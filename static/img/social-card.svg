@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <defs>
+    <mask id="cresMask">
+      <rect width="1200" height="630" fill="black"/>
+      <circle cx="877" cy="187" r="66" fill="white"/>
+      <circle cx="907" cy="162" r="66" fill="black"/>
+    </mask>
+  </defs>
+  <rect width="1200" height="630" fill="#0d1117"/>
+  <rect width="1200" height="630" fill="#15365A" opacity="0.24"/>
+  <circle cx="830" cy="318" r="214" fill="none" stroke="#89AFC8" stroke-opacity="0.26" stroke-width="3"/>
+  <ellipse cx="830" cy="318" rx="270" ry="148" fill="none" stroke="#D4E9F6" stroke-opacity="0.24" stroke-width="6"/>
+  <text x="108" y="250" fill="#F6FBFF" font-family="Microsoft YaHei, PingFang SC, sans-serif" font-size="88" font-weight="700">Ithiltir Docs</text>
+  <text x="112" y="326" fill="#B9CBE0" font-family="Microsoft YaHei, PingFang SC, sans-serif" font-size="32" font-weight="700">Deploy / Nodes / Config / API</text>
+  <rect x="748" y="142" width="164" height="164" rx="36" fill="#15365A"/>
+  <ellipse cx="830" cy="224" rx="64" ry="41" fill="none" stroke="#D4E9F6" stroke-opacity="0.90" stroke-width="14"/>
+  <ellipse cx="830" cy="224" rx="52" ry="33" fill="none" stroke="#89AFC8" stroke-opacity="0.62" stroke-width="11"/>
+  <circle cx="819" cy="241" r="20" fill="none" stroke="#4B91C2" stroke-opacity="0.76" stroke-width="14"/>
+  <circle cx="819" cy="241" r="7" fill="#DDEFFF"/>
+  <g mask="url(#cresMask)">
+    <circle cx="877" cy="187" r="66" fill="#DCEBFA"/>
+  </g>
+</svg>

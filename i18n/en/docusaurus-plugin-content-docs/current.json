@@ -1,0 +1,50 @@
+{
+  "version.label": {
+    "message": "Next",
+    "description": "The label for version current"
+  },
+  "sidebar.docs.category.概览": {
+    "message": "Overview",
+    "description": "The label for category '概览' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.安装部署": {
+    "message": "Install",
+    "description": "The label for category '安装部署' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.配置": {
+    "message": "Config",
+    "description": "The label for category '配置' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.指南": {
+    "message": "Guides",
+    "description": "The label for category '指南' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.运维": {
+    "message": "Operations",
+    "description": "The label for category '运维' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.参考": {
+    "message": "Reference",
+    "description": "The label for category '参考' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.组件": {
+    "message": "Components",
+    "description": "The label for category '组件' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Dash": {
+    "message": "Dash",
+    "description": "The label for category 'Dash' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Node": {
+    "message": "Node",
+    "description": "The label for category 'Node' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.开发和发布": {
+    "message": "Development and Releases",
+    "description": "The label for category '开发和发布' in sidebar 'docs'"
+  },
+  "sidebar.docs.doc.文档索引": {
+    "message": "Documentation Index",
+    "description": "The label for the doc item '文档索引' in sidebar 'docs', linking to the doc Doc"
+  }
+}

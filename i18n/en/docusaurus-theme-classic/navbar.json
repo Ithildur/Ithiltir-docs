@@ -1,0 +1,38 @@
+{
+  "title": {
+    "message": "Ithiltir",
+    "description": "The title in the navbar"
+  },
+  "logo.alt": {
+    "message": "Ithiltir",
+    "description": "The alt text of navbar logo"
+  },
+  "item.label.文档": {
+    "message": "Docs",
+    "description": "Navbar item with label 文档"
+  },
+  "item.label.部署": {
+    "message": "Deploy",
+    "description": "Navbar item with label 部署"
+  },
+  "item.label.配置": {
+    "message": "Config",
+    "description": "Navbar item with label 配置"
+  },
+  "item.label.指南": {
+    "message": "Guides",
+    "description": "Navbar item with label 指南"
+  },
+  "item.label.参考": {
+    "message": "Reference",
+    "description": "Navbar item with label 参考"
+  },
+  "item.label.Ithiltir": {
+    "message": "Ithiltir",
+    "description": "Navbar item with label Ithiltir"
+  },
+  "item.label.Ithiltir-node": {
+    "message": "Ithiltir-node",
+    "description": "Navbar item with label Ithiltir-node"
+  }
+}
