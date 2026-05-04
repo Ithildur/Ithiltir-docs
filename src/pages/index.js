@@ -41,7 +41,7 @@ const sections = [
 const copy = {
   'zh-CN': {
     title: 'Ithiltir 文档',
-    description: '部署 / 节点 / 配置 / API',
+    description: 'Ithiltir 是一套自托管服务器监控系统，支持 Dash 集中管理与 Node 本地监控。',
     eyebrow: 'Ithiltir Docs',
     primary: '打开文档',
     secondary: '快速开始',
@@ -49,7 +49,7 @@ const copy = {
   },
   en: {
     title: 'Ithiltir Docs',
-    description: 'Deploy / Nodes / Config / API',
+    description: 'Ithiltir is a self-hosted server monitoring system with Dash management and Node local monitoring.',
     eyebrow: 'Ithiltir Docs',
     primary: 'Open Docs',
     secondary: 'Quick Start',
