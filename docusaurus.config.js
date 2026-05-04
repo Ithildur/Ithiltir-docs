@@ -1,10 +1,13 @@
 // @ts-check
 
 import path from 'node:path';
+import process from 'node:process';
 import {fileURLToPath} from 'node:url';
 import {themes} from 'prism-react-renderer';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const siteUrl = process.env.DOCUSAURUS_URL ?? 'https://ithildur.github.io';
+const siteBaseUrl = process.env.DOCUSAURUS_BASE_URL ?? '/Ithiltir-docs/';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -12,10 +15,10 @@ const config = {
   tagline: 'Ithiltir / Ithiltir-node',
   favicon: 'img/favicon.svg',
 
-  url: 'https://ithiltir-docs.local',
-  baseUrl: '/',
+  url: siteUrl,
+  baseUrl: siteBaseUrl,
   organizationName: 'Ithildur',
-  projectName: 'Ithiltir',
+  projectName: 'Ithiltir-docs',
   trailingSlash: false,
   future: {
     v4: true,
@@ -81,10 +84,10 @@ const config = {
         },
         items: [
           {type: 'docSidebar', sidebarId: 'docs', label: '文档', position: 'left'},
-          {to: '/docs/Install', label: '部署', position: 'left'},
-          {to: '/docs/Config', label: '配置', position: 'left'},
-          {to: '/docs/Guides', label: '指南', position: 'left'},
-          {to: '/docs/Reference', label: '参考', position: 'left'},
+          {type: 'doc', docId: 'installation/index', label: '部署', position: 'left'},
+          {type: 'doc', docId: 'configuration/index', label: '配置', position: 'left'},
+          {type: 'doc', docId: 'guides/index', label: '指南', position: 'left'},
+          {type: 'doc', docId: 'reference/index', label: '参考', position: 'left'},
           {
             href: 'https://github.com/Ithildur/Ithiltir',
             label: 'Ithiltir',
@@ -104,17 +107,17 @@ const config = {
           {
             title: '文档',
             items: [
-              {label: '快速开始', to: '/docs/QuickStart'},
-              {label: '安装部署', to: '/docs/Install'},
-              {label: '运维', to: '/docs/Operations'},
+              {label: '快速开始', to: 'docs/QuickStart'},
+              {label: '安装部署', to: 'docs/Install'},
+              {label: '运维', to: 'docs/Operations'},
             ],
           },
           {
             title: '参考',
             items: [
-              {label: 'Dash API', to: '/docs/Reference/DashAPI'},
-              {label: 'Node CLI', to: '/docs/Reference/NodeCLI'},
-              {label: '指标结构', to: '/docs/Reference/MetricsSchema'},
+              {label: 'Dash API', to: 'docs/Reference/DashAPI'},
+              {label: 'Node CLI', to: 'docs/Reference/NodeCLI'},
+              {label: '指标结构', to: 'docs/Reference/MetricsSchema'},
             ],
           },
           {

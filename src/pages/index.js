@@ -10,7 +10,7 @@ const sections = [
     meta: 'QuickStart',
     text: 'Dash / Node',
     textEn: 'Dash / Node',
-    to: '/docs/QuickStart',
+    to: 'docs/QuickStart',
   },
   {
     title: '安装部署',
@@ -18,7 +18,7 @@ const sections = [
     meta: 'Install',
     text: 'Linux / Proxy / Upgrade',
     textEn: 'Linux / Proxy / Upgrade',
-    to: '/docs/Install',
+    to: 'docs/Install',
   },
   {
     title: '高级配置',
@@ -26,7 +26,7 @@ const sections = [
     meta: 'Config',
     text: 'Access / Traffic / Alert',
     textEn: 'Access / Traffic / Alert',
-    to: '/docs/Guides/AdvancedConfiguration',
+    to: 'docs/Guides/AdvancedConfiguration',
   },
   {
     title: '参考手册',
@@ -34,7 +34,7 @@ const sections = [
     meta: 'Reference',
     text: 'API / CLI / Metrics',
     textEn: 'API / CLI / Metrics',
-    to: '/docs/Reference',
+    to: 'docs/Reference',
   },
 ];
 
@@ -76,12 +76,12 @@ export default function Home() {
               <h1>{text.title}</h1>
               <p>{text.description}</p>
               <div className="docsHome__actions">
-                <Link className="docsHome__button docsHome__button--primary" to="/docs/">
+                <Link className="docsHome__button docsHome__button--primary" to="docs">
                   {text.primary}
                 </Link>
                 <Link
                   className="docsHome__button docsHome__button--secondary"
-                  to="/docs/QuickStart">
+                  to="docs/QuickStart">
                   {text.secondary}
                 </Link>
               </div>
