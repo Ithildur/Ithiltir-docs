@@ -96,6 +96,7 @@ Bearer 可选端点会把无效 Bearer 当作匿名请求。
 | `GET` | `/api/admin/nodes/deploy` | 无 | `200` |
 | `POST` | `/api/admin/nodes/` | 无 | `204` |
 | `PUT` | `/api/admin/nodes/display-order` | 节点 ID 顺序 | `204` |
+| `PATCH` | `/api/admin/nodes/traffic-p95` | `{ "ids": [1, 2], "enabled": true }` | `204` |
 | `PATCH` | `/api/admin/nodes/{id}` | 节点补丁 | `204` |
 | `POST` | `/api/admin/nodes/{id}/upgrade` | 无 | `204` |
 | `DELETE` | `/api/admin/nodes/{id}` | 无 | `204` |
@@ -119,6 +120,8 @@ Bearer 可选端点会把无效 Bearer 当作匿名请求。
 ```
 
 `tags` 必须是字符串数组，空值和重复值会被移除。
+
+`/api/admin/nodes/traffic-p95` 先校验全部节点 ID，再在一个事务中更新 P95 开关；任一节点不存在或已删除时整个请求失败。
 
 ## 管理：流量设置
 
