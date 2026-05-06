@@ -5,7 +5,7 @@ title: Node Rollout
 
 # 节点批量接入
 
-节点接入的核心是每台机器都有独立 secret，并把 `report.yaml` 写到本机服务目录。不要复用节点 secret。
+节点接入要求每台机器使用独立 secret，并将 `report.yaml` 写入本机服务目录。
 
 ## 接入模型
 
@@ -24,7 +24,7 @@ targets:
 
 ## 创建节点
 
-在 Dash 管理台创建节点时，建议先确定：
+在 Dash 管理台创建节点前，确认以下信息：
 
 - 节点名称。
 - 分组。
@@ -141,7 +141,7 @@ Windows 自更新只在 runner 托管模式下生效。直接运行 `node push` 
 sudo bash install_node.sh dash.example.com 443 '<node-secret>' 3 --require-https
 ```
 
-`--require-https` 会拒绝非 HTTPS target，并禁止 HTTP 回落。内网 HTTP 部署不要加这个参数。
+`--require-https` 会拒绝非 HTTPS target，并禁止 HTTP 回落。内网 HTTP 部署不使用该参数。
 
 ## 轮换 secret
 

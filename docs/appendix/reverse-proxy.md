@@ -10,9 +10,9 @@ slug: /Appendix/ReverseProxy
 
 ## 核心约束
 
-- 生产环境推荐使用域名 + HTTPS + Nginx/Caddy 反向代理。
+- 生产环境使用域名 + HTTPS + Nginx/Caddy 反向代理。
 - Dash 只支持同源根路径部署，不支持 `/dash` 这类 URL 子路径。
 - `/api`、`/theme`、`/deploy` 和 `/` 必须转发到同一个 Dash 后端。
-- 直接 `http://IP:端口` 只适合临时验证或受控内网测试。
+- `http://IP:端口` 用于临时验证或受控内网测试。
 
 完整配置见 [反向代理](../installation/reverse-proxy.md)。

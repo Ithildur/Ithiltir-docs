@@ -89,6 +89,11 @@ const config = {
           {type: 'doc', docId: 'guides/index', label: '指南', position: 'left'},
           {type: 'doc', docId: 'reference/index', label: '参考', position: 'left'},
           {
+            href: 'https://demo.ithiltir.dev/',
+            label: 'Demo',
+            position: 'right',
+          },
+          {
             href: 'https://github.com/Ithildur/Ithiltir',
             label: 'Ithiltir',
             position: 'right',
@@ -123,6 +128,7 @@ const config = {
           {
             title: '项目',
             items: [
+              {label: 'Demo', href: 'https://demo.ithiltir.dev/'},
               {label: 'Ithiltir', href: 'https://github.com/Ithildur/Ithiltir'},
               {
                 label: 'Ithiltir-node',

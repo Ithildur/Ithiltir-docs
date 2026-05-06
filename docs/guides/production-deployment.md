@@ -31,7 +31,7 @@ slug: /Guides/ProductionDeployment
 
 ## Dash 安装
 
-推荐用发布包安装：
+使用发布包安装：
 
 ```bash
 tar -xzf Ithiltir_dash_linux_amd64.tar.gz
@@ -107,7 +107,7 @@ systemd 环境变量应由安装脚本写入服务环境或独立环境文件。
 /opt/Ithiltir-dash/bin/dash migrate -config /opt/Ithiltir-dash/configs/config.local.yaml
 ```
 
-发布包安装和更新脚本会自动执行迁移。手工替换二进制、恢复备份或改数据库连接后，才需要手动执行上面的命令。迁移失败时不要启动新版本服务，先修复数据库连接、权限或扩展问题。
+发布包安装和更新脚本会自动执行迁移。手工替换二进制、恢复备份或修改数据库连接后，需要手动执行上面的命令。迁移失败时，先修复数据库连接、权限或扩展问题，再启动新版本服务。
 
 ## 反向代理
 
@@ -132,7 +132,7 @@ https://example.com/dash/
 
 `app.public_url` 不能带路径前缀。反向代理在本机时，`trusted_proxies` 只写本机地址。反向代理在内网其他机器时，只写明确 CIDR。
 
-不建议正式暴露为：
+生产环境不暴露为：
 
 ```text
 http://10.0.0.2:8080/
@@ -142,7 +142,7 @@ Dash 的 `:8080` 这类后端端口应只对本机或内网开放，公网入口
 
 ## Redis 策略
 
-生产环境使用 Redis。`--no-redis` 只适合测试或极小规模降级运行。
+生产环境使用 Redis。`--no-redis` 用于测试或极小规模降级运行。
 
 `--no-redis` 的实际影响：
 

@@ -5,7 +5,7 @@ title: Manual Run
 
 # 源码和手工运行
 
-源码运行适合开发、验证配置和排查问题。生产部署仍推荐发布包。
+源码运行用于开发、配置验证和问题排查。生产部署使用发布包。
 
 The source path does not invoke the release installer. You must provide the database, TimescaleDB, Redis, Go, and Bun yourself.
 

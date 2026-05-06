@@ -5,7 +5,7 @@ title: Performance and Capacity
 
 # 性能和容量
 
-容量瓶颈主要来自数据库写入和历史保留窗口，不是前端。
+容量规划重点是数据库写入量和历史数据保留窗口。
 
 ## 最小配置
 
@@ -30,7 +30,7 @@ title: Performance and Capacity
 
 ## 降低写入量
 
-优先级从高到低：
+按以下顺序降低写入量：
 
 1. 增大节点 Push 间隔，例如 `push 10`。
 2. 降低历史保留天数。
@@ -58,8 +58,8 @@ database:
 
 ## Redis
 
-Redis 用于运行时状态和热点缓存。生产环境不建议 `--no-redis`，否则所有热点状态随进程重启丢失。
+Redis 用于运行时状态和热点缓存。生产环境应启用 Redis；使用 `--no-redis` 时，热点状态会在进程重启后丢失。
 
 ## 反向代理
 
-反向代理应启用 keep-alive，保留 Host、X-Forwarded-For、X-Forwarded-Proto。不要把 API 和前端拆成跨域服务。
+反向代理应启用 keep-alive，并保留 Host、X-Forwarded-For、X-Forwarded-Proto。API 和前端应保持同源部署。

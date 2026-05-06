@@ -5,7 +5,7 @@ title: Advanced Configuration Path
 
 # Advanced Configuration Path
 
-Advanced configuration is not a pile of fields. Fix the runtime boundary first, then enable the features you need.
+This page covers Dash runtime boundaries, runtime state, traffic accounting, alerts, notifications, and theme configuration. Apply the sections in order to keep related settings consistent.
 
 ## 1. Fix the Public URL
 

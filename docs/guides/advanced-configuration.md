@@ -4,7 +4,7 @@ slug: /Guides/AdvancedConfiguration
 
 # 高级配置路线
 
-高级配置不是堆字段，而是先确定运行边界，再打开对应能力。配置顺序错误会制造假问题。
+本页说明 Dash 运行边界、运行时状态、流量统计、告警、通知和主题相关配置。建议按以下顺序完成配置，减少跨模块配置不一致。
 
 ## 1. 固定公开 URL
 
@@ -79,7 +79,7 @@ database:
   traffic_retention_days: 90
 ```
 
-`traffic_retention_days` 省略时使用 `max(retention_days, 45)`。需要 P95 复核时，不要把流量保留设置得太短。
+`traffic_retention_days` 省略时使用 `max(retention_days, 45)`。需要 P95 复核时，保留窗口应覆盖完整复核周期。
 
 ## 4. 打开游客访问
 
@@ -133,7 +133,7 @@ traffic.guest_access_mode = by_node
 | `-1` | `node.offline` | 节点离线 |
 | `-2` | `raid.failed` | RAID 失效 |
 
-自定义规则先选指标和阈值，再挂载节点或分组。不要为每个节点复制大量同构规则，优先用分组挂载。
+自定义规则先选择指标和阈值，再挂载到节点或分组。多节点使用相同规则时，优先使用分组挂载。
 
 `core_plus` 只适用于：
 
@@ -152,7 +152,7 @@ traffic.guest_access_mode = by_node
 - Email SMTP。
 - Webhook。
 
-建议：
+配置建议：
 
 - 先用测试规则验证通道。
 - Email 明确 TLS 模式。
@@ -199,7 +199,7 @@ README.md
 ./ithiltir-node report install https://dash.example.com/api/node/metrics '<node-secret>'
 ```
 
-改 URL 走 `install`。只轮换 key 走 `update`。
+修改 URL 使用 `install`。仅轮换 key 时使用 `update`。
 
 ## 10. 验证配置是否生效
 

@@ -70,7 +70,7 @@ Authorization: Bearer <access_token>
 X-Node-Secret: <node-secret>
 ```
 
-节点 secret 在管理台创建节点后生成。不要把 secret 暴露给浏览器。
+节点 secret 在管理台创建节点后生成。secret 不应暴露给浏览器。
 
 ## 可见性规则
 

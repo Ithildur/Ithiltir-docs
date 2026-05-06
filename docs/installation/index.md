@@ -28,7 +28,7 @@ Ithiltir 的部署对象有两个：Dash 主控端和 Ithiltir-node 节点端。
 
 发布包安装脚本会检测 PostgreSQL 16+、TimescaleDB 和 Redis。缺失或版本不满足时，脚本会按发行版使用系统包管理器处理，必要时提示源码安装 Redis。Debian/Ubuntu 等 `apt-get` 系统不需要提前手工安装这些依赖。
 
-推荐部署形态是：域名 + HTTPS + Nginx/Caddy 反向代理。Dash 后端监听本机或内网端口，例如 `127.0.0.1:8080`，外部只访问 `https://dash.example.com/`。直接 `http://IP:端口` 暴露 Dash 只适合临时验证和受控内网测试。
+生产部署使用域名 + HTTPS + Nginx/Caddy 反向代理。Dash 后端监听本机或内网端口，例如 `127.0.0.1:8080`，外部访问 `https://dash.example.com/`。`http://IP:端口` 适用于临时验证和受控内网测试。
 
 ## 部署边界
 
@@ -66,9 +66,9 @@ https://dash.example.com/api/node/static
 ## 关键限制
 
 - `app.public_url` 必须是根路径 URL，不能带 `/dash` 这类路径前缀。
-- 生产环境 `app.public_url` 推荐使用 HTTPS 域名，不推荐直接 IP+HTTP。
-- 反向代理必须保持同源路径，不要把前端改成跨域 API。
-- 节点 secret 只用于 `/api/node/*`，不能放进浏览器代码。
+- 生产环境 `app.public_url` 使用 HTTPS 域名。
+- 反向代理保持同源路径，前端不使用跨域 API。
+- 节点 secret 仅用于 `/api/node/*`，不得放入浏览器代码。
 - Dash 是单实例应用，不能多进程同时写同一个数据库。
 - `--no-redis` 是降级模式，运行时状态重启后丢失。
 

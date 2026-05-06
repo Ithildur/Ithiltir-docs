@@ -58,7 +58,7 @@ dash migrate -config /opt/Ithiltir-dash/configs/config.local.yaml
 
 `public_url` 可以省略 scheme。IP 地址默认补 `http`，域名默认补 `https`。最终值不能带路径前缀。
 
-正式环境推荐显式配置 HTTPS 域名，例如 `https://dash.example.com`，并使用 Nginx 或 Caddy 反向代理到 Dash 后端监听地址。不要把直接 IP+HTTP 当作长期部署入口；它只适合本机验证或临时内网测试。
+正式环境显式配置 HTTPS 域名，例如 `https://dash.example.com`，并使用 Nginx 或 Caddy 反向代理到 Dash 后端监听地址。IP+HTTP 适用于本机验证或临时内网测试。
 
 ## `http`
 

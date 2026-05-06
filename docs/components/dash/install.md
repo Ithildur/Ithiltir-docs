@@ -4,7 +4,7 @@ slug: /Dash/Install
 
 # 安装 Dash
 
-Dash 支持源码运行和 Linux 发布包安装。生产部署优先使用发布包。
+Dash 支持源码运行和 Linux 发布包安装。生产部署使用发布包。
 
 ## 运行要求
 
@@ -83,4 +83,4 @@ sudo bash /opt/Ithiltir-dash/update_dash_linux.sh -y --lang zh
 - `/deploy`
 - `/`
 
-不要把 Dash 部署到 URL 子路径。`app.public_url` 不能是 `https://example.com/dash`。
+Dash 不支持部署到 URL 子路径。`app.public_url` 不能是 `https://example.com/dash`。

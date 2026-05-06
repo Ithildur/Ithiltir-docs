@@ -63,7 +63,7 @@ export monitor_dash_pwd='<admin-password>'
 
 `public_url` 可以省略 scheme。IP 地址默认补 `http`，域名默认补 `https`。
 
-生产环境推荐显式配置 HTTPS 域名，例如 `https://dash.example.com`，并通过 Nginx/Caddy 反向代理到 Dash 后端。IP+HTTP 只适合临时验证。
+生产环境显式配置 HTTPS 域名，例如 `https://dash.example.com`，并通过 Nginx/Caddy 反向代理到 Dash 后端。IP+HTTP 用于临时验证。
 
 ## `http`
 

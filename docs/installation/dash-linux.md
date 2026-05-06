@@ -4,7 +4,7 @@ slug: /Install/DashLinux
 
 # 安装 Dash
 
-生产部署优先使用发布包。源码运行只适合开发和验证。
+生产部署使用发布包。源码运行用于开发和配置验证。
 
 ## 发布包内容
 
@@ -81,7 +81,7 @@ sudo bash install_dash_linux.sh --lang zh
 | `redis.addr` | Redis 地址 |
 | `http.trusted_proxies` | 可信反向代理 CIDR |
 
-`app.public_url` 推荐填写 HTTPS 域名，例如 `https://dash.example.com`。生产环境应配置 Nginx 或 Caddy 反向代理到 Dash 的本机监听端口；直接 IP+HTTP 只适合临时测试。
+`app.public_url` 填写 HTTPS 域名，例如 `https://dash.example.com`。生产环境配置 Nginx 或 Caddy 反向代理到 Dash 的本机监听端口；IP+HTTP 用于临时测试。
 
 ## 服务管理
 

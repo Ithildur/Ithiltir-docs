@@ -105,7 +105,7 @@ my-theme/
 - `:root.dark`
 - `:root.dark[data-theme=...]`
 
-只允许自定义属性。不要写组件选择器、全局标签选择器或嵌套规则。
+只允许自定义属性；不支持组件选择器、全局标签选择器或嵌套规则。
 
 ## `recipes.css`
 
@@ -183,4 +183,3 @@ dash pack-theme -src ./my-theme -out ops-dark.zip
 - 包体超过限制。
 
 完整格式见 [主题包格式](../reference/theme-package.md)。
-

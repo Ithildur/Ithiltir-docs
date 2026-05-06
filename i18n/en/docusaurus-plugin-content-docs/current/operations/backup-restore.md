@@ -101,4 +101,4 @@ Start-Service ithiltir-node
 - `/opt/Ithiltir-dash/configs/config.local.yaml`。
 - `/opt/Ithiltir-dash/themes`。
 
-更新脚本会备份安装目录，但不会替你做数据库备份。
+更新脚本会备份安装目录，但不包含数据库备份。

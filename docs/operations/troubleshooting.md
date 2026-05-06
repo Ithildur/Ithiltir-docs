@@ -4,7 +4,7 @@ slug: /Operations/Troubleshooting
 
 # 排错
 
-先按请求路径定位问题：Dash 启动、反向代理、节点上报、历史数据、流量统计和 Windows 更新分别排查。
+按请求路径定位问题：Dash 启动、反向代理、节点上报、历史数据、流量统计和 Windows 更新分别排查。
 
 ## Dash 无法启动
 

@@ -28,7 +28,7 @@ Ithiltir 是一套自托管服务器监控系统。它由单实例主控端 `Ith
 - 节点默认使用 Push 模式向 Dash 上报，不要求 Dash 主动连接节点。
 - 生产环境推荐使用 HTTPS 域名和 Nginx/Caddy 反向代理，不推荐长期使用 IP+HTTP。
 
-Ithiltir 当前不提供多 Dash 实例协调能力。不要让多个 Dash 实例同时写入同一套数据库和 Redis。
+Ithiltir 当前不提供多 Dash 实例协调能力。多个 Dash 实例不应同时写入同一套数据库和 Redis。
 
 ## 运行要求
 

@@ -88,4 +88,4 @@ window.ITHILTIR_LOCAL = {
 - 视觉改动放在 `page.html` 和 `assets/page.css`。
 - 数据映射改动放在 `window.ITHILTIR_LOCAL` 或 `assets/page.js`。
 - `/metrics` 和 `/static` 必须保持已记录的 JSON 契约。
-- 不要把 `X-Node-Secret` 或 Dash 凭据放进浏览器代码。
+- `X-Node-Secret` 和 Dash 凭据不得放入浏览器代码。

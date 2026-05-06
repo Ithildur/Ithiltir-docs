@@ -40,7 +40,7 @@ cd Ithiltir-dash
 sudo bash install_dash_linux.sh --lang zh
 ```
 
-安装时 `app.public_url` 推荐填写域名 HTTPS 根地址，例如 `https://dash.example.com`，并用 Nginx 或 Caddy 反向代理到本机 Dash。直接使用 `http://IP:端口` 只适合本机验证或临时内网测试，不建议作为正式部署地址。
+安装时 `app.public_url` 填写 HTTPS 域名根地址，例如 `https://dash.example.com`，并用 Nginx 或 Caddy 反向代理到本机 Dash。`http://IP:端口` 适用于本机验证或临时内网测试。
 
 在支持的 systemd Linux 发行版上，安装脚本会检测并准备运行依赖：
 
@@ -93,7 +93,7 @@ journalctl -u ithiltir-node -f
 
 ## 源码快速验证
 
-源码路径只适合开发和验证配置，需要自己准备：
+源码路径适合开发和配置验证，需要准备：
 
 - Go 1.26+。
 - Bun 1.3.11。
@@ -121,7 +121,7 @@ cp configs/config.example.yaml config.local.yaml
 export monitor_dash_pwd='<password>'
 ```
 
-`app.public_url` 必须是根路径 URL。正式部署推荐 `https://dash.example.com`；`http://10.0.0.2:8080` 这类 IP+HTTP 只用于临时验证。不能带 `/dash` 这类路径前缀。
+`app.public_url` 必须是根路径 URL。正式部署使用 `https://dash.example.com`；`http://10.0.0.2:8080` 这类 IP+HTTP 用于临时验证。不能带 `/dash` 这类路径前缀。
 
 执行迁移：
 
@@ -135,7 +135,7 @@ go run ./cmd/dash migrate -config config.local.yaml
 go run ./cmd/dash -debug
 ```
 
-如果只想看单机本地页面，可以直接运行：
+单机本地页面可以通过 Local 模式运行：
 
 ```bash
 ./node local

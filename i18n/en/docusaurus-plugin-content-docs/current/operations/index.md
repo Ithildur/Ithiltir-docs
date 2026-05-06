@@ -5,7 +5,7 @@ title: Operations Overview
 
 # Operations Overview
 
-Operations have a simple target: stable Dash process, recoverable database, continuous node reporting, and predictable data retention.
+Operations cover Dash process health, database recovery, continuous node reporting, and predictable data retention.
 
 ## Daily Checks
 
