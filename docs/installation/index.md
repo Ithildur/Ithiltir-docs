@@ -67,7 +67,7 @@ https://dash.example.com/api/node/static
 
 - `app.public_url` 必须是根路径 URL，不能带 `/dash` 这类路径前缀。
 - 生产环境 `app.public_url` 使用 HTTPS 域名。
-- 反向代理保持同源路径，前端不使用跨域 API。
+- 反向代理保持同源路径；跨域后端地址需要同时配置 CORS、cookie 和 CSRF 策略。
 - 节点 secret 仅用于 `/api/node/*`，不得放入浏览器代码。
 - Dash 是单实例应用，不能多进程同时写同一个数据库。
 - `--no-redis` 是降级模式，运行时状态重启后丢失。

@@ -41,6 +41,8 @@ Ithiltir Dash 是单实例应用。根入口只启动一个 HTTP 进程，该进
 4. Redis 或进程内内存保存热点快照、会话和告警运行时状态。
 5. 后台服务评估告警、发送队列通知并汇总流量数据。
 
+节点 IP 是已鉴权 Agent 请求的观察值：有 `X-Forwarded-For` 时 Dash 取其第一个 IP，否则回退到 `RemoteAddr`；不可解析的值不会被使用。该字段用于展示和运维，不作为鉴权边界。
+
 ## 状态和保留策略
 
 - 默认启动依赖 PostgreSQL 和 Redis。
@@ -48,7 +50,7 @@ Ithiltir Dash 是单实例应用。根入口只启动一个 HTTP 进程，该进
 - 节点鉴权和待下发 Agent 更新请求使用进程内内存，不走 Redis。
 - 告警评估读取热点快照。内置离线和 RAID 规则来自快照新鲜度和上报 RAID 健康状态。
 - 告警服务启动后 1 分钟内不会新开告警事件。
-- 告警通知 payload 存入 PostgreSQL outbox，并由带租约的重试 worker 发送。
+- 告警事件和运行时状态提交不依赖通知发送。可加载通知目标时，通知 payload 存入 PostgreSQL outbox，并由带租约的重试 worker 发送；通知目标不可用时，状态变更仍会提交，但不会新增通知 outbox。
 - 数据库历史保留默认 `45 days`；普通监控用 `database.retention_days`，流量 5 分钟事实表用 `database.traffic_retention_days`。
 - 流量 `lite` 模式保存月度入/出总量和估算峰值；`billing` 模式额外维护 5 分钟事实、日汇总、P95、覆盖率和月度快照。
 - 历史指标默认不对游客公开。`history_guest_access_mode=by_node` 时，只对游客可见节点开放。
@@ -66,4 +68,4 @@ Ithiltir Dash 是单实例应用。根入口只启动一个 HTTP 进程，该进
 
 ## 前端和反向代理
 
-前端和后端必须保持同源路径。生产反向代理应把 `/api`、`/theme`、`/deploy` 转给 Dash 后端，`/` 保持为 Dash SPA。`app.public_url` 必须是根路径 URL，不支持 `/dash` 这类路径前缀。
+默认部署边界是同源路径。生产反向代理应把 `/api`、`/theme`、`/deploy` 转给 Dash 后端，`/` 保持为 Dash SPA。跨域后端地址需要同时配置 CORS、cookie 和 CSRF 策略。`app.public_url` 必须是根路径 URL，不支持 `/dash` 这类路径前缀。

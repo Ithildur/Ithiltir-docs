@@ -6,6 +6,8 @@ slug: /Install/ReverseProxy
 
 生产环境使用域名 + HTTPS + 反向代理部署 Dash。Dash 要求同源根路径部署，反向代理将 `/api`、`/theme`、`/deploy` 和 `/` 转发到同一个 Dash 后端。
 
+浏览器请求默认保持同源。跨域后端地址需要同时配置 CORS、cookie 和 CSRF 策略。
+
 `http://IP:端口` 适用于本机验证、短期内网测试或故障排查，不作为生产公开入口。
 
 ## 正确形态

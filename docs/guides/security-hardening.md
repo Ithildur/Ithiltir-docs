@@ -57,8 +57,8 @@ app:
 
 规则：
 
-- `/api`、`/theme`、`/deploy`、`/` 必须同源。
-- 不使用跨域 API。
+- `/api`、`/theme`、`/deploy`、`/` 默认保持同源。
+- 跨域后端地址需要同时配置 CORS、cookie 和 CSRF 策略。
 - 不部署到 URL 子路径。
 - 节点安装脚本和节点二进制从 `/deploy` 同源下载。
 

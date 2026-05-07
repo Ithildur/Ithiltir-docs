@@ -93,5 +93,5 @@ X-Webhook-Signature: sha256=<hmac>
 ## 不支持的部署方式
 
 - Dash 子路径部署。
-- 浏览器跨域直连 API。
+- 未同时配置 CORS、cookie 和 CSRF 策略的浏览器跨域直连 API。
 - 多个 Dash 实例同时写同一套数据库和 Redis。

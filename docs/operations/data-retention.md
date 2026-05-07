@@ -84,4 +84,4 @@ max(database.retention_days, 45)
 - `status`
 - `partial`
 
-这些字段用于判断账期内数据是否足够完整。`partial=true` 不代表接口失败，只表示数据覆盖不足或账期未闭合。
+这些字段用于判断账期内数据是否足够完整。客户端应使用 `coverage_ratio` 展示样本覆盖率和准确性提示。`partial` 仅为兼容保留，新的展示逻辑不应依赖该字段。`partial=true` 不代表接口失败，只表示数据覆盖不足或账期未闭合。

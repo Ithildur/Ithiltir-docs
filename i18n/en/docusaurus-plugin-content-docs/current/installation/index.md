@@ -68,7 +68,7 @@ https://dash.example.com/api/node/static
 
 - `app.public_url` must be a root URL and must not contain a path prefix such as `/dash`.
 - Production `app.public_url` should be an HTTPS domain, not direct IP+HTTP.
-- The reverse proxy must keep same-origin paths; do not split the frontend and API across origins.
+- The reverse proxy must keep same-origin paths; cross-origin backend addresses require CORS, cookie, and CSRF policies to be configured together.
 - Node secrets are only for `/api/node/*`; never embed them in browser code.
 - Dash is a single-instance application; do not run multiple writers against the same database.
 - `--no-redis` is a fallback mode. Runtime state is lost after restart.

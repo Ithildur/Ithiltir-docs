@@ -7,6 +7,8 @@ title: Reverse Proxy
 
 Production deployments should use a domain + HTTPS + reverse proxy. Dash requires same-origin root-path deployment, and the proxy must forward `/api`, `/theme`, `/deploy`, and `/` to the same Dash backend.
 
+Browser requests are same-origin by default. Cross-origin backend addresses require CORS, cookie, and CSRF policies to be configured together.
+
 Direct `http://IP:port` exposure is not the recommended production shape. Use it only for local validation, short-lived internal testing, or troubleshooting.
 
 ## Correct Shape

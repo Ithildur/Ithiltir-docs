@@ -121,7 +121,7 @@ Bearer 可选端点会把无效 Bearer 当作匿名请求。
 
 `tags` 必须是字符串数组，空值和重复值会被移除。
 
-`/api/admin/nodes/traffic-p95` 先校验全部节点 ID，再在一个事务中更新 P95 开关；任一节点不存在或已删除时整个请求失败。
+`/api/admin/nodes/traffic-p95` 接受 `ids` 和 `enabled`。`enabled` 必填。`ids` 必须是非空正整数数组，不能重复，最多 10000 项。该命令先校验全部节点 ID，再在一个事务中更新 P95 开关。成功返回 `204`；任一节点不存在或已删除时返回 `404 not_found`，且不会更新任何节点。
 
 ## 管理：流量设置
 
@@ -130,6 +130,13 @@ Bearer 可选端点会把无效 Bearer 当作匿名请求。
 | `PATCH` | `/api/statistics/traffic/settings` | 局部字段 | `204` |
 
 字段见 [流量统计和账期](../configuration/traffic.md)。
+
+## 流量查询
+
+- `GET /api/statistics/traffic/daily` 要求 `usage_mode=billing`，否则返回 `409 traffic_daily_requires_billing`。`period` 可选，允许 `current`、`previous`，省略时为 `current`。
+- `GET /api/statistics/traffic/monthly` 支持 `months` 和 `period`。`months` 最大 24；`period=current` 从本账期开始，`period=previous` 从上账期开始，省略时为 `current`。响应字段 `includes_current` 在 `period=current` 时为 `true`，在 `period=previous` 时为 `false`。
+- 流量 summary、daily、monthly 响应保留原始 `in_*` 和 `out_*` 字段，并通过 `selected_bytes`、`selected_p95_bytes_per_sec`、`selected_peak_bytes_per_sec` 及其方向字段暴露当前计费视图。
+- 客户端应使用 `coverage_ratio` 展示样本覆盖率和准确性提示。`partial` 仅为兼容保留，新的展示逻辑不应依赖该字段。
 
 ## 管理：告警
 
