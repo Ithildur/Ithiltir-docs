@@ -5,101 +5,106 @@ title: Node CLI
 
 # Node CLI
 
-## 参数解析
+## Argument Parsing
 
-全局参数：
+Global arguments:
 
-| 参数 | 说明 |
+| Argument | Description |
 | --- | --- |
-| `--net iface1,iface2` | 指定优先采集的网卡列表 |
-| `--debug` | 输出更详细 JSON 或启用 Push debug 本地接口 |
-| `--require-https` | 禁止非 HTTPS target 和 HTTP 回落 |
-| `--version`、`-v` | 输出版本 |
+| `--net iface1,iface2` | Preferred network interfaces to collect |
+| `--debug` | Print detailed JSON or enable the local push debug endpoint |
+| `--require-https` | Reject non-HTTPS targets and disable HTTP fallback |
+| `--version`, `-v` | Print version |
 
-`--net` 缺少值时会记录 warning 并忽略。
+When `--net` has no value, the node logs a warning and ignores it.
 
-## Local
-
-```bash
-./node [--net iface1,iface2] [--debug]
-./node local [listen_ip] [listen_port] [--net iface1,iface2] [--debug]
-```
-
-默认：
-
-```text
-0.0.0.0:9100
-```
-
-环境变量：
-
-- `NODE_HOST`
-- `NODE_PORT`
-
-## Push
+## Local Mode
 
 ```bash
-./node push [interval_seconds] [--net iface1,iface2] [--debug] [--require-https]
+ithiltir-node [--net eth0,eth1]
 ```
 
-默认间隔：`3` 秒。
+Defaults:
 
-`--debug` 会额外监听：
+- listen host: `0.0.0.0`
+- listen port: `9100`
+
+Environment variables:
+
+| Variable | Description |
+| --- | --- |
+| `NODE_HOST` | Listen host |
+| `NODE_PORT` | Listen port |
+
+## Push Mode
+
+```bash
+ithiltir-node push [interval_seconds] [target_url secret] [--net eth0,eth1] [--require-https]
+```
+
+Default interval: `3` seconds.
+
+`--debug` also listens on:
 
 ```text
 127.0.0.1:${NODE_PORT:-9101}
 ```
 
-## Report
+## Report Config
+
+Install a target:
 
 ```bash
-./node report install <url> <key> [--require-https]
-./node report remove <id>
-./node report update <id> <key>
-./node report list
+ithiltir-node report install https://dash.example.com/api/node/metrics <secret>
 ```
 
-`report install`：
+Rules:
 
-- URL 必须指向 Dash 的 `/api/node/metrics`。
-- 会请求同级 `/identity`。
-- 会把 `server_install_id` 写入配置。
-- 相同 URL + key + server_install_id 重复执行不改配置。
-- 相同 server_install_id 但目标不同，会要求交互选择保留或替换。
+- URL must point to Dash `/api/node/metrics`.
+- The command requests sibling `/identity`.
+- The command writes `server_install_id` to config.
+- Repeating the same URL, key, and `server_install_id` leaves config unchanged.
+- Same `server_install_id` with a different target requires an interactive keep-or-replace choice.
 
-`report update`：
+Update a key:
 
-- 只轮换 key。
-- 不改 URL。
+```bash
+ithiltir-node report update <id> <secret>
+```
 
-`report list` 输出：
+Rules:
+
+- Only the key is rotated.
+- URL is unchanged.
+
+`report list` output:
 
 ```text
-<id>\t<url>\t<server_install_id>
+ID  URL  KEY  SERVER_INSTALL_ID
 ```
 
-## Report 配置路径
+## Report Config Path
 
-默认：
+Defaults:
 
-- Linux/macOS：`/var/lib/ithiltir-node/report.yaml`
-- Windows：`%ProgramData%\Ithiltir-node\report.yaml`
+- Linux/macOS: `/var/lib/ithiltir-node/report.yaml`
+- Windows: `%ProgramData%\Ithiltir-node\report.yaml`
 
-覆盖：
+Override:
 
-```bash
-ITHILTIR_NODE_REPORT_CONFIG=/path/report.yaml ./node push
+```text
+ITHILTIR_NODE_REPORT_CONFIG=/path/report.yaml
 ```
 
-格式：
+Format:
 
 ```yaml
 version: 1
 targets:
   - id: 1
     url: https://dash.example.com/api/node/metrics
-    key: node-secret
-    server_install_id: dashboard-install-id
+    key: secret
+    server_install_id: dash-install-id
 ```
 
-写入使用原子 rename，并保持文件权限 `0600`。
+Writes use atomic rename and preserve file mode `0600`.

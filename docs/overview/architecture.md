@@ -16,6 +16,7 @@ Ithiltir Dash 是单实例应用。根入口只启动一个 HTTP 进程，该进
 | Redis | 默认保存会话、热点快照和告警运行时状态 |
 | 进程内内存 | 节点鉴权索引和易失 Agent 更新请求；`--no-redis` 时承接会话和热点运行时状态 |
 | Ithiltir-node | 上报指标和静态主机信息；Windows runner 启动时接收更新 manifest |
+| Linux SMART 缓存 timer | root 侧 `smartctl` helper 写入 `/run/ithiltir-node/smart.json`；Ithiltir-node 只读缓存 |
 | Web UI | 读取看板数据并提交管理操作 |
 
 ## HTTP 面
@@ -48,6 +49,7 @@ Ithiltir Dash 是单实例应用。根入口只启动一个 HTTP 进程，该进
 - 默认启动依赖 PostgreSQL 和 Redis。
 - `--no-redis` 会把 Redis 承载的运行时状态改用进程内内存。
 - 节点鉴权和待下发 Agent 更新请求使用进程内内存，不走 Redis。
+- SMART 和 thermal 指标属于运行时状态。SMART 缓存新鲜度、helper 可用性和设备健康结果随指标快照保存，不写入静态磁盘资产。
 - 告警评估读取热点快照。内置离线和 RAID 规则来自快照新鲜度和上报 RAID 健康状态。
 - 告警服务启动后 1 分钟内不会新开告警事件。
 - 告警事件和运行时状态提交不依赖通知发送。可加载通知目标时，通知 payload 存入 PostgreSQL outbox，并由带租约的重试 worker 发送；通知目标不可用时，状态变更仍会提交，但不会新增通知 outbox。

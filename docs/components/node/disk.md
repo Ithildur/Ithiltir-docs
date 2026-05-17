@@ -8,12 +8,13 @@ slug: /Node/Disk
 
 ## 运行时：`metrics.disk`
 
-`metrics.disk` 有四个数组：
+`metrics.disk` 包含四个数组和 SMART 运行时状态：
 
 - `physical[]`
 - `logical[]`
 - `filesystems[]`
 - `base_io[]`
+- `smart`
 
 ## `physical[]`
 
@@ -112,6 +113,71 @@ slug: /Node/Disk
 - `service_ms`
 
 `logical` 项可能没有累计字节和底层延迟/利用率字段。
+
+## `smart`
+
+SMART 数据来自 root 侧缓存文件。它是运行时状态，不属于静态磁盘资产。
+
+必填：
+
+- `status`
+- `devices[]`
+
+可选：
+
+- `updated_at`
+- `ttl_seconds`
+
+`devices[]` 必填字段：
+
+- `name`
+- `source`
+- `status`
+
+`devices[]` 可选字段：
+
+- `ref`
+- `device_path`
+- `device_type`
+- `protocol`
+- `model`
+- `serial`
+- `wwn`
+- `exit_status`
+- `health`
+- `temp_c`
+- `power_on_hours`
+- `lifetime_used_percent`
+- `critical_warning`
+- `failing_attrs[]`
+
+`devices[]` 为空时返回 `[]`。不可用的 SMART 值省略。
+
+`critical_warning` 是 NVMe 原始 critical warning bitset。`failing_attrs[]` 只包含当前失败的 ATA SMART 属性：
+
+- `id`
+- `name`
+- `when_failed`
+
+常见 `status`：
+
+- `ok`
+- `partial`
+- `unsupported`
+- `not_found`
+- `no_permission`
+- `timeout`
+- `error`
+- `no_cache`
+- `stale`
+- `no_tool`
+- `standby`
+
+`status` 表示采集状态。`health` 表示磁盘健康结果。`status=ok` 且 `health=failed` 表示采集成功但磁盘健康失败。
+
+`no_cache`、`no_tool`、`unsupported` 不表示磁盘故障。`stale` 表示缓存过期，但会保留最后一次 `devices[]`。
+
+`devices[].ref` 只有在能安全匹配时才指向 `physical[].ref` 或 `logical[].ref`。
 
 ## 运行时：`metrics.raid`
 

@@ -108,15 +108,22 @@ Body：
 - 非 HTTPS target 直接拒绝。
 - 禁止 HTTP 回落。
 
-## Windows 更新
+## 节点更新
 
-只有 runner 启动的 Windows node 会处理 update manifest。直接运行 `node push` 会忽略更新。
+只有托管安装布局会处理 update manifest：
+
+- Windows：由 runner 启动，且 `ITHILTIR_NODE_RUNNER=1`。
+- Linux/macOS：当前进程位于 `/var/lib/ithiltir-node/current/ithiltir-node` 或 `/var/lib/ithiltir-node/releases/<version>/ithiltir-node`。
+
+安装布局外直接运行的二进制会忽略 update manifest。
 
 manifest 必须满足：
 
-- `version` 非空，且不包含路径分隔符。
+- `version` 非空，不能是 `.` 或 `..`，且不包含路径分隔符。
 - `url` 是带 host 的绝对 HTTP 或 HTTPS URL。
 - `sha256` 是 64 位十六进制 SHA-256。
 - `size` 为正数，并必须等于下载字节数。
 
 同一轮多个 target 返回 manifest 时，`id`、`version`、`url`、`sha256`、`size` 必须完全一致，否则跳过更新。
+
+更新成功后，Windows runner 替换 `%ProgramData%\Ithiltir-node\bin\ithiltir-node.exe` 并重启 node。Linux/macOS 切换 `/var/lib/ithiltir-node/current` 到新的 release 目录，并交给 systemd/launchd 重启 node。

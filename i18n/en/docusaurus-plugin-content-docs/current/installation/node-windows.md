@@ -3,60 +3,60 @@ slug: /Install/NodeWindows
 title: Install Windows Node
 ---
 
-# 安装 Windows 节点
+# Install Windows Node
 
-Windows 节点由 PowerShell 安装脚本安装，并通过 `ithiltir-runner.exe` 托管 node。
+Windows nodes are installed with the PowerShell script served by Dash and managed by `ithiltir-runner.exe`.
 
-## 安装命令
+## Install Command
 
-用管理员 PowerShell 执行：
+Run in Administrator PowerShell:
 
 ```powershell
 Invoke-WebRequest -Uri "https://dash.example.com/deploy/windows/install.ps1" -OutFile ".\install_node.ps1"
 powershell -ExecutionPolicy Bypass -File .\install_node.ps1 dash.example.com 443 "<node-secret>"
 ```
 
-完整参数：
+Full arguments:
 
 ```text
 install_node.ps1 <dash_ip> [dash_port] <secret> [interval_seconds] [extra args...]
 ```
 
-如果省略端口，脚本按 Dash 渲染出的 scheme 推断：HTTPS 用 `443`，HTTP 用 `80`。
+If the port is omitted, the script infers it from the rendered scheme: HTTPS uses `443`, HTTP uses `80`.
 
-## 安装结果
+## Installed Files
 
-| 路径 | 内容 |
+| Path | Content |
 | --- | --- |
-| `%ProgramData%\Ithiltir-node\bin\ithiltir-node.exe` | node 二进制 |
-| `%ProgramData%\Ithiltir-node\report.yaml` | 上报目标配置 |
-| `%ProgramData%\Ithiltir-node\staging` | 暂存更新目录 |
+| `%ProgramData%\Ithiltir-node\bin\ithiltir-node.exe` | node binary |
+| `%ProgramData%\Ithiltir-node\report.yaml` | report target config |
+| `%ProgramData%\Ithiltir-node\staging` | staged update directory |
 | `%ProgramFiles%\Ithiltir-node\ithiltir-runner.exe` | runner |
-| Windows 服务 `ithiltir-node` | 自动启动服务 |
+| Windows service `ithiltir-node` | auto-start service |
 
 ## Runner
 
-服务实际启动的是 runner：
+The service starts runner:
 
 ```powershell
 ithiltir-runner.exe push [interval_seconds] [extra args...]
 ```
 
-runner 做三件事：
+Runner:
 
-1. 设置 `ITHILTIR_NODE_RUNNER=1`。
-2. 启动 `%ProgramData%\Ithiltir-node\bin\ithiltir-node.exe`。
-3. 检查暂存更新，替换 node 后重启。
+1. Sets `ITHILTIR_NODE_RUNNER=1`.
+2. Starts `%ProgramData%\Ithiltir-node\bin\ithiltir-node.exe`.
+3. Checks staged updates, replaces node, and restarts it.
 
-直接运行 `ithiltir-node.exe push` 会忽略 Dash 返回的更新 manifest。
+Direct `ithiltir-node.exe push` ignores update manifests returned by Dash.
 
-## 服务检查
+## Service Check
 
 ```powershell
 Get-Service ithiltir-node
 ```
 
-日志在 Windows 事件查看器：
+Logs are in Windows Event Viewer:
 
 ```text
 Event Viewer -> Windows Logs -> Application/System

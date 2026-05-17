@@ -3,29 +3,29 @@ slug: /Reference/NodeProtocol
 title: Node Report Protocol
 ---
 
-# 节点上报协议
+# Node Report Protocol
 
-Ithiltir-node 在 Push 模式调用 Dash 的 `/api/node/*`。节点本身不提供这些路径。
+Ithiltir-node calls Dash `/api/node/*` endpoints in push mode. The node process itself does not serve these paths.
 
 ## Target URL
 
-配置中的 target URL 必须指向：
+The target URL in config must point to:
 
 ```text
 https://dash.example.com/api/node/metrics
 ```
 
-推导：
+Derived URLs:
 
-| 用途 | URL |
+| Purpose | URL |
 | --- | --- |
-| 运行时指标 | `<target>` |
-| 静态信息 | 把 `/metrics` 改为 `/static` |
-| Dash 身份 | 把 `/metrics` 改为 `/identity` |
+| Runtime metrics | `<target>` |
+| Static info | Replace `/metrics` with `/static` |
+| Dash identity | Replace `/metrics` with `/identity` |
 
-`report install` 要求 target path 以 `/metrics` 结尾。
+`report install` requires the target path to end with `/metrics`.
 
-## 请求头
+## Headers
 
 ```http
 X-Node-Secret: <node-secret>
@@ -34,20 +34,20 @@ Content-Type: application/json
 
 ## `/api/node/identity`
 
-请求：
+Request:
 
 ```http
 POST /api/node/identity
 X-Node-Secret: <secret>
 ```
 
-Body：
+Body:
 
 ```json
 {}
 ```
 
-响应：
+Response:
 
 ```json
 {
@@ -56,13 +56,13 @@ Body：
 }
 ```
 
-如果 Dash 还没有 `install_id`，会创建并返回 `created=true`。
+If Dash has no `install_id`, it creates one and returns `created=true`.
 
 ## `/api/node/metrics`
 
-请求 body 是 `NodeReport`。见 [运行时指标结构](./metrics-schema.md)。
+The request body is `NodeReport`. See [runtime metrics schema](./metrics-schema.md).
 
-响应：
+Response:
 
 ```json
 {
@@ -71,7 +71,7 @@ Body：
 }
 ```
 
-`update` 可为更新 manifest：
+`update` can be an update manifest:
 
 ```json
 {
@@ -85,39 +85,46 @@ Body：
 
 ## `/api/node/static`
 
-请求 body 是 `Static`。见 [运行时指标结构](./metrics-schema.md)。
+The request body is `Static`. See [runtime metrics schema](./metrics-schema.md).
 
-静态信息会在节点启动后上报一次；采集不完整时继续重试。Push 失败恢复后也会补发。
+Static info is reported once after node startup. If static collection is incomplete, the node keeps retrying. It also resends static info after suppressed push failures recover.
 
-## 成功判定
+## Success Rules
 
-节点只把 `200 OK` 视为成功。非 200 响应只影响当前 target，不阻塞其他 target。
+The node treats only `200 OK` as success. Non-200 responses affect only the current target and do not block other targets.
 
-`/api/node/metrics` 响应 body 只影响更新：
+The `/api/node/metrics` response body only affects updates:
 
-- 非 JSON 或空 body：忽略。
-- `Content-Type` 不是 `application/json`：忽略。
-- JSON 中其他顶层字段：忽略。
-- `ok` 不是必填字段。
+- Non-JSON or empty body: ignored.
+- `Content-Type` other than `application/json`: ignored.
+- Other top-level JSON fields: ignored.
+- `ok` is not required.
 
-## HTTPS 回落
+## HTTPS Fallback
 
-默认情况下，HTTPS target 可以按客户端规则回落 HTTP，用于处理误配、IP 访问、证书异常等场景。
+By default, HTTPS targets can fall back to HTTP according to client rules. This covers misconfiguration, IP access, certificate errors, and similar cases.
 
-加 `--require-https` 后：
+With `--require-https`:
 
-- 非 HTTPS target 直接拒绝。
-- 禁止 HTTP 回落。
+- Non-HTTPS targets are rejected.
+- HTTP fallback is disabled.
 
-## Windows 更新
+## Node Update
 
-只有 runner 启动的 Windows node 会处理 update manifest。直接运行 `node push` 会忽略更新。
+Only managed install layouts process update manifests:
 
-manifest 必须满足：
+- Windows: started by runner with `ITHILTIR_NODE_RUNNER=1`.
+- Linux/macOS: current process is `/var/lib/ithiltir-node/current/ithiltir-node` or `/var/lib/ithiltir-node/releases/<version>/ithiltir-node`.
 
-- `version` 非空，且不包含路径分隔符。
-- `url` 是带 host 的绝对 HTTP 或 HTTPS URL。
-- `sha256` 是 64 位十六进制 SHA-256。
-- `size` 为正数，并必须等于下载字节数。
+Direct binaries outside the managed install layout ignore update manifests.
 
-同一轮多个 target 返回 manifest 时，`id`、`version`、`url`、`sha256`、`size` 必须完全一致，否则跳过更新。
+Manifest requirements:
+
+- `version` is non-empty, not `.` or `..`, and contains no path separators.
+- `url` is an absolute HTTP or HTTPS URL with a host.
+- `sha256` is a 64-character SHA-256 hex digest.
+- `size` is positive and must equal the downloaded byte count.
+
+If multiple targets return update manifests in one cycle, `id`, `version`, `url`, `sha256`, and `size` must match exactly. Otherwise the update is skipped.
+
+After a successful update, Windows runner replaces `%ProgramData%\Ithiltir-node\bin\ithiltir-node.exe` and restarts node. Linux/macOS switches `/var/lib/ithiltir-node/current` to the new release directory and lets systemd/launchd restart node.

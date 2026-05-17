@@ -1,112 +1,113 @@
 ---
 slug: /Dash/API
-title: Dash API
+title: Dash HTTP API
 ---
 
 # Dash HTTP API
 
-本文档汇总稳定 HTTP 契约。公开路径、方法和字段语义属于兼容边界：既有语义不在原路径上硬改，新行为通过新增端点或追加字段提供。
+This page summarizes stable HTTP contracts. Existing path, method, and field semantics are compatibility boundaries. New behavior is added through new endpoints or appended fields.
 
-## 基础
+## Basics
 
-- API 基础路径：`/api`
-- Dash 只支持根路径部署，不支持在 `app.public_url` 中配置路径前缀
-- JSON 错误包装：
+- API base path: `/api`
+- Dash supports root-path deployment only. Do not configure a path prefix in `app.public_url`.
+- JSON error wrapper:
 
 ```json
 { "code": "<string>", "message": "<string>" }
 ```
 
-## 鉴权模型
+## Authentication Model
 
-| 方式 | 用途 |
+| Method | Use |
 | --- | --- |
-| 管理员密码 | `POST /api/auth/login` |
-| refresh cookie + `X-CSRF-Token` | `POST /api/auth/refresh`、`POST /api/auth/logout` |
-| `Authorization: Bearer <access_token>` | 管理 API 和可选鉴权读取 |
-| `X-Node-Secret` | 节点上报和节点身份读取 |
+| Admin password | `POST /api/auth/login` |
+| refresh cookie + `X-CSRF-Token` | `POST /api/auth/refresh`, `POST /api/auth/logout` |
+| `Authorization: Bearer <access_token>` | Admin APIs and optionally authenticated reads |
+| `X-Node-Secret` | Node reporting and node identity reads |
 
-Bearer 可选端点会把缺失、格式错误、过期、已撤销或其他无法通过校验的 Bearer token 当作匿名请求处理。需要管理视图的客户端必须自行区分响应是已鉴权视图还是游客过滤视图。
+Optional Bearer endpoints treat missing, malformed, expired, revoked, or otherwise invalid Bearer tokens as anonymous requests.
 
-## 命名空间
+## Namespaces
 
-| 前缀 | 鉴权 | 资源 |
+| Prefix | Auth | Resources |
 | --- | --- | --- |
-| `/api/auth` | 登录用管理员密码；刷新和登出用 refresh cookie + `X-CSRF-Token`；`/sessions*` 用 Bearer | `POST /login`、`POST /refresh`、`POST /logout`、会话撤销 |
-| `/api/version` | 无 | `GET /` |
-| `/api/front` | Bearer 可选 | `GET /brand`、`GET /metrics`、`GET /groups` |
-| `/api/metrics` | Bearer 可选；历史指标默认只对已授权用户开放 | `GET /online`、`GET /history` |
-| `/api/statistics` | Bearer 可选 | `GET /access` |
-| `/api/statistics/traffic` | Bearer 可选；`PATCH /settings` 需要 Bearer | `GET /settings`、`PATCH /settings`、`GET /ifaces`、`GET /summary`、`GET /daily`、`GET /monthly` |
-| `/api/node` | `X-Node-Secret` | `POST /identity`、`POST /metrics`、`POST /static` |
-| `/api/admin/groups` | Bearer | `GET /`、`GET /map`、`POST /`、`PATCH /{id}`、`DELETE /{id}` |
-| `/api/admin/nodes` | Bearer | `GET /`、`GET /deploy`、`POST /`、`PUT /display-order`、`PATCH /traffic-p95`、`PATCH /{id}`、`POST /{id}/upgrade`、`DELETE /{id}` |
-| `/api/admin/alerts/rules` | Bearer | `GET /`、`POST /`、`PATCH /{id}`、`DELETE /{id}` |
-| `/api/admin/alerts/mounts` | Bearer | `GET /`、`PUT /` |
-| `/api/admin/alerts/settings` | Bearer | `GET /`、`PUT /` |
-| `/api/admin/alerts/channels` | Bearer | `GET /`、`POST /`、`GET /{id}`、`PUT /{id}`、`PUT /{id}/enabled`、`POST /{id}/test`、`DELETE /{id}` |
-| `/api/admin/alerts/channels/telegram/mtproto` | Bearer | `POST /code`、`POST /verify`、`POST /password`、`POST /ping` |
-| `/api/admin/system/settings` | Bearer | `GET /`、`PUT /`、`PATCH /` |
-| `/api/admin/system/themes` | Bearer | `GET /`、`POST /upload`、`POST /{id}/apply`、`DELETE /{id}` |
+| `/api/auth` | Password, refresh cookie, or Bearer depending on path | login, refresh, logout, session revoke |
+| `/api/version` | None | `GET /` |
+| `/api/front` | Optional Bearer | brand, metrics, groups |
+| `/api/metrics` | Optional Bearer | online, history |
+| `/api/statistics` | Optional Bearer | access settings |
+| `/api/statistics/traffic` | Optional Bearer; settings patch requires Bearer | traffic settings and queries |
+| `/api/node` | `X-Node-Secret` | identity, metrics, static |
+| `/api/admin/*` | Bearer | groups, nodes, alerts, system settings, themes |
 
-## 匿名读取
+## Anonymous Reads
 
-- `/api/front/brand` 可匿名读取。
-- `/api/front/metrics` 和 `/api/front/groups` 允许匿名读取，但匿名结果只包含游客可见节点。
-- `/api/metrics/online` 允许匿名读取游客可见节点。
-- `/api/metrics/history` 默认需要 Bearer。只有 `history_guest_access_mode` 为 `by_node` 时，匿名读取才按游客可见节点放开。
-- `/api/statistics/access` 可匿名读取。
-- `/api/statistics/traffic/*` 的匿名读取由流量设置控制，并仍受节点游客可见性限制。
+- `/api/front/brand` allows anonymous reads.
+- `/api/front/metrics` and `/api/front/groups` allow anonymous reads, filtered to guest-visible nodes.
+- `/api/metrics/online` allows anonymous reads for guest-visible nodes.
+- `/api/metrics/history` requires Bearer by default. Anonymous reads are allowed only when `history_guest_access_mode=by_node` and the node is guest-visible.
+- `/api/statistics/access` allows anonymous reads.
+- `/api/statistics/traffic/*` anonymous reads follow traffic settings and node guest visibility.
 
-## 管理节点
+## Node Management
 
-- `GET /api/admin/nodes/` 包含 `traffic_p95_enabled`、`traffic_cycle_mode`、`traffic_billing_start_day`、`traffic_billing_anchor_date`、`traffic_billing_timezone`、`tags` 和 `version`。
-- `tags` 始终是字符串数组。
-- `version.version` 是节点最后上报版本；缺失、非法或低于打包节点版本时，`version.is_outdated` 为 true。
-- `PATCH /api/admin/nodes/{id}` 接受 `traffic_p95_enabled`、`tags` 和节点账期覆盖字段。未提交字段保持不变。
-- `PATCH /api/admin/nodes/traffic-p95` 接受 `ids` 和 `enabled`。`enabled` 必填。`ids` 必须是非空正整数数组，不能重复，最多 10000 项。该命令先校验全部节点 ID，再在一个事务中更新全部选中节点。成功返回 `204`；任一节点不存在或已删除时返回 `404 not_found`，且不会更新任何节点。
-- `tags` 接受字符串数组；值会 trim，空值和重复值会被删除，`[]` 表示清空标签。
-- 非法 `tags` 返回 `400 invalid_tags`。
-- `POST /api/admin/nodes/{id}/upgrade` 成功返回 `204`；打包版本、平台或资产不可用时返回 `409`。
+- `GET /api/admin/nodes/` includes traffic settings, tags, and version status.
+- `tags` is always a string array.
+- `version.version` is the last reported node version. Missing, invalid, or older-than-bundled versions set `version.is_outdated=true`.
+- `PATCH /api/admin/nodes/{id}` accepts traffic settings, tags, secret, group IDs, and display fields. Omitted fields are unchanged.
+- `PATCH /api/admin/nodes/traffic-p95` validates all node IDs before updating them in one transaction.
+- `POST /api/admin/nodes/{id}/upgrade` returns `204` on success. Unavailable bundled version, platform, or asset returns `409`.
 
-## Agent 更新
+## Agent Update
 
-- `POST /api/node/metrics` 成功响应包含 `update`。
-- 无待升级任务时，`update` 为 `null`。
-- 有待升级任务时，`update` 包含 `id`、`version`、`url`、`sha256` 和 `size`。
-- 待升级任务是易失状态，节点上报目标版本或更新版本后清除。
+- Successful `POST /api/node/metrics` responses include `update`.
+- When no upgrade task is pending, `update` is `null`.
+- When an upgrade task is pending, `update` includes `id`, `version`, `url`, `sha256`, and `size`.
+- Upgrade tasks are volatile and are cleared after the node reports the target version or a newer version.
 
-## 流量统计
+## Front Metrics and History Metrics
 
-- `GET /api/statistics/traffic/settings` 返回 `guest_access_mode`、`usage_mode`、`cycle_mode`、`billing_start_day`、`billing_anchor_date`、`billing_timezone` 和 `direction_mode`。
-- `PATCH /api/statistics/traffic/settings` 接受局部更新，未知值返回 `400 invalid_fields`。
-- 允许值：
-  - `guest_access_mode`: `disabled`、`by_node`
-  - `usage_mode`: `lite`、`billing`
-  - `cycle_mode`: `calendar_month`、`whmcs_compatible`、`clamp_to_month_end`
-  - `direction_mode`: `out`、`both`、`max`
-- 流量查询使用节点有效账期配置：节点 `traffic_cycle_mode=default` 时继承全局账期模式、月度起始日、账期锚点和账期时区；否则使用节点自己的 `traffic_*` 账期字段。
-- `GET /daily` 要求 `usage_mode=billing`，否则返回 `409 traffic_daily_requires_billing`。`period` 可选，允许 `current`、`previous`，省略时为 `current`。
-- `GET /monthly` 支持 `months` 和 `period`。`months` 最大 24；`period=current` 从本账期开始，`period=previous` 从上账期开始，省略时为 `current`。响应字段 `includes_current` 在 `period=current` 时为 `true`，在 `period=previous` 时为 `false`。
-- 流量 summary、daily、monthly 响应保留原始 `in_*` 和 `out_*` 字段，并通过 `selected_bytes`、`selected_p95_bytes_per_sec`、`selected_peak_bytes_per_sec` 及其方向字段暴露当前计费视图。
-- 客户端应使用 `coverage_ratio` 展示样本覆盖率和准确性提示。`partial` 仅为兼容保留，新的展示逻辑不应依赖该字段。
-- 只有 `p95_status` 为 `available` 时，P95 字段才不是 `null`。
+`GET /api/front/metrics` node objects can include:
 
-## 非 API HTTP 路径
+- `node.disk.smart`: latest SMART runtime state.
+- `node.disk.temperature_devices[]`: physical disk names with disk temperature history.
+- `node.thermal`: latest thermal sensor runtime state.
 
-| 路径 | 作用 |
+SMART and thermal runtime payloads are cached separately from the front node snapshot. They are reattached only when `received_at` matches the node snapshot.
+
+`GET /api/metrics/history` supports temperature metrics:
+
+| Metric | Source | Device parameter |
+| --- | --- | --- |
+| `cpu.temp_c` | Maximum CPU thermal sensor temperature | Not required |
+| `disk.temp_c` | SMART physical disk temperature history | Required `device` |
+
+For `disk.temp_c`, `device` can match physical disk `name`, `ref`, or `path`. Temperature history does not use a rollup prefix.
+
+## Traffic Accounting
+
+- `GET /api/statistics/traffic/settings` returns guest access, usage mode, cycle settings, timezone, and direction mode.
+- `PATCH /api/statistics/traffic/settings` accepts partial updates. Unknown values return `400 invalid_fields`.
+- Traffic queries use the node's effective billing cycle configuration.
+- Daily traffic requires `usage_mode=billing`.
+- P95 fields are non-null only when `p95_status=available`.
+
+## Non-API HTTP Paths
+
+| Path | Purpose |
 | --- | --- |
-| `/theme/active.css` | 当前主题 CSS |
-| `/theme/active.json` | 当前主题 manifest；默认主题可能返回 404 |
-| `/theme/preview/{id}.png` | 主题预览图 |
-| `/deploy/linux/install.sh` | Linux 节点安装脚本 |
-| `/deploy/macos/install.sh` | macOS 节点安装脚本 |
-| `/deploy/windows/install.ps1` | Windows 节点安装脚本 |
-| `/deploy/*` | 打包携带的节点发布资产 |
+| `/theme/active.css` | Active theme CSS |
+| `/theme/active.json` | Active theme manifest; default theme can return 404 |
+| `/theme/preview/{id}.png` | Theme preview image |
+| `/deploy/linux/install.sh` | Linux node installer |
+| `/deploy/macos/install.sh` | macOS node installer |
+| `/deploy/windows/install.ps1` | Windows node installer |
+| `/deploy/*` | Bundled node release assets |
 | `/` | SPA |
 
-## 兼容性规则
+## Compatibility Rules
 
-- 既有路径、方法和字段语义保持稳定。
-- 新行为通过新端点或追加字段提供。
-- 需要废弃时先保留旧入口，再新增替代入口。
+- Existing paths, methods, and field semantics stay stable.
+- New behavior uses new endpoints or appended fields.
+- Deprecations keep the old entrypoint before adding a replacement.

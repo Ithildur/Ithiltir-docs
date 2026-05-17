@@ -34,6 +34,8 @@ sudo bash install_node.sh 10.0.0.2 8080 'my secret' 3 --net eth0,eth1
 
 Linux 支持 `amd64` 和 `arm64`。安装后服务名为 `ithiltir-node`。
 
+Linux 安装脚本会尝试安装 `smartmontools`，并启用 `ithiltir-node-smart-cache.timer` 刷新 `/run/ithiltir-node/smart.json`。SMART 安装失败不影响基础监控。
+
 常用检查：
 
 ```bash

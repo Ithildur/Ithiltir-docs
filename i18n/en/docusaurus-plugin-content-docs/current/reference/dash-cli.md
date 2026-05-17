@@ -5,55 +5,55 @@ title: Dash CLI
 
 # Dash CLI
 
-## 启动
+## Start
 
 ```bash
 dash [-debug] [--no-redis]
 ```
 
-| 参数 | 说明 |
+| Argument | Description |
 | --- | --- |
-| `-debug` | 启用 debug 日志，并输出脱敏配置 |
-| `--no-redis` | 不连接 Redis，使用进程内运行时状态 |
+| `-debug` | Enable debug logs and print redacted config |
+| `--no-redis` | Do not connect to Redis; use in-process runtime state |
 
-启动时会：
+Startup sequence:
 
-1. 加载配置。
-2. 初始化日志。
-3. 校验管理员密码。
-4. 连接 PostgreSQL + TimescaleDB。
-5. 同步保留策略。
-6. 连接 Redis，除非 `--no-redis`。
-7. 初始化 store、主题目录、默认分组、JWT。
-8. 启动 HTTP、告警和流量后台服务。
+1. Load config.
+2. Initialize logging.
+3. Validate the admin password.
+4. Connect to PostgreSQL + TimescaleDB.
+5. Sync retention policies.
+6. Connect to Redis unless `--no-redis` is set.
+7. Initialize store, theme directory, default group, and JWT.
+8. Start HTTP, alert, and traffic background services.
 
-## 数据库迁移
+## Database Migration
 
 ```bash
 dash migrate [-config path] [-debug]
 ```
 
-输出：
+Output:
 
 ```text
 migrate: total=<n> applied=<n> skipped=<n>
 ```
 
-迁移会同步 TimescaleDB 保留策略。
+Migration also syncs TimescaleDB retention policies.
 
-## 主题打包
+## Theme Packing
 
 ```bash
 dash pack-theme -src <theme-dir> [-out <theme.zip>]
 ```
 
-`-src` 必填。`-out` 省略时输出为 `<theme-id>.zip`。扩展名不是 `.zip` 时自动补 `.zip`。
+`-src` is required. If `-out` is omitted, output is `<theme-id>.zip`. A missing `.zip` extension is added automatically.
 
-## 版本
+## Version
 
 ```bash
 dash --version
 dash -v
 ```
 
-输出当前 Dash 版本。
+Prints the current Dash version.

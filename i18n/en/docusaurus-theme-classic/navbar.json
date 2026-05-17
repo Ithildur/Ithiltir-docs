@@ -7,25 +7,25 @@
     "message": "Ithiltir",
     "description": "The alt text of navbar logo"
   },
-  "item.label.文档": {
+  "item.label.\u6587\u6863": {
     "message": "Docs",
-    "description": "Navbar item with label 文档"
+    "description": "Navbar item for the docs section"
   },
-  "item.label.部署": {
+  "item.label.\u90e8\u7f72": {
     "message": "Deploy",
-    "description": "Navbar item with label 部署"
+    "description": "Navbar item for deployment docs"
   },
-  "item.label.配置": {
+  "item.label.\u914d\u7f6e": {
     "message": "Config",
-    "description": "Navbar item with label 配置"
+    "description": "Navbar item for configuration docs"
   },
-  "item.label.指南": {
+  "item.label.\u6307\u5357": {
     "message": "Guides",
-    "description": "Navbar item with label 指南"
+    "description": "Navbar item for guides"
   },
-  "item.label.参考": {
+  "item.label.\u53c2\u8003": {
     "message": "Reference",
-    "description": "Navbar item with label 参考"
+    "description": "Navbar item for reference docs"
   },
   "item.label.Ithiltir": {
     "message": "Ithiltir",

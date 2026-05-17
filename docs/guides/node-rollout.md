@@ -75,6 +75,17 @@ LVM thinpool 采集由脚本和 cron 支持：
 
 脚本检测到 LVM/LVM-thin 后才启用这部分；在 `apt-get` 系统上会自动安装 cron，不需要预先手工安装。没有 LVM 的机器会跳过并清理旧采集项。
 
+SMART 缓存由 root 侧 systemd timer 刷新：
+
+| 项 | 路径 |
+| --- | --- |
+| 缓存 | `/run/ithiltir-node/smart.json` |
+| helper | `/usr/local/libexec/ithiltir-node/smart-cache` |
+| service | `/etc/systemd/system/ithiltir-node-smart-cache.service` |
+| timer | `/etc/systemd/system/ithiltir-node-smart-cache.timer` |
+
+脚本会尝试安装 `smartmontools`。安装失败、没有 `smartctl` 或缓存过期时，节点继续上报基础指标，并通过 `disk.smart.status` 表示 SMART 状态。
+
 ## macOS 节点
 
 ```bash
@@ -116,6 +127,8 @@ Get-Service ithiltir-node
 ```
 
 Windows 自更新只在 runner 托管模式下生效。直接运行 `node push` 不处理 update manifest。
+
+Linux 和 macOS 使用 `/var/lib/ithiltir-node/releases/<version>` 与 `/var/lib/ithiltir-node/current` 安装布局时，也会处理 update manifest。安装布局外的直接二进制不处理自更新。
 
 ## 网卡选择
 

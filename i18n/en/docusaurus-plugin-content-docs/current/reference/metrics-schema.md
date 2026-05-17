@@ -3,9 +3,9 @@ slug: /Reference/MetricsSchema
 title: Runtime Metrics Schema
 ---
 
-# 运行时指标结构
+# Runtime Metrics Schema
 
-JSON 使用 UTF-8。时间戳是 UTC RFC3339。所有 `*Ratio` 字段都是 `0..1`，不是百分比。数组返回 `[]`，不是 `null`。
+JSON uses UTF-8. Timestamps are UTC RFC3339. All `*Ratio` fields are `0..1`, not percentages. Arrays return `[]`, not `null`.
 
 ## `NodeReport`
 
@@ -18,25 +18,26 @@ JSON 使用 UTF-8。时间戳是 UTC RFC3339。所有 `*Ratio` 字段都是 `0..
 }
 ```
 
-| 字段 | 说明 |
+| Field | Description |
 | --- | --- |
-| `version` | 节点版本 |
-| `hostname` | 主机名 |
-| `timestamp` | 节点采样时间 |
+| `version` | Node version |
+| `hostname` | Hostname |
+| `timestamp` | Node sample time |
 | `metrics` | `Snapshot` |
 
 ## `Snapshot`
 
-| 字段 | 说明 |
+| Field | Description |
 | --- | --- |
-| `cpu` | CPU 运行时 |
-| `memory` | 内存运行时 |
-| `disk` | 磁盘运行时，见 [磁盘结构](./disk-schema.md) |
-| `network[]` | 网卡运行时 |
-| `system` | 系统运行时 |
-| `processes` | 进程数 |
-| `connections` | TCP/UDP 连接数 |
-| `raid` | RAID 运行时 |
+| `cpu` | CPU runtime data |
+| `memory` | Memory runtime data |
+| `disk` | Disk runtime data, see [Disk Schema](./disk-schema.md) |
+| `network[]` | Network interface runtime data |
+| `system` | System runtime data |
+| `processes` | Process count |
+| `connections` | TCP/UDP connection counts |
+| `raid` | RAID runtime data |
+| `thermal` | Thermal sensor runtime data, optional |
 
 ## CPU
 
@@ -71,7 +72,7 @@ JSON 使用 UTF-8。时间戳是 UTC RFC3339。所有 `*Ratio` 字段都是 `0..
 }
 ```
 
-字节字段都是原始字节数。
+Byte fields are raw byte counts.
 
 ## Network
 
@@ -139,6 +140,61 @@ JSON 使用 UTF-8。时间戳是 UTC RFC3339。所有 `*Ratio` 字段都是 `0..
 }
 ```
 
+## Thermal
+
+```json
+{
+  "status": "ok",
+  "updated_at": "2026-05-04T00:00:00Z",
+  "sensors": [
+    {
+      "kind": "cpu",
+      "name": "Package id 0",
+      "sensor_key": "coretemp_package_id_0",
+      "source": "gopsutil",
+      "status": "ok",
+      "temp_c": 52.5,
+      "high_c": 90,
+      "critical_c": 100
+    }
+  ]
+}
+```
+
+`sensors[]` returns `[]` when empty. `updated_at`, `temp_c`, `high_c`, and `critical_c` are omitted when unavailable.
+
+Required:
+
+- `status`
+- `sensors[]`
+
+Required `sensors[]` fields:
+
+- `kind`
+- `name`
+- `sensor_key`
+- `source`
+- `status`
+
+`kind` can be:
+
+- `cpu`
+- `gpu`
+- `chipset`
+- `board`
+- `acpi`
+- `unknown`
+
+Common `status` values:
+
+- `ok`
+- `partial`
+- `unsupported`
+- `not_found`
+- `no_permission`
+- `timeout`
+- `error`
+
 ## `Static`
 
 ```json
@@ -154,7 +210,7 @@ JSON 使用 UTF-8。时间戳是 UTC RFC3339。所有 `*Ratio` 字段都是 `0..
 }
 ```
 
-字段：
+Fields:
 
 - `cpu.info.model_name`
 - `cpu.info.vendor_id`

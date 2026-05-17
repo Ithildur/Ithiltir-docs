@@ -60,13 +60,24 @@ LVM thinpool：
 /etc/cron.d/ithiltir-node-thinpool
 ```
 
+SMART 缓存：
+
+```text
+/run/ithiltir-node/smart.json
+/usr/local/libexec/ithiltir-node/smart-cache
+/etc/systemd/system/ithiltir-node-smart-cache.service
+/etc/systemd/system/ithiltir-node-smart-cache.timer
+```
+
 ## macOS 节点
 
 ```text
 /var/lib/ithiltir-node/
   report.yaml
   releases/
-  current
+    <version>/
+      ithiltir-node
+  current -> releases/<version>
 /Library/LaunchDaemons/com.ithiltir.node.plist
 /var/log/ithiltir-node.log
 /var/log/ithiltir-node.err

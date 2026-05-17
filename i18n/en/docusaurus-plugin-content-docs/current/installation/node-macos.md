@@ -3,41 +3,43 @@ slug: /Install/NodeMacOS
 title: Install macOS Node
 ---
 
-# 安装 macOS 节点
+# Install macOS Node
 
-macOS 节点安装脚本由 Dash 提供：
+The macOS node install script is served by Dash:
 
 ```text
 https://dash.example.com/deploy/macos/install.sh
 ```
 
-当前 macOS 节点只支持 arm64。
+macOS nodes currently support arm64 only.
 
-## 安装命令
+## Install Command
 
 ```bash
 curl -fsSL https://dash.example.com/deploy/macos/install.sh -o install_node.sh
 sudo bash install_node.sh dash.example.com 443 '<node-secret>'
 ```
 
-完整参数：
+Full arguments:
 
 ```text
 sudo bash install_node.sh <dash_ip> [dash_port] <secret> [interval_seconds] [--net iface1,iface2] [--require-https]
 ```
 
-## 安装结果
+## Installed Files
 
-| 路径 | 内容 |
+| Path | Content |
 | --- | --- |
-| `/var/lib/ithiltir-node/releases/<version>/ithiltir-node` | 当前版本节点二进制 |
-| `/var/lib/ithiltir-node/current` | 指向当前 release 的软链接 |
-| `/var/lib/ithiltir-node/report.yaml` | 上报目标配置 |
+| `/var/lib/ithiltir-node/releases/<version>/ithiltir-node` | Current node binary |
+| `/var/lib/ithiltir-node/current` | Symlink to current release |
+| `/var/lib/ithiltir-node/report.yaml` | Report target config |
 | `/Library/LaunchDaemons/com.ithiltir.node.plist` | LaunchDaemon |
-| `/var/log/ithiltir-node.log` | 标准输出 |
-| `/var/log/ithiltir-node.err` | 标准错误 |
+| `/var/log/ithiltir-node.log` | stdout |
+| `/var/log/ithiltir-node.err` | stderr |
 
-## 服务管理
+The `current` symlink and `releases/<version>` directories are also the macOS managed self-update boundary. Direct binaries outside that install layout do not process update manifests returned by Dash.
+
+## Service Management
 
 ```bash
 sudo launchctl print system/com.ithiltir.node
@@ -45,6 +47,6 @@ sudo launchctl kickstart -k system/com.ithiltir.node
 tail -f /var/log/ithiltir-node.log /var/log/ithiltir-node.err
 ```
 
-## 权限
+## Permissions
 
-如果用 `sudo` 执行，脚本会尽量把 `/var/lib/ithiltir-node` 归属给原始 `SUDO_USER`。如果 `RUN_USER=root` 或未能识别用户，则以 root 运行。
+When run with `sudo`, the script attempts to set `/var/lib/ithiltir-node` ownership to the original `SUDO_USER`. If `RUN_USER=root` or the user cannot be detected, the node runs as root.

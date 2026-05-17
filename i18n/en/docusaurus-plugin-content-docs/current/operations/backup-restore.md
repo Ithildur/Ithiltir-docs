@@ -3,102 +3,77 @@ slug: /Operations/BackupRestore
 title: Backup and Restore
 ---
 
-# 备份和恢复
+# Backup and Restore
 
-Ithiltir 没有内置备份服务。生产部署必须用数据库和文件级备份组合。
+Back up PostgreSQL and Dash config before upgrades, migration work, and storage changes.
 
-## 必备备份
+## Backup
 
-Dash 主控端：
-
-```text
-/opt/Ithiltir-dash/configs/config.local.yaml
-/opt/Ithiltir-dash/themes
-/opt/Ithiltir-dash/install_id
-```
-
-PostgreSQL：
+Dash control plane:
 
 ```bash
 pg_dump -Fc -d <db_name> -f ithiltir-$(date +%Y%m%d%H%M%S).dump
+tar -C /opt -czf ithiltir-dash-config-$(date +%Y%m%d%H%M%S).tar.gz Ithiltir-dash/configs Ithiltir-dash/install_id
 ```
 
-节点：
+Node config:
 
-```text
-/var/lib/ithiltir-node/report.yaml
-%ProgramData%\Ithiltir-node\report.yaml
+Linux/macOS:
+
+```bash
+cp /var/lib/ithiltir-node/report.yaml ./report.yaml.bak
 ```
 
-## 可选备份
+Windows:
 
-Redis 可选。Redis 丢失会影响在线会话、热点快照和告警运行时状态，但持久化配置和历史数据在 PostgreSQL。
+```powershell
+Copy-Item "$env:ProgramData\Ithiltir-node\report.yaml" .\report.yaml.bak
+```
 
-如果业务要求会话不断、告警运行时状态不丢，可以按 Redis 自身机制备份 RDB/AOF。
+Redis is optional for backup. Redis loss affects sessions, hot snapshots, and alert runtime state. Persistent settings and history data are in PostgreSQL.
 
-## 恢复 Dash
+## Restore Dash
 
-1. 安装同版本或兼容版本发布包。
-2. 停止服务：
+1. Install the same or a compatible release package.
+2. Stop `dash.service`.
+3. Restore PostgreSQL.
+4. Restore `/opt/Ithiltir-dash/configs/config.local.yaml` and `/opt/Ithiltir-dash/install_id` when available.
+5. Run migration.
+6. Start `dash.service`.
 
 ```bash
 systemctl stop dash.service
-```
-
-3. 恢复配置、主题和 `install_id`：
-
-```bash
-cp config.local.yaml /opt/Ithiltir-dash/configs/config.local.yaml
-cp -a themes /opt/Ithiltir-dash/themes
-cp install_id /opt/Ithiltir-dash/install_id
-chmod 0600 /opt/Ithiltir-dash/configs/config.local.yaml
-```
-
-4. 恢复 PostgreSQL：
-
-```bash
-pg_restore -d <db_name> --clean --if-exists ithiltir.dump
-```
-
-5. 执行迁移：
-
-```bash
-env DASH_HOME=/opt/Ithiltir-dash \
-  /opt/Ithiltir-dash/bin/dash migrate \
-  -config /opt/Ithiltir-dash/configs/config.local.yaml
-```
-
-6. 启动服务：
-
-```bash
+pg_restore -d <db_name> ithiltir.dump
+env DASH_HOME=/opt/Ithiltir-dash /opt/Ithiltir-dash/bin/dash migrate -config /opt/Ithiltir-dash/configs/config.local.yaml
 systemctl start dash.service
 ```
 
-## 恢复节点
+If `install_id` changes, existing node configs can still report with their configured target and secret. Running `report install` against the new Dash writes the new `server_install_id`.
 
-Linux：
+## Restore Node Config
+
+Linux/macOS:
 
 ```bash
-systemctl stop ithiltir-node.service
-cp report.yaml /var/lib/ithiltir-node/report.yaml
-chmod 0600 /var/lib/ithiltir-node/report.yaml
-systemctl start ithiltir-node.service
+install -m 0600 report.yaml /var/lib/ithiltir-node/report.yaml
+systemctl restart ithiltir-node.service
 ```
 
-Windows：
+macOS uses launchd restart commands instead of systemd.
+
+Windows:
 
 ```powershell
-Stop-Service ithiltir-node
 Copy-Item .\report.yaml "$env:ProgramData\Ithiltir-node\report.yaml" -Force
-Start-Service ithiltir-node
+Restart-Service ithiltir-node
 ```
 
-## 升级前备份
+## Upgrade Backup
 
-升级前至少备份：
+Before upgrading, back up at least:
 
-- PostgreSQL dump。
-- `/opt/Ithiltir-dash/configs/config.local.yaml`。
-- `/opt/Ithiltir-dash/themes`。
+- PostgreSQL database.
+- `/opt/Ithiltir-dash/configs/config.local.yaml`.
+- `/opt/Ithiltir-dash/install_id`.
 
-更新脚本会备份安装目录，但不包含数据库备份。
+The update script backs up the install directory, but it does not create a database backup.

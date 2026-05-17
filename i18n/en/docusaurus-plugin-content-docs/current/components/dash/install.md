@@ -73,7 +73,14 @@ sudo bash /opt/Ithiltir-dash/update_dash_linux.sh --check
 sudo bash /opt/Ithiltir-dash/update_dash_linux.sh -y --lang en
 ```
 
-The updater follows the current release channel, downloads the matching GitHub Release asset, and keeps existing configuration.
+The default target is the latest stable release. Use `--test` for prereleases:
+
+```bash
+sudo bash /opt/Ithiltir-dash/update_dash_linux.sh --check --test
+sudo bash /opt/Ithiltir-dash/update_dash_linux.sh -y --test --lang en
+```
+
+The updater follows the target release channel, downloads the matching GitHub Release asset, and keeps existing configuration.
 
 ## Reverse Proxy
 

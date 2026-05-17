@@ -3,13 +3,13 @@ slug: /Guides/NodeRollout
 title: Node Rollout
 ---
 
-# 节点批量接入
+# Node Rollout
 
-节点接入要求每台机器使用独立 secret，并将 `report.yaml` 写入本机服务目录。
+Each node should use an individual secret and write `report.yaml` to its local service directory.
 
-## 接入模型
+## Reporting Model
 
-每个节点保存：
+Each node stores:
 
 ```yaml
 version: 1
@@ -20,45 +20,45 @@ targets:
     server_install_id: dash-install-id
 ```
 
-`report install` 会调用同级 `/api/node/identity`，取得 `server_install_id` 后写入配置。写入使用原子 rename，权限保持 `0600`。
+`report install` calls sibling `/api/node/identity`, reads `server_install_id`, and writes config with atomic rename and `0600` permissions.
 
-## 创建节点
+## Create Nodes
 
-在 Dash 管理台创建节点前，确认以下信息：
+Before creating nodes in Dash, prepare:
 
-- 节点名称。
-- 分组。
-- 是否游客可见。
-- 上报 secret。
-- 是否参与流量计费。
-- 是否启用 P95。
-- 是否需要节点级账期覆盖。
+- Node name.
+- Group.
+- Guest visibility.
+- Reporting secret.
+- Traffic billing participation.
+- P95 setting.
+- Node-level billing cycle override, if required.
 
-批量接入时把节点清单写成表格：
+Batch rollout can use a table:
 
-| 主机 | 系统 | 架构 | 分组 | 网卡 | secret |
+| Host | OS | Arch | Group | NIC | secret |
 | --- | --- | --- | --- | --- | --- |
-| `web-01` | Linux | amd64 | web | `eth0` | 独立生成 |
-| `db-01` | Linux | arm64 | db | `ens3` | 独立生成 |
+| `web-01` | Linux | amd64 | web | `eth0` | unique |
+| `db-01` | Linux | arm64 | db | `ens3` | unique |
 
-## Linux 节点
+## Linux Nodes
 
 ```bash
 curl -fsSL https://dash.example.com/deploy/linux/install.sh -o install_node.sh
 sudo bash install_node.sh dash.example.com 443 '<node-secret>' 3 --net eth0
 ```
 
-安装后路径：
+Installed paths:
 
-| 项 | 路径 |
+| Item | Path |
 | --- | --- |
-| 服务用户 | `ithiltir` |
-| 数据目录 | `/var/lib/ithiltir-node` |
-| 当前版本 | `/var/lib/ithiltir-node/current` |
-| 配置文件 | `/var/lib/ithiltir-node/report.yaml` |
+| Service user | `ithiltir` |
+| Data directory | `/var/lib/ithiltir-node` |
+| Current version | `/var/lib/ithiltir-node/current` |
+| Config file | `/var/lib/ithiltir-node/report.yaml` |
 | systemd unit | `/etc/systemd/system/ithiltir-node.service` |
 
-检查：
+Checks:
 
 ```bash
 systemctl status ithiltir-node.service
@@ -66,105 +66,118 @@ journalctl -u ithiltir-node.service -n 100 --no-pager
 /var/lib/ithiltir-node/current/ithiltir-node report list
 ```
 
-LVM thinpool 采集由脚本和 cron 支持：
+LVM thinpool collection is handled by the script and cron:
 
-| 项 | 路径 |
+| Item | Path |
 | --- | --- |
-| 采集脚本 | `/opt/node/collect_thinpool.sh` |
+| Collector | `/opt/node/collect_thinpool.sh` |
 | cron | `/etc/cron.d/ithiltir-node-thinpool` |
-| 缓存 | `/run/ithiltir-node/thinpool.json` |
+| Cache | `/run/ithiltir-node/thinpool.json` |
 
-The script enables this only when LVM/LVM-thin is detected. On `apt-get` systems it installs cron automatically; hosts without LVM skip this path and remove old collector entries.
+The script enables this only when LVM/LVM-thin is detected. On `apt-get` systems it installs cron automatically. Hosts without LVM skip this path and remove old collector entries.
 
-## macOS 节点
+SMART cache is refreshed by a root-side systemd timer:
+
+| Item | Path |
+| --- | --- |
+| Cache | `/run/ithiltir-node/smart.json` |
+| Helper | `/usr/local/libexec/ithiltir-node/smart-cache` |
+| Service | `/etc/systemd/system/ithiltir-node-smart-cache.service` |
+| Timer | `/etc/systemd/system/ithiltir-node-smart-cache.timer` |
+
+The script attempts to install `smartmontools`. If installation fails, `smartctl` is missing, or the cache is stale, the node keeps reporting base metrics and exposes SMART state through `disk.smart.status`.
+
+## macOS Nodes
 
 ```bash
 curl -fsSL https://dash.example.com/deploy/macos/install.sh -o install_node.sh
 sudo bash install_node.sh dash.example.com 443 '<node-secret>' 3
 ```
 
-macOS 当前只支持 arm64。
+macOS currently supports arm64 only.
 
-检查：
+Checks:
 
 ```bash
 sudo launchctl print system/com.ithiltir.node
 tail -n 100 /var/log/ithiltir-node.log /var/log/ithiltir-node.err
 ```
 
-## Windows 节点
+## Windows Nodes
 
-管理员 PowerShell：
+Administrator PowerShell:
 
 ```powershell
 Invoke-WebRequest -Uri "https://dash.example.com/deploy/windows/install.ps1" -OutFile ".\install_node.ps1"
 powershell -ExecutionPolicy Bypass -File .\install_node.ps1 dash.example.com 443 "<node-secret>" 3
 ```
 
-路径：
+Paths:
 
-| 项 | 路径 |
+| Item | Path |
 | --- | --- |
 | runner | `%ProgramFiles%\Ithiltir-node\ithiltir-runner.exe` |
 | node | `%ProgramData%\Ithiltir-node\bin\ithiltir-node.exe` |
-| 配置 | `%ProgramData%\Ithiltir-node\report.yaml` |
-| 服务 | `ithiltir-node` |
+| Config | `%ProgramData%\Ithiltir-node\report.yaml` |
+| Service | `ithiltir-node` |
 
-检查：
+Check:
 
 ```powershell
 Get-Service ithiltir-node
 ```
 
-Windows 自更新只在 runner 托管模式下生效。直接运行 `node push` 不处理 update manifest。
+Windows self-update works only when the node is managed by runner. Direct `node push` does not process update manifests.
 
-## 网卡选择
+Linux and macOS also process update manifests when using the `/var/lib/ithiltir-node/releases/<version>` and `/var/lib/ithiltir-node/current` install layout. Direct binaries outside that layout do not self-update.
 
-默认采集所有可见网卡。只统计业务网卡时指定：
+## Network Interface Selection
+
+By default, the node collects all visible network interfaces. To collect business interfaces only:
 
 ```bash
 --net eth0,eth1
 ```
 
-规则：
+Rules:
 
-- 逗号分隔。
-- 空值会被忽略。
-- 指定不存在的网卡时节点会记录警告。
-- Push 和 Local 模式都支持 `--net`。
+- Comma-separated.
+- Empty values are ignored.
+- Nonexistent interfaces are logged as warnings.
+- Push and Local modes both support `--net`.
 
-## HTTPS 严格模式
+## Strict HTTPS
 
-需要强制 HTTPS：
+To require HTTPS:
 
 ```bash
 sudo bash install_node.sh dash.example.com 443 '<node-secret>' 3 --require-https
 ```
 
-`--require-https` 会拒绝非 HTTPS target，并禁止 HTTP 回落。内网 HTTP 部署不使用该参数。
+`--require-https` rejects non-HTTPS targets and disables HTTP fallback. Do not use it for internal HTTP deployments.
 
-## 轮换 secret
+## Rotate Secret
 
-节点本机更新 key：
+Update local key:
 
 ```bash
 /var/lib/ithiltir-node/current/ithiltir-node report update <id> '<new-secret>'
 sudo systemctl restart ithiltir-node.service
 ```
 
-`report update` 只改已有 target 的 key。URL 变化要重新执行：
+`report update` changes only the existing target key. When the URL changes, run:
 
 ```bash
 /var/lib/ithiltir-node/current/ithiltir-node report install https://dash.example.com/api/node/metrics '<new-secret>'
 ```
 
-## 验证标准
+## Validation
 
-节点接入成功至少满足：
+A successful node rollout should satisfy:
 
-- 节点服务处于 running。
-- `report list` 能看到目标 URL。
-- Dash 管理台节点状态在线。
-- `/metrics` 历史有新点。
-- 静态硬件信息出现 CPU、内存、磁盘和系统字段。
-- 指定网卡的流量计数持续增长。
+- Node service is running.
+- `report list` shows the target URL.
+- Dash admin console shows the node online.
+- `/metrics` history has new points.
+- Static hardware info includes CPU, memory, disk, and system fields.
+- Selected NIC traffic counters keep increasing.

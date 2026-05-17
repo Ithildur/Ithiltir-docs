@@ -1,46 +1,56 @@
 ---
 slug: /Operations/Logging
-title: Logging
+title: Logging and Status
 ---
 
-# 日志和状态检查
+# Logging and Status
 
-## Dash 日志
+## Dash Logs
 
-systemd：
+systemd install:
 
 ```bash
-journalctl -u dash.service -f
 journalctl -u dash.service -n 200 --no-pager
+journalctl -u dash.service -f
 ```
 
-源码运行直接输出到终端。
+Source run writes to stdout and stderr.
 
-日志配置：
-
-```yaml
-app:
-  log_level: "info"
-  log_format: "text"
-```
-
-环境变量覆盖：
-
-```bash
-APP_LOG_LEVEL=debug
-APP_LOG_FORMAT=json
-```
-
-`-debug` 启动参数会把日志级别提升到 debug。
-
-## Dash 状态
+Useful checks:
 
 ```bash
 systemctl status dash.service
-curl -fsS http://127.0.0.1:8080/api/version
+curl -fsS http://127.0.0.1:8080/api/version/
 ```
 
-版本接口返回：
+## Node Logs
+
+Linux systemd:
+
+```bash
+systemctl status ithiltir-node.service
+journalctl -u ithiltir-node.service -n 200 --no-pager
+journalctl -u ithiltir-node.service -f
+```
+
+macOS LaunchDaemon:
+
+```bash
+sudo launchctl print system/com.ithiltir.node
+tail -f /var/log/ithiltir-node.log /var/log/ithiltir-node.err
+```
+
+Windows service:
+
+```powershell
+Get-Service ithiltir-node
+```
+
+Windows runner and service events are written to Windows Event Viewer.
+
+## Version Status
+
+The version endpoint returns:
 
 ```json
 {
@@ -49,57 +59,8 @@ curl -fsS http://127.0.0.1:8080/api/version
 }
 ```
 
-## Linux 节点日志
+`version` is Dash version. `node_version` is the node version bundled in the Dash package.
 
-```bash
-systemctl status ithiltir-node.service
-journalctl -u ithiltir-node.service -f
-journalctl -u ithiltir-node.service -n 200 --no-pager
-```
+## Log Level
 
-Push debug：
-
-```bash
-systemctl edit ithiltir-node.service
-```
-
-把 ExecStart 中加入 `--debug` 后重载并重启：
-
-```bash
-systemctl daemon-reload
-systemctl restart ithiltir-node.service
-curl http://127.0.0.1:9101/
-```
-
-## macOS 节点日志
-
-```bash
-sudo launchctl print system/com.ithiltir.node
-tail -f /var/log/ithiltir-node.log /var/log/ithiltir-node.err
-```
-
-## Windows 节点日志
-
-服务状态：
-
-```powershell
-Get-Service ithiltir-node
-```
-
-日志：
-
-```text
-Event Viewer -> Windows Logs -> Application/System
-```
-
-## 本地页面检查
-
-Local 模式：
-
-```bash
-./node local 127.0.0.1 9100 --debug
-curl http://127.0.0.1:9100/metrics
-curl http://127.0.0.1:9100/static
-```
-
-首次采样前 `/metrics` 和 `/static` 可能返回 `503`。
+Start Dash with `-debug` to print debug logs and redacted configuration. Do not run long-term production with debug logs unless needed for diagnosis.

@@ -77,3 +77,21 @@ Dash 发布包包含：
 - `deploy/<platform>/node_*` 和 Windows runner。
 
 发布包里的安装脚本负责准备常规运行依赖。`apt-get` 系统会尝试自动安装 PostgreSQL 16、TimescaleDB、Redis、更新脚本所需的 `git`/`tar`/下载工具，以及 Linux 节点 LVM 采集需要的 cron。
+
+## 发布说明
+
+发布工作流会生成 GitHub Release 正文。普通发布使用上一个普通发布 tag 作为 changelog base；预发布默认使用上一个 SemVer tag。
+
+本地生成：
+
+```bash
+scripts/release_notes.sh <version> release-notes.md
+```
+
+Ithiltir-node 稳定发布构建可以显式传入发布说明文件：
+
+```bash
+./scripts/build.sh --use-git-tag --release --release-notes release-notes.md
+```
+
+稳定发布未传 `--release-notes` 时，构建脚本会生成临时发布说明文件。预发布仍按 GoReleaser 默认行为处理。

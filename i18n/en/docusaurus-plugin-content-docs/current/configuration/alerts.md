@@ -3,38 +3,51 @@ slug: /Config/Alerts
 title: Alert Rules
 ---
 
-# 告警规则
+# Alert Rules
 
-告警由规则、规则挂载、全局告警设置和通知渠道组成。
+Alerts are composed of rules, mounts, global settings, and notification channels.
 
-## 内置规则
+## Built-in Rules
 
-| ID | 名称 | 指标 | 条件 | 冷却 |
+| ID | Name | Metric | Condition | Cooldown |
 | --- | --- | --- | --- | --- |
 | `-1` | `node_offline` | `node.offline` | `>= 1` | 0 |
-| `-2` | `raid_failed` | `raid.failed` | `>= 1` | 30 分钟 |
+| `-2` | `raid_failed` | `raid.failed` | `>= 1` | 30 minutes |
+| `-3` | `smart_failed` | `disk.smart.failed` | `>= 1` | 30 minutes |
+| `-4` | `smart_nvme_critical_warning` | `disk.smart.nvme.critical_warning` | `>= 1` | 30 minutes |
 
-内置规则默认挂载。规则挂载表可以对具体节点禁用或启用规则。
+Built-in rules are mounted by default. Rule mounts can disable or enable rules for specific nodes.
 
-## 支持的指标
+## Supported Metrics
 
-| 指标 | 说明 | 支持 `core_plus` |
+| Metric | Description | Supports `core_plus` |
 | --- | --- | --- |
-| `cpu.usage_ratio` | CPU 使用率，比例值 `0..1` | 否 |
-| `cpu.load1` | 1 分钟 load | 是 |
-| `cpu.load5` | 5 分钟 load | 是 |
-| `cpu.load15` | 15 分钟 load | 是 |
-| `mem.used` | 已用内存字节 | 否 |
-| `mem.used_ratio` | 内存使用率，比例值 `0..1` | 否 |
-| `disk.usage.used_ratio` | 主挂载点磁盘使用率 | 否 |
-| `net.recv_bps` | 接收速率 B/s | 否 |
-| `net.sent_bps` | 发送速率 B/s | 否 |
-| `conn.tcp` | TCP 连接数 | 否 |
-| `raid.failed` | RAID 失败成员或非健康阵列数量 | 否 |
+| `cpu.usage_ratio` | CPU usage ratio `0..1` | No |
+| `cpu.load1` | 1-minute load | Yes |
+| `cpu.load5` | 5-minute load | Yes |
+| `cpu.load15` | 15-minute load | Yes |
+| `mem.used` | Used memory bytes | No |
+| `mem.used_ratio` | Memory usage ratio `0..1` | No |
+| `disk.usage.used_ratio` | Main mount disk usage ratio | No |
+| `disk.smart.failed` | Count of devices with `health=failed` | No |
+| `disk.smart.nvme.critical_warning` | Count of NVMe devices with non-zero `critical_warning` | No |
+| `disk.smart.attribute_failing` | Count of ATA SMART attributes currently in `FAILING_NOW` | No |
+| `disk.smart.max_temp_c` | Max SMART device temperature in C | No |
+| `net.recv_bps` | Receive rate in B/s | No |
+| `net.sent_bps` | Send rate in B/s | No |
+| `conn.tcp` | TCP connection count | No |
+| `raid.failed` | Failed RAID members or unhealthy arrays | No |
+| `thermal.max_temp_c` | Max thermal sensor temperature in C | No |
 
-`disk.usage.used_ratio` 优先使用 `/` 挂载点；没有 `/` 时，为兼容旧行为回退到第一个挂载点。
+`disk.usage.used_ratio` uses `/` first. If `/` is missing, it falls back to the first mount for compatibility.
 
-## 操作符
+`disk.smart.failed` counts only `health=failed`. Collection states such as `no_cache`, `no_tool`, `unsupported`, and `stale` are not counted as disk failures.
+
+`disk.smart.nvme.critical_warning` counts only devices that report `critical_warning` with a non-zero value. If no device reports the field, the metric is not evaluated.
+
+`disk.smart.attribute_failing` counts only `failing_attrs[].when_failed=FAILING_NOW`. If no failing attribute data is available, the metric is not evaluated.
+
+## Operators
 
 - `>`
 - `>=`
@@ -43,78 +56,37 @@ title: Alert Rules
 - `==`
 - `!=`
 
-## 持续时间
+## Duration
 
-允许值：
+Allowed values:
 
 - `0`
 - `60`
 - `300`
 
-单位是秒。创建规则时未传 `duration_sec` 默认 `60`。
+Unit is seconds. Missing `duration_sec` defaults to `60` when creating a rule.
 
-## 阈值模式
+## Threshold Mode
 
-| 模式 | 说明 |
+| Mode | Description |
 | --- | --- |
-| `static` | 直接使用 `threshold` |
-| `core_plus` | 只支持 load 指标，阈值为 CPU 核心数 + `threshold` + `threshold_offset` |
+| `static` | Use `threshold` directly |
+| `core_plus` | Load metrics only; threshold is CPU cores + `threshold` + `threshold_offset` |
 
-`static` 模式下 `threshold_offset` 必须为 `0`。
+In `static` mode, `threshold_offset` must be `0`.
 
-CPU 核心数优先使用逻辑核心，其次物理核心。
+CPU core count uses logical cores first, then physical cores.
 
-## 告警生命周期
+## Lifecycle
 
-1. 节点上报后标记该节点告警需要评估。
-2. 告警服务读取热点快照。
-3. 编译启用的规则和该节点挂载状态。
-4. 满足条件并达到持续时间后打开事件。
-5. 不满足条件后关闭事件。
-6. 可加载通知目标时，按全局设置选择通知渠道并写入通知 outbox。
-7. worker 带租约重试发送通知。
+1. A node report marks the node for alert evaluation.
+2. The alert service reads the hot snapshot.
+3. Enabled rules and node mount state are compiled.
+4. Matching conditions open events after duration is met.
+5. Non-matching conditions close events.
+6. If notification targets can be loaded, payloads are written to the notification outbox according to global settings.
+7. A leased worker retries notification delivery.
 
-告警服务启动后 1 分钟内不会新开告警事件。
+The alert service does not open new alert events during the first minute after startup.
 
-通知目标不可用时，告警事件和运行时状态仍会提交，但不会新增通知 outbox。
-
-## 规则挂载
-
-规则挂载是 `(rule_id, server_id) -> enabled`。
-
-接口：
-
-```text
-PUT /api/admin/alerts/mounts
-```
-
-请求：
-
-```json
-{
-  "rule_ids": [-1, 10],
-  "server_ids": [1, 2],
-  "mounted": true
-}
-```
-
-`rule_ids` 可包含内置规则 ID。`server_ids` 必须是存在的节点。
-
-## 全局告警设置
-
-接口：
-
-```text
-PUT /api/admin/alerts/settings
-```
-
-请求：
-
-```json
-{
-  "enabled": true,
-  "channel_ids": [1, 2]
-}
-```
-
-`channel_ids` 可以为空数组，表示启用告警但不发送通知。
+If notification targets are unavailable, alert events and runtime state are still committed, but no notification outbox item is added.

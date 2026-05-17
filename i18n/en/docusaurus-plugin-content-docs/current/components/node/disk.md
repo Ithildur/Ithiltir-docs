@@ -3,24 +3,25 @@ slug: /Node/Disk
 title: Disk Metrics
 ---
 
-# 磁盘结构
+# Disk Schema
 
-运行时磁盘结构和静态磁盘结构用途不同，应分别处理。
+Runtime disk data and static disk data have different purposes and should be handled separately.
 
-## 运行时：`metrics.disk`
+## Runtime: `metrics.disk`
 
-`metrics.disk` 有四个数组：
+`metrics.disk` contains four arrays and SMART runtime state:
 
 - `physical[]`
 - `logical[]`
 - `filesystems[]`
 - `base_io[]`
+- `smart`
 
 ## `physical[]`
 
-每条对应一个块设备。
+Each item represents a block device.
 
-必填：
+Required:
 
 - `name`
 - `read_bytes`
@@ -35,16 +36,16 @@ title: Disk Metrics
 - `wait_ms`
 - `service_ms`
 
-可选：
+Optional:
 
 - `device_path`
 - `ref`
 
 ## `logical[]`
 
-逻辑存储的容量视图。
+Logical storage capacity view.
 
-必填：
+Required:
 
 - `kind`
 - `name`
@@ -52,13 +53,13 @@ title: Disk Metrics
 - `free`
 - `used_ratio`
 
-可选：
+Optional:
 
 - `device_path`
 - `ref`
 - `health`
 
-常见 `kind`：
+Common `kind` values:
 
 - `disk`
 - `raid`
@@ -70,9 +71,9 @@ title: Disk Metrics
 
 ## `filesystems[]`
 
-挂载点视图。
+Mount point view.
 
-必填：
+Required:
 
 - `path`
 - `used`
@@ -82,16 +83,16 @@ title: Disk Metrics
 - `inodes_free`
 - `inodes_used_ratio`
 
-可选：
+Optional:
 
 - `device`
 - `mountpoint`
 
 ## `base_io[]`
 
-用于展示和排序的 IO 视图。
+IO view used for display and sorting.
 
-必填：
+Required:
 
 - `kind`
 - `name`
@@ -101,7 +102,7 @@ title: Disk Metrics
 - `write_iops`
 - `iops`
 
-可选：
+Optional:
 
 - `device_path`
 - `ref`
@@ -112,17 +113,74 @@ title: Disk Metrics
 - `wait_ms`
 - `service_ms`
 
-`logical` 项可能没有累计字节和底层延迟/利用率字段。
+`logical` items may not have cumulative byte or underlying latency/utilization fields.
 
-## 运行时：`metrics.raid`
+## `smart`
 
-必填：
+SMART data comes from a root-side cache file. It is runtime state, not static disk inventory.
+
+Required:
+
+- `status`
+- `devices[]`
+
+Optional:
+
+- `updated_at`
+- `ttl_seconds`
+
+Required `devices[]` fields:
+
+- `name`
+- `source`
+- `status`
+
+Optional `devices[]` fields:
+
+- `ref`
+- `device_path`
+- `device_type`
+- `protocol`
+- `model`
+- `serial`
+- `wwn`
+- `exit_status`
+- `health`
+- `temp_c`
+- `power_on_hours`
+- `lifetime_used_percent`
+- `critical_warning`
+- `failing_attrs[]`
+
+`devices[]` returns `[]` when empty. Unavailable SMART values are omitted.
+
+`critical_warning` is the raw NVMe critical warning bitset. `failing_attrs[]` contains only ATA SMART attributes that are currently failing.
+
+Common `status` values:
+
+- `ok`
+- `partial`
+- `unsupported`
+- `not_found`
+- `no_permission`
+- `timeout`
+- `error`
+- `no_cache`
+- `stale`
+- `no_tool`
+- `standby`
+
+`status` is the collection state. `health` is the disk health result. `no_cache`, `no_tool`, and `unsupported` do not indicate disk failure.
+
+## Runtime: `metrics.raid`
+
+Required:
 
 - `supported`
 - `available`
 - `arrays[]`
 
-`arrays[]`：
+`arrays[]` fields:
 
 - `name`
 - `status`
@@ -131,63 +189,10 @@ title: Disk Metrics
 - `failed`
 - `health`
 - `members`
-- 可选：`sync_status`
-- 可选：`sync_progress`
+- Optional: `sync_status`
+- Optional: `sync_progress`
 
-`members[]`：
+`members[]` fields:
 
 - `name`
 - `state`
-
-## 静态：`disk`
-
-静态结构只保留稳定元数据。
-
-### `physical[]`
-
-- `name`
-- 可选：`device_path`
-- 可选：`ref`
-
-### `logical[]`
-
-- `kind`
-- `name`
-- 可选：`device_path`
-- 可选：`ref`
-- 可选：`total`
-- 可选：`mountpoint`
-- 可选：`fs_type`
-- 可选：`devices[]`
-
-### `filesystems[]`
-
-- `path`
-- `total`
-- `fs_type`
-- `inodes_total`
-- 可选：`device`
-- 可选：`mountpoint`
-
-### `base_io[]`
-
-- `kind`
-- `name`
-- 可选：`device_path`
-- 可选：`ref`
-- 可选：`role`
-
-## 静态：`raid`
-
-- `supported`
-- `available`
-- `arrays[]`
-- `arrays[]`: `name`、`level`、`devices`、`members[]`
-- `members[]`: `name`
-
-## 平台说明
-
-- Linux 采集文件系统、块设备、RAID、LVM、ZFS。
-- 非 Linux 仍会从 `gopsutil` 分区结果填充 `filesystems[]`。
-- 非 Linux 的 RAID 固定返回 `supported=false`。
-- 数组返回 `[]`，不是 `null`。

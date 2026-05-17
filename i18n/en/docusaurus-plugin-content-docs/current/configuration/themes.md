@@ -3,131 +3,43 @@ slug: /Config/Themes
 title: Themes
 ---
 
-# 主题
+# Themes
 
-Dash 支持内置主题和自定义主题包。主题影响管理台外壳、看板摘要布局、密度和 CSS token。
+Dash supports built-in themes and custom theme packages. Themes affect the admin shell, dashboard summary layout, density, and CSS tokens.
 
-## 主题目录
+## Theme Package
 
-自定义主题保存在：
-
-```text
-$DASH_HOME/themes
-```
-
-发布包默认：
+A theme package is a zip file containing allowed root-level files:
 
 ```text
-/opt/Ithiltir-dash/themes
+manifest.json
+tokens.css
+recipes.css
+preview.png
 ```
 
-每个主题一个目录：
+See [Theme Package](../reference/theme-package.md) for package format and validation rules.
+
+## Upload
+
+Theme packages can be uploaded from the admin console or through the system theme API. Invalid packages are rejected and do not change the active theme.
+
+## Apply
+
+Applying a theme updates the active theme setting. The browser loads the active CSS from:
 
 ```text
-themes/
-  my-theme/
-    theme.json
-    tokens.css
-    recipes.css
-    preview.png
-    README.md
+/theme/active.css
 ```
 
-## 主题包文件
-
-允许文件：
-
-- `theme.json`
-- `tokens.css`
-- `recipes.css`
-- `preview.png`
-- `README.md`
-
-必填：
-
-- `theme.json`
-- `tokens.css`
-
-`recipes.css` 省略时按空文件处理。
-
-## `theme.json`
-
-```json
-{
-  "id": "my-theme",
-  "name": "My Theme",
-  "version": "1.0.0",
-  "author": "Team",
-  "description": "Short description",
-  "skin": {
-    "admin": {
-      "shell": "topbar",
-      "frame": "flat"
-    },
-    "dashboard": {
-      "summary": "strip",
-      "density": "compact"
-    }
-  }
-}
-```
-
-字段规则：
-
-- `id` 必须匹配 `[a-z0-9][a-z0-9_-]{0,63}`。
-- `default` 和内置主题 ID 是保留 ID。
-- `name` 必填。
-- `version` 必填。
-
-## Skin 取值
-
-| 字段 | 允许值 | 默认 |
-| --- | --- | --- |
-| `skin.admin.shell` | `sidebar`、`topbar` | `sidebar` |
-| `skin.admin.frame` | `layered`、`flat` | `layered` |
-| `skin.dashboard.summary` | `cards`、`strip` | `cards` |
-| `skin.dashboard.density` | `comfortable`、`compact` | `comfortable` |
-
-## CSS 限制
-
-主题 CSS 只允许在这些 selector 中声明 CSS custom property：
-
-- `:root`
-- `:root[data-theme='<id>']`
-- `:root[data-theme="<id>"]`
-- `:root.dark`
-- `:root.dark[data-theme='<id>']`
-- `:root.dark[data-theme="<id>"]`
-
-禁止：
-
-- 嵌套 block。
-- at-rules，例如 `@import`、`@media`、`@layer`。
-- 非 custom property。
-- `url(`、`expression(`、`javascript:`、`<style`、`</style` 等危险值。
-
-`tokens.css` 必须至少定义一个 custom property。
-
-## 打包
-
-```bash
-dash pack-theme -src ./my-theme -out my-theme.zip
-```
-
-上传：
+The active manifest is available at:
 
 ```text
-POST /api/admin/system/themes/upload
+/theme/active.json
 ```
 
-multipart 字段名：
+The default theme can return `404` for `active.json`.
 
-```text
-file
-```
+## Storage
 
-压缩包大小限制：
-
-- archive 最大 20 MiB。
-- 解压后最大 50 MiB。
-- 单文件最大 20 MiB。
+Theme metadata and active theme setting are stored in PostgreSQL. Theme files are stored under Dash theme storage in `DASH_HOME`.

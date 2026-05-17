@@ -3,38 +3,38 @@ slug: /Releases
 title: Releases
 ---
 
-# 发布版本
+# Releases
 
-Ithiltir 和 Ithiltir-node 都使用严格 SemVer。
+Ithiltir and Ithiltir-node use strict SemVer.
 
-## 版本格式
+## Version Format
 
 ```text
 MAJOR.MINOR.PATCH[-PRERELEASE][+BUILD]
 ```
 
-规则：
+Rules:
 
-- 不使用 `v` 前缀。
-- `x.x.x` 或 `x.x.x+build` 是普通发布。
-- `x.x.x-rc.1` 或 `x.x.x-rc.1+build` 是预发布。
-- CI 和构建脚本会拒绝非法 SemVer tag。
+- Do not use a `v` prefix.
+- `x.x.x` or `x.x.x+build` is a stable release.
+- `x.x.x-rc.1` or `x.x.x-rc.1+build` is a prerelease.
+- CI and build scripts reject invalid SemVer tags.
 
-## Dash 打包节点版本
+## Bundled Node Version
 
-Dash 发布包会携带 Ithiltir-node 资产。打包时可以显式指定：
+Dash packages include Ithiltir-node assets. Specify the bundled node version explicitly:
 
 ```bash
 bash scripts/package.sh --version 1.2.3 --node-version 1.2.3 -o release -t linux/amd64 --tar-gz
 ```
 
-省略 `--node-version` 时，脚本从 `https://github.com/Ithildur/Ithiltir-node.git` 取最新兼容 tag：
+When `--node-version` is omitted, the script fetches the latest compatible tag from `https://github.com/Ithildur/Ithiltir-node.git`:
 
-- Dash 普通发布使用 node 普通发布。
-- Dash 预发布构建会在 node 最新预发布和最新发布中选择更新的一个。
-- 没有 node 预发布时回退到最新发布。
+- Stable Dash releases use stable node releases.
+- Dash prerelease builds choose the newer tag from latest node prerelease and latest stable release.
+- If no node prerelease exists, the latest stable release is used.
 
-本地节点资产必须配合 `--node-version` 或 `ITHILTIR_NODE_VERSION`：
+Local node assets must use `--node-version` or `ITHILTIR_NODE_VERSION`:
 
 ```bash
 bash scripts/package.sh \
@@ -46,9 +46,9 @@ bash scripts/package.sh \
   --tar-gz
 ```
 
-## Release asset 命名
+## Release Asset Names
 
-Ithiltir-node GitHub Release 使用裸二进制：
+Ithiltir-node GitHub Releases use bare binaries:
 
 ```text
 Ithiltir-node-linux-amd64
@@ -60,16 +60,16 @@ Ithiltir-runner-windows-amd64.exe
 Ithiltir-runner-windows-arm64.exe
 ```
 
-Windows 保留 `.exe`，checksums 单独上传。
+Windows keeps `.exe`. Checksums are uploaded separately.
 
-Dash 发布包命名：
+Dash package names:
 
 ```text
 Ithiltir_dash_<os>_<arch>.tar.gz
 Ithiltir_dash_<os>_<arch>.zip
 ```
 
-Dash release packages include:
+Dash packages include:
 
 - `bin/dash`.
 - `install_dash_linux.sh`.
@@ -77,4 +77,22 @@ Dash release packages include:
 - `deploy/<platform>/install.*`.
 - `deploy/<platform>/node_*` and the Windows runner.
 
-The install scripts in the release package prepare normal runtime dependencies. On `apt-get` systems they attempt to install PostgreSQL 16, TimescaleDB, Redis, updater requirements such as `git`/`tar`/download tools, and cron for Linux node LVM collection.
+Install scripts in the release package prepare normal runtime dependencies. On `apt-get` systems they attempt to install PostgreSQL 16, TimescaleDB, Redis, updater requirements such as `git`/`tar`/download tools, and cron for Linux node LVM collection.
+
+## Release Notes
+
+Release workflows generate the GitHub Release body. Stable releases use the previous stable release tag as the changelog base; prereleases default to the previous SemVer tag.
+
+Generate locally:
+
+```bash
+scripts/release_notes.sh <version> release-notes.md
+```
+
+Ithiltir-node stable release builds can pass release notes explicitly:
+
+```bash
+./scripts/build.sh --use-git-tag --release --release-notes release-notes.md
+```
+
+When `--release-notes` is omitted for a stable release, the build script generates temporary release notes. Prereleases still use GoReleaser's default behavior.

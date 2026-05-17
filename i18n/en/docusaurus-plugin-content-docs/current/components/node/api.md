@@ -3,40 +3,40 @@ slug: /Node/API
 title: Node API
 ---
 
-# 节点 HTTP API
+# Node HTTP API
 
-本文档定义 Ithiltir-node 与 Dash 之间的线协议，以及 Local 模式提供的本地接口。
+This page defines the wire protocol between Ithiltir-node and Dash, and the local endpoints provided by Local mode.
 
-## HTTP 接口
+## HTTP Endpoints
 
-`/api/node/*` 是 Dash 提供的接口。Ithiltir-node 在 Push 模式调用这些接口，本身不提供这些路径。
+`/api/node/*` endpoints are served by Dash. Ithiltir-node calls them in Push mode; the node itself does not serve these paths.
 
-| 范围 | 路径 | 方法 | 数据 | 成功 | 说明 |
+| Scope | Path | Method | Data | Success | Description |
 | --- | --- | --- | --- | --- | --- |
-| 本地页面 | `/` | `GET` | HTML | `200` | 内置单节点页面 |
-| 本地页面 | `/local` | `GET` | HTML | `200` | `/` 的别名 |
-| 本地页面 | `/metrics` | `GET` | `NodeReport` | `200` | 首次采样前返回 `503` |
-| 本地页面 | `/static` | `GET` | `Static` | `200` | 静态数据未就绪前返回 `503` |
-| Push 目标 | `/api/node/metrics` | `POST` | `NodeReport` | `200` | 需要 `X-Node-Secret` |
-| Push 目标 | `/api/node/static` | `POST` | `Static` | `200` | 需要 `X-Node-Secret`，由 `/metrics` target URL 推导 |
-| Push 目标 | `/api/node/identity` | `POST` | `{}` | `200` | 需要 `X-Node-Secret`，返回 `{ "install_id": "...", "created": true/false }` |
-| Push debug 本地 | `/` | `GET` | `NodeReport` | `200` | 仅 `push --debug` 启用，绑定到 `127.0.0.1:${NODE_PORT:-9101}` |
+| Local page | `/` | `GET` | HTML | `200` | Built-in single-node page |
+| Local page | `/local` | `GET` | HTML | `200` | Alias of `/` |
+| Local page | `/metrics` | `GET` | `NodeReport` | `200` | Returns `503` before first sample |
+| Local page | `/static` | `GET` | `Static` | `200` | Returns `503` before static data is ready |
+| Push target | `/api/node/metrics` | `POST` | `NodeReport` | `200` | Requires `X-Node-Secret` |
+| Push target | `/api/node/static` | `POST` | `Static` | `200` | Requires `X-Node-Secret`; derived from target URL |
+| Push target | `/api/node/identity` | `POST` | `{}` | `200` | Requires `X-Node-Secret`; returns `install_id` |
+| Push debug local | `/` | `GET` | `NodeReport` | `200` | Enabled only by `push --debug`, bound to `127.0.0.1:<NODE_PORT or 9101>` |
 
-本地 `GET` 路由也接受 `HEAD`。其他方法返回 `405`，并带 `Allow: GET, HEAD`。
+Local `GET` routes also accept `HEAD`. Other methods return `405` with `Allow: GET, HEAD`.
 
-## 线协议约定
+## Wire Rules
 
-- JSON 使用 UTF-8。
-- 时间戳为 UTC RFC3339。
-- 字节和包计数是原始数字计数器。
-- `*Ratio` 字段范围是 `0..1`，不是百分比。
-- 数组返回 `[]`，不是 `null`。
-- 没有值的可选字段会省略。
-- 运行时磁盘结构和静态磁盘结构含义不同，见 [磁盘结构](./disk.md)。
+- JSON uses UTF-8.
+- Timestamps are UTC RFC3339.
+- Byte and packet counters are raw numeric counters.
+- `*Ratio` fields are `0..1`, not percentages.
+- Arrays return `[]`, not `null`.
+- Optional fields without values are omitted.
+- Runtime disk structure and static disk structure have different meanings. See [Disk Metrics](./disk.md).
 
 ## `NodeReport`
 
-顶层对象：
+Top-level object:
 
 ```json
 {
@@ -47,69 +47,30 @@ title: Node API
 }
 ```
 
-字段：
+Fields:
 
-- `version`：节点版本。
-- `hostname`：节点主机名。
-- `timestamp`：UTC RFC3339。
-- `metrics`：`Snapshot`。
+- `version`: node version.
+- `hostname`: node hostname.
+- `timestamp`: UTC RFC3339.
+- `metrics`: `Snapshot`.
 
 ## `Snapshot`
 
-`metrics` 字段：
+`metrics` fields:
 
-- `cpu`
-  - `usage_ratio`
-  - `load1`
-  - `load5`
-  - `load15`
-  - `times.user`
-  - `times.system`
-  - `times.idle`
-  - `times.iowait`
-  - `times.steal`
-- `memory`
-  - `used`
-  - `available`
-  - `buffers`
-  - `cached`
-  - `used_ratio`
-  - `swap_used`
-  - `swap_free`
-  - `swap_used_ratio`
-- `disk`
-  - 见 [磁盘结构](./disk.md)
-- `network[]`
-  - `name`
-  - `bytes_recv`
-  - `bytes_sent`
-  - `recv_rate_bytes_per_sec`
-  - `sent_rate_bytes_per_sec`
-  - `packets_recv`
-  - `packets_sent`
-  - `recv_rate_packets_per_sec`
-  - `sent_rate_packets_per_sec`
-  - `err_in`
-  - `err_out`
-  - `drop_in`
-  - `drop_out`
-- `system`
-  - `alive`
-  - `uptime_seconds`
-  - `uptime`
-- `processes`
-  - `process_count`
-- `connections`
-  - `tcp_count`
-  - `udp_count`
-- `raid`
-  - `supported`
-  - `available`
-  - `arrays[]`
+- `cpu`: usage ratio, load, and CPU times.
+- `memory`: memory and swap counters.
+- `disk`: see [Disk Metrics](./disk.md).
+- `network[]`: interface counters and rates.
+- `system`: liveness and uptime.
+- `processes`: process count.
+- `connections`: TCP and UDP counts.
+- `raid`: RAID runtime state.
+- `thermal`: thermal sensor runtime state.
 
 ## `Static`
 
-顶层对象：
+Top-level object:
 
 ```json
 {
@@ -124,36 +85,10 @@ title: Node API
 }
 ```
 
-静态上报行为：
+Static reporting behavior:
 
-- 静态元数据没有外层包装对象。
-- `report_interval_seconds` 是必填字段。
-- 静态元数据会在启动时上报一次。
-- 静态采集不完整时继续重试，直到完整。
-- 被抑制的 push 失败恢复后，静态元数据会再补发一次。
-
-字段：
-
-- `cpu.info`
-  - `model_name`
-  - `vendor_id`
-  - `sockets`
-  - `cores_physical`
-  - `cores_logical`
-  - `frequency_mhz`
-- `memory`
-  - `total`
-  - `swap_total`
-- `disk`
-  - 见 [磁盘结构](./disk.md)
-- `system`
-  - `hostname`
-  - `os`
-  - `platform`
-  - `platform_version`
-  - `kernel_version`
-  - `arch`
-- `raid`
-  - `supported`
-  - `available`
-  - `arrays[]`
+- Static metadata has no outer wrapper object.
+- `report_interval_seconds` is required.
+- Static metadata is sent once at startup.
+- Incomplete static collection keeps retrying until complete.
+- After suppressed push failures recover, static metadata is sent again.

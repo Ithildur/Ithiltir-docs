@@ -3,33 +3,42 @@ slug: /Install/Upgrade
 title: Upgrade
 ---
 
-# 升级
+# Upgrade
 
-升级分两类：Dash 升级和节点升级。
+Upgrades are split into Dash upgrades and node upgrades.
 
-## Dash 升级
+## Dash Upgrade
 
-Linux 发布包安装的 Dash 使用：
+Dash installed from the Linux release package uses:
 
 ```bash
 sudo bash /opt/Ithiltir-dash/update_dash_linux.sh --check
-sudo bash /opt/Ithiltir-dash/update_dash_linux.sh -y --lang zh
+sudo bash /opt/Ithiltir-dash/update_dash_linux.sh -y --lang en
 ```
 
-更新脚本会：
+The default target is the latest stable release. Use `--test` for prereleases:
 
-1. 检查当前版本和发布通道。
-2. 从 GitHub Release 下载新包。
-3. 停止 `dash.service`。
-4. 备份 `/opt/Ithiltir-dash` 到临时目录。
-5. 覆盖安装文件。
-6. 收紧敏感文件权限。
-7. 执行数据库迁移。
-8. 启动 `dash.service`。
+```bash
+sudo bash /opt/Ithiltir-dash/update_dash_linux.sh --check --test
+sudo bash /opt/Ithiltir-dash/update_dash_linux.sh -y --test --lang en
+```
 
-如果迁移失败，脚本会尝试恢复安装目录并重启旧服务。数据库迁移已经提交的部分不会自动反向回滚，因此升级前必须做数据库备份。
+The updater:
 
-## 手工升级 Dash
+1. Checks the current version and release channel.
+2. Downloads the new package from GitHub Releases.
+3. Stops `dash.service`.
+4. Backs up `/opt/Ithiltir-dash` to a temporary directory.
+5. Replaces installed files.
+6. Tightens sensitive file permissions.
+7. Runs database migrations.
+8. Starts `dash.service`.
+
+`--check` checks the selected target channel. The default channel checks stable releases only; `--test` checks prereleases only. If the installed Dash is a prerelease newer than the latest stable release, the default update stops and tells you to use `--test`.
+
+If migration fails, the script attempts to restore the install directory and restart the old service. Migration steps already committed to the database are not rolled back automatically, so back up the database before upgrading.
+
+## Manual Dash Upgrade
 
 ```bash
 systemctl stop dash.service
@@ -40,33 +49,38 @@ env DASH_HOME=/opt/Ithiltir-dash /opt/Ithiltir-dash/bin/dash migrate -config /op
 systemctl start dash.service
 ```
 
-手工升级前备份数据库：
+Back up the database before manual upgrades:
 
 ```bash
 pg_dump -Fc -d <db_name> -f ithiltir-$(date +%Y%m%d%H%M%S).dump
 ```
 
-## 节点升级
+## Node Upgrade
 
-Dash 发布包携带节点资产。管理台触发节点升级时：
+Dash release packages include node assets. When the admin console triggers a node upgrade:
 
-1. Dash 根据节点最后上报的平台选择对应资产。
-2. `POST /api/admin/nodes/{id}/upgrade` 写入易失升级任务。
-3. 节点下一次 `POST /api/node/metrics` 响应拿到 update manifest。
-4. Windows runner 模式会暂存、校验、替换并重启 node。
+1. Dash selects the asset from the node's last reported platform.
+2. `POST /api/admin/nodes/{id}/upgrade` writes a volatile upgrade task.
+3. The node receives an update manifest in the next `POST /api/node/metrics` response.
+4. Supported managed install layouts download, verify, switch, and restart node.
 
-当前自更新只支持 Windows runner。Linux/macOS 节点应重新执行安装脚本完成升级。
+Supported scope:
 
-## Linux/macOS 节点重新安装
+- Windows: runner-managed only.
+- Linux/macOS: requires the `/var/lib/ithiltir-node/releases/<version>` and `/var/lib/ithiltir-node/current` install layout.
 
-重新执行安装命令即可。脚本会下载新二进制，写入新的 release 目录，并更新 `current` 软链接。
+Direct binaries outside the managed install layout ignore update manifests.
 
-## 版本通道
+## Linux/macOS Node Reinstall
 
-版本必须是严格 SemVer：
+When managed self-update cannot be used, rerun the install command. The script downloads the new binary, writes a new release directory, and updates the `current` symlink.
+
+## Version Channels
+
+Versions must be strict SemVer:
 
 ```text
 MAJOR.MINOR.PATCH[-PRERELEASE][+BUILD]
 ```
 
-不使用 `v` 前缀。普通发布不能携带预发布段；预发布构建可以携带 `-rc.1`、`-alpha.1` 等。
+Do not use a `v` prefix. Stable releases cannot include a prerelease segment; prerelease builds can include segments such as `-rc.1` or `-alpha.1`.

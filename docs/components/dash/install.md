@@ -72,7 +72,14 @@ sudo bash /opt/Ithiltir-dash/update_dash_linux.sh --check
 sudo bash /opt/Ithiltir-dash/update_dash_linux.sh -y --lang zh
 ```
 
-更新脚本按当前发布通道查找更新的 Git tag，下载对应 GitHub Release asset，并保留现有配置。
+默认更新目标是最新普通发布。预发布使用 `--test`：
+
+```bash
+sudo bash /opt/Ithiltir-dash/update_dash_linux.sh --check --test
+sudo bash /opt/Ithiltir-dash/update_dash_linux.sh -y --test --lang zh
+```
+
+更新脚本按目标发布通道查找更新的 Git tag，下载对应 GitHub Release asset，并保留现有配置。
 
 ## 反向代理
 

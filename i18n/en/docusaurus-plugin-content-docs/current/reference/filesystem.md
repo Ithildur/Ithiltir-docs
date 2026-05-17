@@ -3,9 +3,9 @@ slug: /Reference/Filesystem
 title: Filesystem Layout
 ---
 
-# 文件系统布局
+# Filesystem Layout
 
-## Dash 发布包
+## Dash Release Package
 
 ```text
 /opt/Ithiltir-dash/
@@ -27,7 +27,7 @@ title: Filesystem Layout
 /etc/systemd/system/dash.service
 ```
 
-关键设置：
+Key settings:
 
 ```text
 WorkingDirectory=/opt/Ithiltir-dash
@@ -36,7 +36,7 @@ Environment="monitor_dash_pwd=..."
 ExecStart=/opt/Ithiltir-dash/bin/dash
 ```
 
-## Linux 节点
+## Linux Node
 
 ```text
 /var/lib/ithiltir-node/
@@ -47,13 +47,13 @@ ExecStart=/opt/Ithiltir-dash/bin/dash
   current -> releases/<version>
 ```
 
-服务：
+Service:
 
 ```text
 /etc/systemd/system/ithiltir-node.service
 ```
 
-LVM thinpool：
+LVM thinpool:
 
 ```text
 /run/ithiltir-node/thinpool.json
@@ -61,19 +61,30 @@ LVM thinpool：
 /etc/cron.d/ithiltir-node-thinpool
 ```
 
-## macOS 节点
+SMART cache:
+
+```text
+/run/ithiltir-node/smart.json
+/usr/local/libexec/ithiltir-node/smart-cache
+/etc/systemd/system/ithiltir-node-smart-cache.service
+/etc/systemd/system/ithiltir-node-smart-cache.timer
+```
+
+## macOS Node
 
 ```text
 /var/lib/ithiltir-node/
   report.yaml
   releases/
-  current
+    <version>/
+      ithiltir-node
+  current -> releases/<version>
 /Library/LaunchDaemons/com.ithiltir.node.plist
 /var/log/ithiltir-node.log
 /var/log/ithiltir-node.err
 ```
 
-## Windows 节点
+## Windows Node
 
 ```text
 %ProgramFiles%\Ithiltir-node\ithiltir-runner.exe
@@ -82,13 +93,13 @@ LVM thinpool：
 %ProgramData%\Ithiltir-node\staging\
 ```
 
-服务名：
+Service name:
 
 ```text
 ithiltir-node
 ```
 
-## Node local page override
+## Node Local Page Override
 
 ```text
 localpage/
@@ -98,7 +109,7 @@ localpage/
     page.js
 ```
 
-环境变量：
+Environment variable:
 
 ```text
 ITHILTIR_NODE_LOCAL_PAGE_DIR=/path/to/localpage

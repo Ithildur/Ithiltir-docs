@@ -36,6 +36,7 @@ JSON 使用 UTF-8。时间戳是 UTC RFC3339。所有 `*Ratio` 字段都是 `0..
 | `processes` | 进程数 |
 | `connections` | TCP/UDP 连接数 |
 | `raid` | RAID 运行时 |
+| `thermal` | 温度传感器运行时，可缺省 |
 
 ## CPU
 
@@ -137,6 +138,61 @@ JSON 使用 UTF-8。时间戳是 UTC RFC3339。所有 `*Ratio` 字段都是 `0..
   ]
 }
 ```
+
+## Thermal
+
+```json
+{
+  "status": "ok",
+  "updated_at": "2026-05-04T00:00:00Z",
+  "sensors": [
+    {
+      "kind": "cpu",
+      "name": "Package id 0",
+      "sensor_key": "coretemp_package_id_0",
+      "source": "gopsutil",
+      "status": "ok",
+      "temp_c": 52.5,
+      "high_c": 90,
+      "critical_c": 100
+    }
+  ]
+}
+```
+
+`sensors[]` 为空时返回 `[]`。`updated_at`、`temp_c`、`high_c`、`critical_c` 读不到时省略。
+
+必填：
+
+- `status`
+- `sensors[]`
+
+`sensors[]` 必填字段：
+
+- `kind`
+- `name`
+- `sensor_key`
+- `source`
+- `status`
+
+`kind` 可为：
+
+- `cpu`
+- `gpu`
+- `chipset`
+- `board`
+- `acpi`
+- `unknown`
+
+常见 `status`：
+
+- `ok`
+- `partial`
+- `unsupported`
+- `not_found`
+- `no_permission`
+- `timeout`
+- `error`
 
 ## `Static`
 

@@ -36,6 +36,8 @@ sudo bash install_node.sh <dash_ip> [dash_port] <secret> [interval_seconds] [--n
 | `/var/log/ithiltir-node.log` | 标准输出 |
 | `/var/log/ithiltir-node.err` | 标准错误 |
 
+`current` 软链接和 `releases/<version>` 目录也是 macOS 托管自更新的边界。安装布局外直接运行的二进制不会处理 Dash 返回的 update manifest。
+
 ## 服务管理
 
 ```bash

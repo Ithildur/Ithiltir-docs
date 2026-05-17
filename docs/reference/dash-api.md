@@ -138,6 +138,17 @@ Bearer 可选端点会把无效 Bearer 当作匿名请求。
 - 流量 summary、daily、monthly 响应保留原始 `in_*` 和 `out_*` 字段，并通过 `selected_bytes`、`selected_p95_bytes_per_sec`、`selected_peak_bytes_per_sec` 及其方向字段暴露当前计费视图。
 - 客户端应使用 `coverage_ratio` 展示样本覆盖率和准确性提示。`partial` 仅为兼容保留，新的展示逻辑不应依赖该字段。
 
+## 历史指标
+
+`GET /api/metrics/history` 支持温度指标：
+
+| 指标 | 来源 | 设备参数 |
+| --- | --- | --- |
+| `cpu.temp_c` | CPU 温度传感器最高温度 | 不需要 |
+| `disk.temp_c` | SMART 物理磁盘温度历史 | 必须传 `device` |
+
+`disk.temp_c` 的 `device` 可以匹配物理磁盘 `name`、`ref` 或 `path`。温度历史不使用 rollup 前缀。
+
 ## 管理：告警
 
 | 方法 | 路径 | 说明 |

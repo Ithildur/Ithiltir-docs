@@ -3,29 +3,37 @@ slug: /Node/Update
 title: Node Update
 ---
 
-# Windows Runner 与更新
+# Node Update
 
-Windows 自更新只在 runner 托管模式下生效。
+Dash delivers node updates through the update manifest in the `/api/node/metrics` response. Only managed install layouts process the manifest.
 
-## Runner
+## Supported Scope
+
+| Platform | Requirement | Behavior |
+| --- | --- | --- |
+| Windows | Started by `ithiltir-runner.exe` with `ITHILTIR_NODE_RUNNER=1` | Stages the new binary, exits node, then runner replaces and restarts it |
+| Linux | Current process is `/var/lib/ithiltir-node/current/ithiltir-node` or `/var/lib/ithiltir-node/releases/<version>/ithiltir-node` | Downloads into a new release directory, switches the `current` symlink, exits, and lets systemd restart node |
+| macOS | Current process is `/var/lib/ithiltir-node/current/ithiltir-node` or `/var/lib/ithiltir-node/releases/<version>/ithiltir-node` | Downloads into a new release directory, switches the `current` symlink, exits, and lets launchd restart node |
+
+Direct binaries outside the managed install layout ignore update manifests.
+
+## Windows Runner
 
 ```powershell
 .\ithiltir-runner.exe [node args...]
 ```
 
-行为：
+Behavior:
 
-- 仅 Windows。
-- 不传参数时默认执行 `push`。
-- 托管 `%ProgramData%\Ithiltir-node\bin\ithiltir-node.exe`。
-- 工作目录为 `%ProgramData%\Ithiltir-node`。
-- 启用 Dash 指标响应里的 node 暂存更新。
+- Windows only.
+- Defaults to `push` when no arguments are provided.
+- Manages `%ProgramData%\Ithiltir-node\bin\ithiltir-node.exe`.
+- Uses `%ProgramData%\Ithiltir-node` as the working directory.
+- Enables staged node updates from Dash metric responses.
 
-直接运行 `node push` 会忽略 update manifest。
+## Update Manifest
 
-## 更新 manifest
-
-Dash 的 `POST /api/node/metrics` 成功响应可以包含：
+A successful Dash `POST /api/node/metrics` response can include:
 
 ```json
 {
@@ -39,27 +47,27 @@ Dash 的 `POST /api/node/metrics` 成功响应可以包含：
 }
 ```
 
-规则：
+Rules:
 
-- `update.version`、`update.url`、`update.sha256` 和正数字节数 `update.size` 必填。
-- `update.id` 是可选元数据。
-- `update.url` 必须是带 host 的绝对 `http` 或 `https` URL。
-- `update.version` 不得包含路径分隔符。
-- `update.sha256` 是期望的 SHA-256 十六进制摘要。
-- `update.size` 必须等于下载字节数。
+- `update.version`, `update.url`, `update.sha256`, and positive byte count `update.size` are required.
+- `update.id` is optional metadata.
+- `update.url` must be an absolute `http` or `https` URL with a host.
+- `update.version` must be a single release directory name. It cannot be `.` or `..`, and cannot contain path separators.
+- `update.sha256` is the expected SHA-256 hex digest.
+- `update.size` must equal the downloaded byte count.
 
-## 冲突处理
+## Conflict Handling
 
-如果同一轮里多个 target 返回 update manifest，所有 manifest 的 `id`、`version`、`url`、`sha256` 和 `size` 必须一致；有冲突则跳过更新。
+If multiple targets return update manifests in the same cycle, every manifest must have identical `id`, `version`, `url`, `sha256`, and `size`. If they conflict, the update is skipped.
 
-JSON 格式错误、manifest 非法、下载失败、大小不匹配或校验和不匹配时，跳过更新并继续上报。
+Malformed JSON, invalid manifests, download failures, size mismatches, or checksum mismatches skip the update and reporting continues.
 
-## 生命周期
+## Lifecycle
 
-1. node 解析 Dash 返回的 update manifest。
-2. runner 模式下 node 下载并校验暂存文件。
-3. 成功暂存更新后，`node push` 干净退出。
-4. runner 替换 `%ProgramData%\Ithiltir-node\bin\ithiltir-node.exe`。
-5. runner 重启 node。
+1. node parses the update manifest returned by Dash.
+2. node downloads the file and verifies size and SHA-256.
+3. After staging succeeds, `node push` exits cleanly.
+4. Windows runner replaces `%ProgramData%\Ithiltir-node\bin\ithiltir-node.exe` and restarts node.
+5. Linux/macOS switches `/var/lib/ithiltir-node/current` to the new release and systemd/launchd restarts node.
 
-非 Windows 不支持自更新。
+If the active managed release already matches the manifest version, node does not reinstall it.

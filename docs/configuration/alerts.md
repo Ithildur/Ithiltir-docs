@@ -12,6 +12,8 @@ slug: /Config/Alerts
 | --- | --- | --- | --- | --- |
 | `-1` | `node_offline` | `node.offline` | `>= 1` | 0 |
 | `-2` | `raid_failed` | `raid.failed` | `>= 1` | 30 分钟 |
+| `-3` | `smart_failed` | `disk.smart.failed` | `>= 1` | 30 分钟 |
+| `-4` | `smart_nvme_critical_warning` | `disk.smart.nvme.critical_warning` | `>= 1` | 30 分钟 |
 
 内置规则默认挂载。规则挂载表可以对具体节点禁用或启用规则。
 
@@ -26,12 +28,23 @@ slug: /Config/Alerts
 | `mem.used` | 已用内存字节 | 否 |
 | `mem.used_ratio` | 内存使用率，比例值 `0..1` | 否 |
 | `disk.usage.used_ratio` | 主挂载点磁盘使用率 | 否 |
+| `disk.smart.failed` | SMART 健康结果为 `failed` 的设备数量 | 否 |
+| `disk.smart.nvme.critical_warning` | NVMe `critical_warning` 非零的设备数量 | 否 |
+| `disk.smart.attribute_failing` | 当前 `FAILING_NOW` 的 ATA SMART 属性数量 | 否 |
+| `disk.smart.max_temp_c` | SMART 设备最高温度，单位 C | 否 |
 | `net.recv_bps` | 接收速率 B/s | 否 |
 | `net.sent_bps` | 发送速率 B/s | 否 |
 | `conn.tcp` | TCP 连接数 | 否 |
 | `raid.failed` | RAID 失败成员或非健康阵列数量 | 否 |
+| `thermal.max_temp_c` | 普通温度传感器最高温度，单位 C | 否 |
 
 `disk.usage.used_ratio` 优先使用 `/` 挂载点；没有 `/` 时，为兼容旧行为回退到第一个挂载点。
+
+`disk.smart.failed` 只统计 `health=failed`。`no_cache`、`no_tool`、`unsupported`、`stale` 等采集状态不会按磁盘故障计数。
+
+`disk.smart.nvme.critical_warning` 只统计上报了 `critical_warning` 且值非零的设备。没有设备上报该字段时，该指标不参与评估。
+
+`disk.smart.attribute_failing` 只统计 `failing_attrs[].when_failed=FAILING_NOW`。没有属性失败数据时，该指标不参与评估。
 
 ## 操作符
 

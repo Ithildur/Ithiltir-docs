@@ -3,26 +3,32 @@ slug: /Reference/DiskSchema
 title: Disk Schema
 ---
 
-# 磁盘结构
+# Disk Schema
 
-磁盘结构分运行时和静态两套。运行时描述当前容量和 IO，静态描述稳定元数据。
+Disk data has runtime and static shapes. Runtime data describes current capacity and IO. Static data describes stable metadata.
 
-## 运行时：`metrics.disk`
+## Runtime: `metrics.disk`
 
 ```json
 {
   "physical": [],
   "logical": [],
   "filesystems": [],
-  "base_io": []
+  "base_io": [],
+  "smart": {
+    "status": "ok",
+    "updated_at": "2026-05-04T00:00:00Z",
+    "ttl_seconds": 300,
+    "devices": []
+  }
 }
 ```
 
 ## `physical[]`
 
-每条对应一个块设备。
+Each item represents a block device.
 
-必填：
+Required:
 
 - `name`
 - `read_bytes`
@@ -37,16 +43,16 @@ title: Disk Schema
 - `wait_ms`
 - `service_ms`
 
-可选：
+Optional:
 
 - `device_path`
 - `ref`
 
 ## `logical[]`
 
-逻辑存储容量视图。
+Logical storage capacity view.
 
-必填：
+Required:
 
 - `kind`
 - `name`
@@ -54,13 +60,13 @@ title: Disk Schema
 - `free`
 - `used_ratio`
 
-可选：
+Optional:
 
 - `device_path`
 - `ref`
 - `health`
 
-常见 `kind`：
+Common `kind` values:
 
 - `disk`
 - `raid`
@@ -72,9 +78,9 @@ title: Disk Schema
 
 ## `filesystems[]`
 
-挂载点视图。
+Mount point view.
 
-必填：
+Required:
 
 - `path`
 - `used`
@@ -84,16 +90,16 @@ title: Disk Schema
 - `inodes_free`
 - `inodes_used_ratio`
 
-可选：
+Optional:
 
 - `device`
 - `mountpoint`
 
 ## `base_io[]`
 
-用于展示和排序的 IO 视图。
+IO view used for display and sorting.
 
-必填：
+Required:
 
 - `kind`
 - `name`
@@ -103,7 +109,7 @@ title: Disk Schema
 - `write_iops`
 - `iops`
 
-可选：
+Optional:
 
 - `device_path`
 - `ref`
@@ -114,9 +120,74 @@ title: Disk Schema
 - `wait_ms`
 - `service_ms`
 
-`logical` 项可能没有累计字节、延迟或利用率字段。
+`logical` items may not have cumulative byte, latency, or utilization fields.
 
-## 静态：`disk`
+## `smart`
+
+SMART data comes from a root-side cache file. It is runtime state, not static disk inventory.
+
+Required:
+
+- `status`
+- `devices[]`
+
+Optional:
+
+- `updated_at`
+- `ttl_seconds`
+
+Required `devices[]` fields:
+
+- `name`
+- `source`
+- `status`
+
+Optional `devices[]` fields:
+
+- `ref`
+- `device_path`
+- `device_type`
+- `protocol`
+- `model`
+- `serial`
+- `wwn`
+- `exit_status`
+- `health`
+- `temp_c`
+- `power_on_hours`
+- `lifetime_used_percent`
+- `critical_warning`
+- `failing_attrs[]`
+
+`devices[]` returns `[]` when empty. Unavailable SMART values are omitted.
+
+`critical_warning` is the raw NVMe critical warning bitset. `failing_attrs[]` contains only ATA SMART attributes that are currently failing:
+
+- `id`
+- `name`
+- `when_failed`
+
+Common `status` values:
+
+- `ok`
+- `partial`
+- `unsupported`
+- `not_found`
+- `no_permission`
+- `timeout`
+- `error`
+- `no_cache`
+- `stale`
+- `no_tool`
+- `standby`
+
+`status` is the collection state. `health` is the disk health result. A device can have `status=ok` and `health=failed` when collection succeeds but the disk health check fails.
+
+`no_cache`, `no_tool`, and `unsupported` do not indicate disk failure. `stale` means the cache has expired, but the last `devices[]` data is retained.
+
+`devices[].ref` points to `physical[].ref` or `logical[].ref` only when it can be matched safely.
+
+## Static: `disk`
 
 ```json
 {
@@ -130,19 +201,19 @@ title: Disk Schema
 ### `physical[]`
 
 - `name`
-- 可选：`device_path`
-- 可选：`ref`
+- Optional: `device_path`
+- Optional: `ref`
 
 ### `logical[]`
 
 - `kind`
 - `name`
-- 可选：`device_path`
-- 可选：`ref`
-- 可选：`total`
-- 可选：`mountpoint`
-- 可选：`fs_type`
-- 可选：`devices[]`
+- Optional: `device_path`
+- Optional: `ref`
+- Optional: `total`
+- Optional: `mountpoint`
+- Optional: `fs_type`
+- Optional: `devices[]`
 
 ### `filesystems[]`
 
@@ -150,20 +221,20 @@ title: Disk Schema
 - `total`
 - `fs_type`
 - `inodes_total`
-- 可选：`device`
-- 可选：`mountpoint`
+- Optional: `device`
+- Optional: `mountpoint`
 
 ### `base_io[]`
 
 - `kind`
 - `name`
-- 可选：`device_path`
-- 可选：`ref`
-- 可选：`role`
+- Optional: `device_path`
+- Optional: `ref`
+- Optional: `role`
 
-## 平台行为
+## Platform Behavior
 
-- Linux 采集文件系统、块设备、RAID、LVM、ZFS。
-- 非 Linux 仍会从 `gopsutil` 分区结果填充 `filesystems[]`。
-- 非 Linux RAID 固定返回 `supported=false`。
-- 数组返回 `[]`，不是 `null`。
+- Linux collects filesystems, block devices, RAID, LVM, and ZFS.
+- Non-Linux platforms still populate `filesystems[]` from `gopsutil` partition data.
+- Non-Linux RAID always returns `supported=false`.
+- Arrays return `[]`, not `null`.

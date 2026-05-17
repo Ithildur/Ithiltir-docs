@@ -5,55 +5,55 @@ title: Dash HTTP API
 
 # Dash HTTP API
 
-基础路径：
+Base path:
 
 ```text
 /api
 ```
 
-错误格式：
+Error format:
 
 ```json
 { "code": "<string>", "message": "<string>" }
 ```
 
-## 鉴权
+## Authentication
 
-| 方式 | 用途 |
+| Method | Use |
 | --- | --- |
-| 管理员密码 | `POST /api/auth/login` |
-| refresh cookie + `X-CSRF-Token` | `POST /api/auth/refresh`、`POST /api/auth/logout` |
-| `Authorization: Bearer <access_token>` | 管理 API 和可选鉴权读取 |
-| `X-Node-Secret` | 节点上报和节点身份读取 |
+| Admin password | `POST /api/auth/login` |
+| refresh cookie + `X-CSRF-Token` | `POST /api/auth/refresh`, `POST /api/auth/logout` |
+| `Authorization: Bearer <access_token>` | Admin APIs and optionally authenticated reads |
+| `X-Node-Secret` | Node reporting and node identity reads |
 
-## 公开和可选鉴权
+## Public and Optional Auth
 
-| 方法 | 路径 | 鉴权 | 说明 |
+| Method | Path | Auth | Description |
 | --- | --- | --- | --- |
-| `GET` | `/api/version/` | 无 | Dash 和打包 node 版本 |
-| `GET` | `/api/front/brand` | 可选 Bearer | 品牌信息 |
-| `GET` | `/api/front/metrics` | 可选 Bearer | 当前看板指标 |
-| `GET` | `/api/front/groups` | 可选 Bearer | 前台分组 |
-| `GET` | `/api/metrics/online` | 可选 Bearer | 在线率 |
-| `GET` | `/api/metrics/history` | 可选 Bearer | 历史指标 |
-| `GET` | `/api/statistics/access` | 可选 Bearer | 匿名访问设置 |
-| `GET` | `/api/statistics/traffic/settings` | 可选 Bearer | 流量设置 |
-| `GET` | `/api/statistics/traffic/ifaces` | 可选 Bearer | 节点网卡列表 |
-| `GET` | `/api/statistics/traffic/summary` | 可选 Bearer | 当前账期流量 |
-| `GET` | `/api/statistics/traffic/daily` | 可选 Bearer | 日流量，要求 billing 模式 |
-| `GET` | `/api/statistics/traffic/monthly` | 可选 Bearer | 月流量 |
+| `GET` | `/api/version/` | None | Dash and bundled node version |
+| `GET` | `/api/front/brand` | Optional Bearer | Brand info |
+| `GET` | `/api/front/metrics` | Optional Bearer | Current front metrics |
+| `GET` | `/api/front/groups` | Optional Bearer | Front groups |
+| `GET` | `/api/metrics/online` | Optional Bearer | Online rate |
+| `GET` | `/api/metrics/history` | Optional Bearer | History metrics |
+| `GET` | `/api/statistics/access` | Optional Bearer | Anonymous access settings |
+| `GET` | `/api/statistics/traffic/settings` | Optional Bearer | Traffic settings |
+| `GET` | `/api/statistics/traffic/ifaces` | Optional Bearer | Node interface list |
+| `GET` | `/api/statistics/traffic/summary` | Optional Bearer | Current billing cycle traffic |
+| `GET` | `/api/statistics/traffic/daily` | Optional Bearer | Daily traffic, requires billing mode |
+| `GET` | `/api/statistics/traffic/monthly` | Optional Bearer | Monthly traffic |
 
-Bearer 可选端点会把无效 Bearer 当作匿名请求。
+Optional Bearer endpoints treat invalid Bearer tokens as anonymous requests.
 
-## 节点接口
+## Node Endpoints
 
-| 方法 | 路径 | 鉴权 | Body | 成功 |
+| Method | Path | Auth | Body | Success |
 | --- | --- | --- | --- | --- |
 | `POST` | `/api/node/identity` | `X-Node-Secret` | `{}` | `200` |
 | `POST` | `/api/node/metrics` | `X-Node-Secret` | `NodeReport` | `200` |
 | `POST` | `/api/node/static` | `X-Node-Secret` | `Static` | `200` |
 
-`/api/node/metrics` 成功响应：
+Successful `/api/node/metrics` response:
 
 ```json
 {
@@ -62,7 +62,7 @@ Bearer 可选端点会把无效 Bearer 当作匿名请求。
 }
 ```
 
-或：
+Or:
 
 ```json
 {
@@ -77,32 +77,32 @@ Bearer 可选端点会把无效 Bearer 当作匿名请求。
 }
 ```
 
-## 管理：分组
+## Admin: Groups
 
-| 方法 | 路径 | Body | 成功 |
+| Method | Path | Body | Success |
 | --- | --- | --- | --- |
-| `GET` | `/api/admin/groups/` | 无 | `200` |
-| `GET` | `/api/admin/groups/map` | 无 | `200` |
+| `GET` | `/api/admin/groups/` | None | `200` |
+| `GET` | `/api/admin/groups/map` | None | `200` |
 | `POST` | `/api/admin/groups/` | `{ "name": "...", "remark": "..." }` | `204` |
 | `PATCH` | `/api/admin/groups/{id}` | `{ "name": "...", "remark": "..." }` | `204` |
-| `DELETE` | `/api/admin/groups/{id}` | 无 | `204` |
+| `DELETE` | `/api/admin/groups/{id}` | None | `204` |
 
-`name` 会 trim，不能为空。
+`name` is trimmed and cannot be empty.
 
-## 管理：节点
+## Admin: Nodes
 
-| 方法 | 路径 | Body | 成功 |
+| Method | Path | Body | Success |
 | --- | --- | --- | --- |
-| `GET` | `/api/admin/nodes/` | 无 | `200` |
-| `GET` | `/api/admin/nodes/deploy` | 无 | `200` |
-| `POST` | `/api/admin/nodes/` | 无 | `204` |
-| `PUT` | `/api/admin/nodes/display-order` | 节点 ID 顺序 | `204` |
+| `GET` | `/api/admin/nodes/` | None | `200` |
+| `GET` | `/api/admin/nodes/deploy` | None | `200` |
+| `POST` | `/api/admin/nodes/` | None | `204` |
+| `PUT` | `/api/admin/nodes/display-order` | Node ID order | `204` |
 | `PATCH` | `/api/admin/nodes/traffic-p95` | `{ "ids": [1, 2], "enabled": true }` | `204` |
-| `PATCH` | `/api/admin/nodes/{id}` | 节点补丁 | `204` |
-| `POST` | `/api/admin/nodes/{id}/upgrade` | 无 | `204` |
-| `DELETE` | `/api/admin/nodes/{id}` | 无 | `204` |
+| `PATCH` | `/api/admin/nodes/{id}` | Node patch | `204` |
+| `POST` | `/api/admin/nodes/{id}/upgrade` | None | `204` |
+| `DELETE` | `/api/admin/nodes/{id}` | None | `204` |
 
-节点补丁字段：
+Node patch fields:
 
 ```json
 {
@@ -120,53 +120,64 @@ Bearer 可选端点会把无效 Bearer 当作匿名请求。
 }
 ```
 
-`tags` 必须是字符串数组，空值和重复值会被移除。
+`tags` must be a string array. Empty and duplicate values are removed.
 
-`/api/admin/nodes/traffic-p95` 接受 `ids` 和 `enabled`。`enabled` 必填。`ids` 必须是非空正整数数组，不能重复，最多 10000 项。该命令先校验全部节点 ID，再在一个事务中更新 P95 开关。成功返回 `204`；任一节点不存在或已删除时返回 `404 not_found`，且不会更新任何节点。
+`/api/admin/nodes/traffic-p95` accepts `ids` and `enabled`. `enabled` is required. `ids` must be a non-empty positive integer array, cannot contain duplicates, and can contain at most 10000 items. The command validates all node IDs first, then updates them in one transaction. Success returns `204`; any missing or deleted node returns `404 not_found`, and no node is updated.
 
-## 管理：流量设置
+## Admin: Traffic Settings
 
-| 方法 | 路径 | Body | 成功 |
+| Method | Path | Body | Success |
 | --- | --- | --- | --- |
-| `PATCH` | `/api/statistics/traffic/settings` | 局部字段 | `204` |
+| `PATCH` | `/api/statistics/traffic/settings` | Partial fields | `204` |
 
-字段见 [流量统计和账期](../configuration/traffic.md)。
+Fields are documented in [Traffic Accounting and Billing Cycles](../configuration/traffic.md).
 
-## 流量查询
+## Traffic Queries
 
-- `GET /api/statistics/traffic/daily` 要求 `usage_mode=billing`，否则返回 `409 traffic_daily_requires_billing`。`period` 可选，允许 `current`、`previous`，省略时为 `current`。
-- `GET /api/statistics/traffic/monthly` 支持 `months` 和 `period`。`months` 最大 24；`period=current` 从本账期开始，`period=previous` 从上账期开始，省略时为 `current`。响应字段 `includes_current` 在 `period=current` 时为 `true`，在 `period=previous` 时为 `false`。
-- 流量 summary、daily、monthly 响应保留原始 `in_*` 和 `out_*` 字段，并通过 `selected_bytes`、`selected_p95_bytes_per_sec`、`selected_peak_bytes_per_sec` 及其方向字段暴露当前计费视图。
-- 客户端应使用 `coverage_ratio` 展示样本覆盖率和准确性提示。`partial` 仅为兼容保留，新的展示逻辑不应依赖该字段。
+- `GET /api/statistics/traffic/daily` requires `usage_mode=billing`; otherwise it returns `409 traffic_daily_requires_billing`. `period` allows `current` or `previous`; omitted means `current`.
+- `GET /api/statistics/traffic/monthly` supports `months` and `period`. `months` is at most 24. `period=current` starts at the current billing cycle; `period=previous` starts at the previous cycle. Omitted means `current`. `includes_current` is `true` for `period=current` and `false` for `period=previous`.
+- Traffic summary, daily, and monthly responses keep raw `in_*` and `out_*` fields. The active accounting view is exposed through `selected_bytes`, `selected_p95_bytes_per_sec`, `selected_peak_bytes_per_sec`, and selected direction fields.
+- Clients should use `coverage_ratio` for sample coverage and accuracy hints. `partial` is retained only for compatibility.
 
-## 管理：告警
+## History Metrics
 
-| 方法 | 路径 | 说明 |
+`GET /api/metrics/history` supports temperature metrics:
+
+| Metric | Source | Device parameter |
 | --- | --- | --- |
-| `GET` | `/api/admin/alerts/rules/` | 列出规则 |
-| `POST` | `/api/admin/alerts/rules/` | 创建规则 |
-| `PATCH` | `/api/admin/alerts/rules/{id}` | 更新规则 |
-| `DELETE` | `/api/admin/alerts/rules/{id}` | 删除规则 |
-| `GET` | `/api/admin/alerts/mounts/` | 列出挂载 |
-| `PUT` | `/api/admin/alerts/mounts/` | 设置挂载 |
-| `GET` | `/api/admin/alerts/settings/` | 读取全局设置 |
-| `PUT` | `/api/admin/alerts/settings/` | 替换全局设置 |
-| `GET` | `/api/admin/alerts/channels/` | 列出渠道 |
-| `POST` | `/api/admin/alerts/channels/` | 创建渠道 |
-| `GET` | `/api/admin/alerts/channels/{id}` | 读取渠道 |
-| `PUT` | `/api/admin/alerts/channels/{id}` | 替换渠道 |
-| `PUT` | `/api/admin/alerts/channels/{id}/enabled` | 切换启用 |
-| `POST` | `/api/admin/alerts/channels/{id}/test` | 测试发送 |
-| `DELETE` | `/api/admin/alerts/channels/{id}` | 删除渠道 |
+| `cpu.temp_c` | Maximum CPU thermal sensor temperature | Not required |
+| `disk.temp_c` | SMART physical disk temperature history | Required `device` |
 
-## 管理：系统
+For `disk.temp_c`, `device` can match physical disk `name`, `ref`, or `path`. Temperature history does not use a rollup prefix.
 
-| 方法 | 路径 | 说明 |
+## Admin: Alerts
+
+| Method | Path | Description |
 | --- | --- | --- |
-| `GET` | `/api/admin/system/settings/` | 读取系统设置 |
-| `PUT` | `/api/admin/system/settings/` | 替换系统设置 |
-| `PATCH` | `/api/admin/system/settings/` | 局部更新 |
-| `GET` | `/api/admin/system/themes/` | 列出主题 |
-| `POST` | `/api/admin/system/themes/upload` | 上传主题 zip |
-| `POST` | `/api/admin/system/themes/{id}/apply` | 应用主题 |
-| `DELETE` | `/api/admin/system/themes/{id}` | 删除主题 |
+| `GET` | `/api/admin/alerts/rules/` | List rules |
+| `POST` | `/api/admin/alerts/rules/` | Create rule |
+| `PATCH` | `/api/admin/alerts/rules/{id}` | Update rule |
+| `DELETE` | `/api/admin/alerts/rules/{id}` | Delete rule |
+| `GET` | `/api/admin/alerts/mounts/` | List mounts |
+| `PUT` | `/api/admin/alerts/mounts/` | Set mounts |
+| `GET` | `/api/admin/alerts/settings/` | Read global settings |
+| `PUT` | `/api/admin/alerts/settings/` | Replace global settings |
+| `GET` | `/api/admin/alerts/channels/` | List channels |
+| `POST` | `/api/admin/alerts/channels/` | Create channel |
+| `GET` | `/api/admin/alerts/channels/{id}` | Read channel |
+| `PUT` | `/api/admin/alerts/channels/{id}` | Replace channel |
+| `PUT` | `/api/admin/alerts/channels/{id}/enabled` | Toggle enabled |
+| `POST` | `/api/admin/alerts/channels/{id}/test` | Send test notification |
+| `DELETE` | `/api/admin/alerts/channels/{id}` | Delete channel |
+
+## Admin: System
+
+| Method | Path | Description |
+| --- | --- | --- |
+| `GET` | `/api/admin/system/settings/` | Read system settings |
+| `PUT` | `/api/admin/system/settings/` | Replace system settings |
+| `PATCH` | `/api/admin/system/settings/` | Partial update |
+| `GET` | `/api/admin/system/themes/` | List themes |
+| `POST` | `/api/admin/system/themes/upload` | Upload theme zip |
+| `POST` | `/api/admin/system/themes/{id}/apply` | Apply theme |
+| `DELETE` | `/api/admin/system/themes/{id}` | Delete theme |

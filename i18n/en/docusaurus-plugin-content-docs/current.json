@@ -3,33 +3,33 @@
     "message": "Next",
     "description": "The label for version current"
   },
-  "sidebar.docs.category.概览": {
+  "sidebar.docs.category.\u6982\u89c8": {
     "message": "Overview",
-    "description": "The label for category '概览' in sidebar 'docs'"
+    "description": "The label for the overview category in sidebar 'docs'"
   },
-  "sidebar.docs.category.安装部署": {
+  "sidebar.docs.category.\u5b89\u88c5\u90e8\u7f72": {
     "message": "Install",
-    "description": "The label for category '安装部署' in sidebar 'docs'"
+    "description": "The label for the installation category in sidebar 'docs'"
   },
-  "sidebar.docs.category.配置": {
+  "sidebar.docs.category.\u914d\u7f6e": {
     "message": "Config",
-    "description": "The label for category '配置' in sidebar 'docs'"
+    "description": "The label for the configuration category in sidebar 'docs'"
   },
-  "sidebar.docs.category.指南": {
+  "sidebar.docs.category.\u6307\u5357": {
     "message": "Guides",
-    "description": "The label for category '指南' in sidebar 'docs'"
+    "description": "The label for the guides category in sidebar 'docs'"
   },
-  "sidebar.docs.category.运维": {
+  "sidebar.docs.category.\u8fd0\u7ef4": {
     "message": "Operations",
-    "description": "The label for category '运维' in sidebar 'docs'"
+    "description": "The label for the operations category in sidebar 'docs'"
   },
-  "sidebar.docs.category.参考": {
+  "sidebar.docs.category.\u53c2\u8003": {
     "message": "Reference",
-    "description": "The label for category '参考' in sidebar 'docs'"
+    "description": "The label for the reference category in sidebar 'docs'"
   },
-  "sidebar.docs.category.组件": {
+  "sidebar.docs.category.\u7ec4\u4ef6": {
     "message": "Components",
-    "description": "The label for category '组件' in sidebar 'docs'"
+    "description": "The label for the components category in sidebar 'docs'"
   },
   "sidebar.docs.category.Dash": {
     "message": "Dash",
@@ -39,12 +39,12 @@
     "message": "Node",
     "description": "The label for category 'Node' in sidebar 'docs'"
   },
-  "sidebar.docs.category.开发和发布": {
+  "sidebar.docs.category.\u5f00\u53d1\u548c\u53d1\u5e03": {
     "message": "Development and Releases",
-    "description": "The label for category '开发和发布' in sidebar 'docs'"
+    "description": "The label for the development and releases category in sidebar 'docs'"
   },
-  "sidebar.docs.doc.文档索引": {
+  "sidebar.docs.doc.\u6587\u6863\u7d22\u5f15": {
     "message": "Documentation Index",
-    "description": "The label for the doc item '文档索引' in sidebar 'docs', linking to the doc Doc"
+    "description": "The label for the documentation index item in sidebar 'docs'"
   }
 }

@@ -33,6 +33,8 @@ Dash is not designed for multiple active instances writing the same runtime stat
 
 `--no-redis` moves Redis-backed runtime state into process memory. It is a fallback mode, not a production topology.
 
+SMART and thermal metrics are runtime state. On Linux, a root-side `smartctl` helper writes `/run/ithiltir-node/smart.json`; Ithiltir-node only reads the cache. SMART cache freshness, helper availability, and device health are stored with metrics snapshots, not static disk assets.
+
 ## Node Reporting
 
 Nodes normally run in push mode:

@@ -46,6 +46,12 @@ node report install <dash-url>/api/node/metrics <secret>
 
 静态信息不完整时，节点会继续重试，直到完整上报。
 
+## 节点更新
+
+Dash 管理台触发节点升级后，Dash 会在下一次指标响应里返回 update manifest。Windows runner、Linux systemd 安装布局和 macOS LaunchDaemon 安装布局可以处理该 manifest。
+
+安装布局外直接运行的二进制不会处理自更新。更新规则见 [节点更新](../components/node/update.md)。
+
 ## Secret 轮换
 
 1. 在 Dash 管理台修改节点 secret。

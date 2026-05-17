@@ -105,6 +105,18 @@ slug: /Node/API
   - `supported`
   - `available`
   - `arrays[]`
+- `thermal`
+  - `status`
+  - `updated_at`
+  - `sensors[]`
+  - `sensors[].kind`
+  - `sensors[].name`
+  - `sensors[].sensor_key`
+  - `sensors[].source`
+  - `sensors[].status`
+  - `sensors[].temp_c`
+  - `sensors[].high_c`
+  - `sensors[].critical_c`
 
 ## `Static`
 

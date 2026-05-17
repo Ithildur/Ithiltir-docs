@@ -1,104 +1,77 @@
 ---
 slug: /Reference/ThemePackage
-title: Theme Package Format
+title: Theme Package
 ---
 
-# 主题包格式
+# Theme Package Format
 
-主题包是 zip 文件。允许文件：
+A theme package is a zip file. Allowed files:
 
 ```text
-theme.json
+manifest.json
 tokens.css
 recipes.css
 preview.png
-README.md
 ```
 
-必填：
+## `manifest.json`
 
-- `theme.json`
-- `tokens.css`
-
-## 限制
-
-| 项 | 限制 |
-| --- | --- |
-| archive | 最大 20 MiB |
-| 解压总量 | 最大 50 MiB |
-| 单文件 | 最大 20 MiB |
-| 路径 | 只允许根目录下的允许文件 |
-| 重复文件 | 不允许 |
-
-## Manifest
+Required:
 
 ```json
 {
-  "id": "operator-copy",
-  "name": "Operator Copy",
-  "version": "1.0.0",
-  "author": "Team",
-  "description": "Compact operator skin.",
-  "skin": {
-    "admin": {
-      "shell": "topbar",
-      "frame": "flat"
-    },
-    "dashboard": {
-      "summary": "strip",
-      "density": "compact"
-    }
-  }
+  "id": "dark-modern",
+  "name": "Dark Modern",
+  "version": "1.0.0"
 }
 ```
 
-`id` 必须匹配：
+## Limits
+
+| Item | Limit |
+| --- | --- |
+| archive | Max 20 MiB |
+| extracted total | Max 50 MiB |
+| single file | Max 20 MiB |
+| path | Only allowed root-level files |
+| duplicate file | Not allowed |
+
+`id` must match:
 
 ```text
-[a-z0-9][a-z0-9_-]{0,63}
+^[a-z0-9][a-z0-9_-]{1,63}$
 ```
 
-保留 ID：
+Reserved IDs:
 
 - `default`
-- 内置主题 ID
+- built-in theme IDs
 
-## CSS
+## CSS Files
 
-`tokens.css` 和 `recipes.css` 都只能声明 CSS custom properties。
+`tokens.css` and `recipes.css` can only declare CSS custom properties.
 
-允许 selector：
+Allowed selectors:
 
 ```css
-:root {
-  --color-bg: #ffffff;
-}
-
-:root.dark {
-  --color-bg: #111111;
-}
-
-:root[data-theme='operator-copy'] {
-  --color-accent: #3b82f6;
-}
+:root { ... }
+[data-theme="dark"] { ... }
+[data-theme="light"] { ... }
 ```
 
-禁止：
+Disallowed:
 
 - `@import`
-- `@media`
-- `@layer`
-- `url(`
-- `expression(`
-- `javascript:`
-- `<style`
-- `</style`
-- 嵌套 block
+- `@font-face`
+- `@keyframes`
+- URLs
+- selectors outside the allowed list
+- nested blocks
 
-## 打包命令
+## Pack Command
 
 ```bash
-dash pack-theme -src ./operator-copy -out operator-copy.zip
+dash pack-theme -src theme-dir -out theme.zip
 ```
 
-输出包含固定时间戳，方便得到稳定 zip。
+The output uses fixed timestamps to produce stable zip files.
