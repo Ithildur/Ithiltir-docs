@@ -69,6 +69,12 @@ Supported scope:
 - Windows: runner-managed only.
 - Linux/macOS: requires the `/var/lib/ithiltir-node/releases/<version>` and `/var/lib/ithiltir-node/current` install layout.
 
+:::warning Automatic Update Delivery
+
+Automatic update delivery from the Dash admin console requires the current node version to be `0.2.1` or later. For older versions, the admin console shows a manual update notice and the install command must be rerun.
+
+:::
+
 Direct binaries outside the managed install layout ignore update manifests.
 
 ## Linux/macOS Node Reinstall

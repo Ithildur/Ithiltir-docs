@@ -55,9 +55,10 @@ Optional Bearer endpoints treat missing, malformed, expired, revoked, or otherwi
 - `GET /api/admin/nodes/` includes traffic settings, tags, and version status.
 - `tags` is always a string array.
 - `version.version` is the last reported node version. Missing, invalid, or older-than-bundled versions set `version.is_outdated=true`.
+- `version.supports_auto_update` shows whether the current node version meets the Dash admin console automatic update delivery requirement. The minimum version is `0.2.1`.
 - `PATCH /api/admin/nodes/{id}` accepts traffic settings, tags, secret, group IDs, and display fields. Omitted fields are unchanged.
 - `PATCH /api/admin/nodes/traffic-p95` validates all node IDs before updating them in one transaction.
-- `POST /api/admin/nodes/{id}/upgrade` returns `204` on success. Unavailable bundled version, platform, or asset returns `409`.
+- `POST /api/admin/nodes/{id}/upgrade` returns `204` on success. Current node versions below `0.2.1` return `409 node_upgrade_unsupported`. Unavailable bundled version, platform, or asset returns `409`.
 
 ## Agent Update
 

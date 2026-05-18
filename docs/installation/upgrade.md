@@ -68,6 +68,12 @@ Dash 发布包携带节点资产。管理台触发节点升级时：
 - Windows：必须由 runner 托管。
 - Linux/macOS：必须使用 `/var/lib/ithiltir-node/releases/<version>` 和 `/var/lib/ithiltir-node/current` 安装布局。
 
+:::warning 自动下发版本要求
+
+Dash 管理台自动下发更新要求当前 Node 版本为 `0.2.1` 或更高。低于该版本时，管理台提示手动更新，重新执行安装命令。
+
+:::
+
 安装布局外直接运行的二进制会忽略 update manifest。
 
 ## Linux/macOS 节点重新安装

@@ -17,6 +17,12 @@ Dash delivers node updates through the update manifest in the `/api/node/metrics
 
 Direct binaries outside the managed install layout ignore update manifests.
 
+:::warning Automatic Update Delivery
+
+Automatic update delivery from the Dash admin console applies only to nodes running `0.2.1` or later. Nodes below `0.2.1` must be updated by rerunning the install command or manually replacing the binary.
+
+:::
+
 ## Windows Runner
 
 ```powershell
@@ -58,7 +64,7 @@ Rules:
 
 ## Conflict Handling
 
-If multiple targets return update manifests in the same cycle, every manifest must have identical `id`, `version`, `url`, `sha256`, and `size`. If they conflict, the update is skipped.
+Manifests matching the currently reported version are ignored before conflict checks. If multiple remaining targets return update manifests in the same cycle, every manifest must have identical `id`, `version`, `url`, `sha256`, and `size`. If they conflict, the update is skipped.
 
 Malformed JSON, invalid manifests, download failures, size mismatches, or checksum mismatches skip the update and reporting continues.
 

@@ -47,6 +47,7 @@ Dash API 错误格式：
 | --- | --- | --- |
 | `409` | `node_version_unavailable` | 打包节点版本不可用 |
 | `409` | `invalid_node_version` | 打包节点版本非法 |
+| `409` | `node_upgrade_unsupported` | 当前节点版本低于 `0.2.1`，不支持自动下发更新 |
 | `409` | `node_platform_unknown` | 节点平台未知 |
 | `409` | `node_platform_unsupported` | 节点平台不支持 |
 | `409` | `node_asset_missing` | 对应节点资产缺失 |

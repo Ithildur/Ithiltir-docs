@@ -123,6 +123,10 @@ Bearer 可选端点会把无效 Bearer 当作匿名请求。
 
 `/api/admin/nodes/traffic-p95` 接受 `ids` 和 `enabled`。`enabled` 必填。`ids` 必须是非空正整数数组，不能重复，最多 10000 项。该命令先校验全部节点 ID，再在一个事务中更新 P95 开关。成功返回 `204`；任一节点不存在或已删除时返回 `404 not_found`，且不会更新任何节点。
 
+`GET /api/admin/nodes/` 的 `version.supports_auto_update` 表示当前节点版本是否满足 Dash 管理台自动下发更新要求。最低版本为 `0.2.1`。
+
+`POST /api/admin/nodes/{id}/upgrade` 要求 `version.supports_auto_update=true`。当前节点版本低于 `0.2.1` 时返回 `409 node_upgrade_unsupported`。
+
 ## 管理：流量设置
 
 | 方法 | 路径 | Body | 成功 |

@@ -117,6 +117,8 @@ Body：
 
 安装布局外直接运行的二进制会忽略 update manifest。
 
+Dash 管理台自动下发更新只适用于当前上报版本为 `0.2.1` 或更高的节点。更低版本必须手动更新。
+
 manifest 必须满足：
 
 - `version` 非空，不能是 `.` 或 `..`，且不包含路径分隔符。
@@ -124,6 +126,6 @@ manifest 必须满足：
 - `sha256` 是 64 位十六进制 SHA-256。
 - `size` 为正数，并必须等于下载字节数。
 
-同一轮多个 target 返回 manifest 时，`id`、`version`、`url`、`sha256`、`size` 必须完全一致，否则跳过更新。
+与当前上报版本相同的 manifest 会先被忽略。同一轮剩余多个 target 返回 manifest 时，`id`、`version`、`url`、`sha256`、`size` 必须完全一致，否则跳过更新。
 
 更新成功后，Windows runner 替换 `%ProgramData%\Ithiltir-node\bin\ithiltir-node.exe` 并重启 node。Linux/macOS 切换 `/var/lib/ithiltir-node/current` 到新的 release 目录，并交给 systemd/launchd 重启 node。

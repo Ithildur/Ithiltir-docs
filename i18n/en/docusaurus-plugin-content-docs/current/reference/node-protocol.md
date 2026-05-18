@@ -118,6 +118,8 @@ Only managed install layouts process update manifests:
 
 Direct binaries outside the managed install layout ignore update manifests.
 
+Automatic update delivery from the Dash admin console applies only to nodes currently reporting `0.2.1` or later. Older versions must be updated manually.
+
 Manifest requirements:
 
 - `version` is non-empty, not `.` or `..`, and contains no path separators.
@@ -125,6 +127,6 @@ Manifest requirements:
 - `sha256` is a 64-character SHA-256 hex digest.
 - `size` is positive and must equal the downloaded byte count.
 
-If multiple targets return update manifests in one cycle, `id`, `version`, `url`, `sha256`, and `size` must match exactly. Otherwise the update is skipped.
+Manifests matching the currently reported version are ignored first. If multiple remaining targets return update manifests in one cycle, `id`, `version`, `url`, `sha256`, and `size` must match exactly. Otherwise the update is skipped.
 
 After a successful update, Windows runner replaces `%ProgramData%\Ithiltir-node\bin\ithiltir-node.exe` and restarts node. Linux/macOS switches `/var/lib/ithiltir-node/current` to the new release directory and lets systemd/launchd restart node.
