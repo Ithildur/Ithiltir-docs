@@ -93,5 +93,7 @@ Ithiltir documentation is organized by reader goal: install the system, understa
 
 ### Development and Releases
 
+- [Development Guidelines](contributing/development-guidelines.md)
+- [AI Policy](contributing/ai-policy.md)
 - [Build](contributing/build.md)
 - [Releases](contributing/releases.md)

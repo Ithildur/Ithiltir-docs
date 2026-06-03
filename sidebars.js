@@ -122,6 +122,8 @@ const sidebars = {
       type: 'category',
       label: '开发和发布',
       items: [
+        'contributing/development-guidelines',
+        'contributing/ai-policy',
         'contributing/build',
         'contributing/releases',
       ],
