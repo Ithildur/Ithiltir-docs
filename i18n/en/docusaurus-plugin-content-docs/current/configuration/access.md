@@ -9,7 +9,7 @@ Dash has administrator access, optional anonymous reads, and node reporting acce
 
 ## Admin
 
-Admin APIs require Bearer access tokens from `POST /api/auth/login`. Refresh and logout use the refresh cookie plus `X-CSRF-Token`.
+Admin APIs require Bearer access tokens from `POST /api/auth/login`. Direct login API calls must send `password` and `persistence`, where `persistence` is `session` or `persistent`. Refresh and logout use the refresh cookie plus `X-CSRF-Token`.
 
 ## Anonymous Reads
 

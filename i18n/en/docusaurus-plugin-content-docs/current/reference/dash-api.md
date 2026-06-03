@@ -45,6 +45,19 @@ Error format:
 
 Optional Bearer endpoints treat invalid Bearer tokens as anonymous requests.
 
+## Auth Sessions
+
+`POST /api/auth/login` request bodies must include `password` and `persistence`. `persistence` allows `session` or `persistent`. Successful responses include `access_token`, `expires_at`, and `csrf_token`, and set refresh/CSRF cookies.
+
+| Method | Path | Auth | Success |
+| --- | --- | --- | --- |
+| `GET` | `/api/auth/sessions/` | Bearer | `200` |
+| `DELETE` | `/api/auth/sessions/current` | Bearer | `204` |
+| `DELETE` | `/api/auth/sessions/` | Bearer | `204` |
+| `DELETE` | `/api/auth/sessions/{sid}` | Bearer | `204` |
+
+`GET /api/auth/sessions/` returns `{ "sessions": [...] }` for the bearer token user. Each item includes `id`, `expires_at`, `session_only`, and `current`.
+
 ## Node Endpoints
 
 | Method | Path | Auth | Body | Success |
@@ -100,6 +113,8 @@ Or:
 | `PATCH` | `/api/admin/nodes/traffic-p95` | `{ "ids": [1, 2], "enabled": true }` | `204` |
 | `PATCH` | `/api/admin/nodes/{id}` | Node patch | `204` |
 | `POST` | `/api/admin/nodes/{id}/upgrade` | None | `204` |
+| `GET` | `/api/admin/nodes/traffic/rebuild` | None | `200` |
+| `POST` | `/api/admin/nodes/{id}/traffic/rebuild` | None | `202` |
 | `DELETE` | `/api/admin/nodes/{id}` | None | `204` |
 
 Node patch fields:
@@ -113,6 +128,7 @@ Node patch fields:
   "traffic_billing_start_day": 1,
   "traffic_billing_anchor_date": "",
   "traffic_billing_timezone": "Asia/Shanghai",
+  "traffic_direction_mode": "default",
   "display_order": 1,
   "tags": ["prod", "hk"],
   "secret": "new-secret",
@@ -122,7 +138,15 @@ Node patch fields:
 
 `tags` must be a string array. Empty and duplicate values are removed.
 
+Node billing cycle override fields are atomic. If any of `traffic_cycle_mode`, `traffic_billing_start_day`, `traffic_billing_anchor_date`, or `traffic_billing_timezone` is submitted, the request must also include `traffic_cycle_mode` and every field used by that mode, otherwise it returns `400 invalid_traffic_cycle_settings`. `traffic_cycle_mode` allows `default`, `calendar_month`, `whmcs_compatible`, and `clamp_to_month_end`.
+
+`traffic_direction_mode` allows `default`, `out`, `both`, and `max`. `default` inherits the global direction mode; other values override that node.
+
 `/api/admin/nodes/traffic-p95` accepts `ids` and `enabled`. `enabled` is required. `ids` must be a non-empty positive integer array, cannot contain duplicates, and can contain at most 10000 items. The command validates all node IDs first, then updates them in one transaction. Success returns `204`; any missing or deleted node returns `404 not_found`, and no node is updated.
+
+`GET /api/admin/nodes/traffic/rebuild` returns the latest process-local rebuild task state. Before any task exists it returns `status=idle`; running responses include `server_id`, `running=true`, and `started_at`; finished responses may return `completed` or `failed` until replaced by the next task. This state is not durable across process restarts. Failed states expose stable `code` and `error` values, not internal error strings.
+
+`POST /api/admin/nodes/{id}/traffic/rebuild` starts a per-node traffic rebuild. It rewrites that node's 5-minute facts from retained `nic_metrics` within `database.traffic_retention_days`. Success returns `202` with the status body. Missing or deleted nodes return `404 not_found`; any running rebuild returns `409 traffic_rebuild_running`; unavailable rebuild tasks return `503 traffic_rebuild_unavailable`. The task invalidates overlapping monthly snapshots in the retained window when it starts and does not synchronously rewrite monthly snapshots.
 
 `GET /api/admin/nodes/` field `version.supports_auto_update` shows whether the current node version meets the Dash admin console automatic update delivery requirement. The minimum version is `0.2.1`.
 
@@ -140,10 +164,13 @@ Fields are documented in [Traffic Accounting and Billing Cycles](../configuratio
 
 - `GET /api/statistics/traffic/daily` requires `usage_mode=billing`; otherwise it returns `409 traffic_daily_requires_billing`. `period` allows `current` or `previous`; omitted means `current`.
 - `GET /api/statistics/traffic/monthly` supports `months` and `period`. `months` is at most 24. `period=current` starts at the current billing cycle; `period=previous` starts at the previous cycle. Omitted means `current`. `includes_current` is `true` for `period=current` and `false` for `period=previous`.
+- Traffic queries use each node's effective traffic configuration. Nodes with `traffic_cycle_mode=default` inherit the global cycle; nodes with `traffic_direction_mode=default` inherit the global direction mode.
 - Traffic summary, daily, and monthly responses keep raw `in_*` and `out_*` fields. The active accounting view is exposed through `selected_bytes`, `selected_p95_bytes_per_sec`, `selected_peak_bytes_per_sec`, and selected direction fields.
 - Clients should use `coverage_ratio` for sample coverage and accuracy hints. `partial` is retained only for compatibility.
 
 ## History Metrics
+
+`GET /api/front/metrics` node objects can include `node.tags`, `node.disk.smart`, `node.disk.temperature_devices[]`, and `node.thermal`. SMART and thermal runtime payloads are cached separately from the front node snapshot and are reattached only when `received_at` matches.
 
 `GET /api/metrics/history` supports temperature metrics:
 
@@ -153,6 +180,8 @@ Fields are documented in [Traffic Accounting and Billing Cycles](../configuratio
 | `disk.temp_c` | SMART physical disk temperature history | Required `device` |
 
 For `disk.temp_c`, `device` can match physical disk `name`, `ref`, or `path`. Temperature history does not use a rollup prefix.
+
+Disk temperature history is written only for backend-confirmed physical disks. Virtual disks and RAID devices are not persisted as `disk.temp_c`.
 
 ## Admin: Alerts
 

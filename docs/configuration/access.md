@@ -14,7 +14,7 @@ Ithiltir 有三类访问者：管理员、匿名访客和节点。
 POST /api/auth/login
 ```
 
-使用 `monitor_dash_pwd` 登录。登录后使用 Bearer access token 调用管理 API，refresh/logout 使用 refresh cookie 和 `X-CSRF-Token`。
+使用 `monitor_dash_pwd` 登录。直接调用登录 API 时，请求体必须包含 `password` 和 `persistence`，其中 `persistence` 为 `session` 或 `persistent`。登录后使用 Bearer access token 调用管理 API，refresh/logout 使用 refresh cookie 和 `X-CSRF-Token`。
 
 管理 API：
 

@@ -21,12 +21,16 @@ Release install path:
 app:
   listen: ":8080"
   public_url: "https://dash.example.com"
+  timezone: "UTC"
   node_offline_threshold: "30s"
+http:
   trusted_proxies:
     - "127.0.0.1/32"
 ```
 
 Production deployments should use an HTTPS domain root URL such as `https://dash.example.com`, with Nginx or Caddy reverse-proxying to Dash. IP+HTTP is only for temporary validation.
+
+`app.timezone` is validated during startup. Empty uses the local timezone; non-empty values must be valid IANA timezone names such as `UTC` or `Asia/Hong_Kong`. Invalid values stop config loading.
 
 ## Database
 
@@ -41,6 +45,8 @@ database:
   traffic_retention_days: 90
 ```
 
+`traffic_retention_days` defaults to `max(retention_days, 45)` and bounds the 5-minute fact retention window and the raw metrics window available for manual traffic rebuilds.
+
 ## Redis
 
 ```yaml
@@ -52,13 +58,11 @@ redis:
 
 Dash connects to Redis on startup unless `--no-redis` is used. Connection failure exits the process.
 
-## Security
+## Auth
 
 ```yaml
-security:
-  jwt_secret: "<random>"
-  cookie_hash_key: "<random>"
-  cookie_block_key: "<random>"
+auth:
+  jwt_signing_key: "<random>"
 ```
 
-Changing these values invalidates active sessions.
+Changing `auth.jwt_signing_key` invalidates active sessions.

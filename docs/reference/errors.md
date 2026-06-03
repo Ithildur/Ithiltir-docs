@@ -25,6 +25,12 @@ Dash API 错误格式：
 | `503` | `db_error` | 数据库读写失败 |
 | `503` | `redis_cache_error` | Redis 缓存同步失败 |
 
+## 认证
+
+| HTTP | code | 说明 |
+| --- | --- | --- |
+| `400` | `invalid_persistence` | 登录 `persistence` 不是 `session` 或 `persistent` |
+
 ## 节点管理
 
 | code | 说明 |
@@ -32,9 +38,11 @@ Dash API 错误格式：
 | `invalid_name` | 节点名为空 |
 | `invalid_display_order` | 排序值不是正数 |
 | `invalid_traffic_cycle_mode` | 节点账期模式非法 |
+| `invalid_traffic_cycle_settings` | 节点账期字段与账期模式不匹配 |
 | `invalid_traffic_billing_start_day` | 账期日不在 1..31 |
 | `invalid_traffic_billing_anchor_date` | 锚点日期非法 |
 | `invalid_traffic_billing_timezone` | 时区非法 |
+| `invalid_traffic_direction_mode` | 节点统计方向非法 |
 | `invalid_tags` | tags 不是字符串数组 |
 | `invalid_secret` | 节点 secret 非法 |
 | `invalid_group_ids` | 分组 ID 非法 |
@@ -59,6 +67,8 @@ Dash API 错误格式：
 | --- | --- | --- |
 | `400` | `invalid_fields` | 流量设置字段非法 |
 | `409` | `traffic_daily_requires_billing` | 日统计要求 billing 模式 |
+| `409` | `traffic_rebuild_running` | 已有流量重建任务运行中 |
+| `503` | `traffic_rebuild_unavailable` | 流量重建任务不可用 |
 
 ## 告警和通知
 

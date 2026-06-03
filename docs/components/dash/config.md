@@ -50,7 +50,7 @@ dash migrate -config /opt/Ithiltir-dash/configs/config.local.yaml
 | `env` | 运行环境；非生产环境会启用开发静态资源行为 |
 | `listen` | HTTP 监听地址，如 `:8080` |
 | `public_url` | 对浏览器和节点公开的根 URL |
-| `timezone` | 账期和告警消息使用的时区 |
+| `timezone` | 账期和告警消息使用的时区；空值使用本地时区，非空值必须是有效 IANA 时区名 |
 | `language` | `zh` 或 `en`，默认 `zh` |
 | `log_level` | `debug`、`info`、`warn`、`error` |
 | `log_format` | `text` 或 `json` |
@@ -59,6 +59,8 @@ dash migrate -config /opt/Ithiltir-dash/configs/config.local.yaml
 `public_url` 可以省略 scheme。IP 地址默认补 `http`，域名默认补 `https`。最终值不能带路径前缀。
 
 正式环境显式配置 HTTPS 域名，例如 `https://dash.example.com`，并使用 Nginx 或 Caddy 反向代理到 Dash 后端监听地址。IP+HTTP 适用于本机验证或临时内网测试。
+
+`app.timezone` 无效时，Dash 会在配置加载阶段退出。
 
 ## `http`
 
@@ -91,7 +93,7 @@ http:
 | `retention_days` | 普通指标保留天数，省略时为 `45` |
 | `traffic_retention_days` | 流量 5 分钟事实表保留天数，省略时为 `max(retention_days, 45)` |
 
-如果需要 95 计费历史，建议把流量保留天数设置为 `90` 或更高。
+如果需要 95 计费历史、手工流量重建或更长账期回溯，建议把流量保留天数设置为 `90` 或更高。`traffic_5m` 保持可写，并通过滚动保留删除旧数据。
 
 ## `redis`
 

@@ -10,8 +10,8 @@ Dash 从节点上报的网卡计数器生成流量统计。系统保存原始入
 
 | 模式 | 值 | 行为 |
 | --- | --- | --- |
-| 轻量模式 | `lite` | 保存月度入/出总量和估算峰值 |
-| 计费模式 | `billing` | 额外维护 5 分钟事实、日汇总、P95、覆盖率和月度快照 |
+| 轻量模式 | `lite` | 根据近期原始网卡采样保存月度入/出总量和估算峰值 |
+| 计费模式 | `billing` | 维护当前 5 分钟事实、日汇总、P95、覆盖率和月度快照 |
 
 `GET /api/statistics/traffic/daily` 只在 `billing` 模式可用，否则返回 `409 traffic_daily_requires_billing`。`period` 可选，允许 `current`、`previous`，省略时为 `current`。
 
@@ -61,7 +61,7 @@ America/Los_Angeles
 
 ## 节点覆盖
 
-节点可覆盖全局账期：
+节点可覆盖全局账期和统计方向：
 
 | 字段 | 说明 |
 | --- | --- |
@@ -69,6 +69,7 @@ America/Los_Angeles
 | `traffic_billing_start_day` | 1 到 31 |
 | `traffic_billing_anchor_date` | WHMCS 锚点 |
 | `traffic_billing_timezone` | 节点账期时区 |
+| `traffic_direction_mode` | `default` 表示继承全局；也可使用 `out`、`both`、`max` |
 | `traffic_p95_enabled` | 是否为该节点计算 P95 |
 
 规范化规则：
@@ -77,6 +78,7 @@ America/Los_Angeles
 - `calendar_month` 保存 `traffic_billing_start_day=1`。
 - 非 `whmcs_compatible` 模式保存空 `traffic_billing_anchor_date`。
 - 非默认模式下空 `traffic_billing_timezone` 在读取时使用应用时区。
+- `traffic_direction_mode=default` 继承全局统计方向；`out`、`both`、`max` 覆盖该节点。
 
 ## 方向模式
 
@@ -85,6 +87,8 @@ America/Los_Angeles
 | `out` | 只使用出站 |
 | `both` | 入站 + 出站 |
 | `max` | 每项指标选择入站/出站较大值 |
+
+全局 `direction_mode` 是默认计费视图。节点设置 `traffic_direction_mode=default` 时继承全局值。
 
 响应仍保留原始字段：
 
@@ -108,14 +112,18 @@ America/Los_Angeles
 
 ## 后台服务
 
-流量后台服务会：
+后台服务负责把节点上报的原始计数器整理成查询使用的流量事实和月度结果。写入节奏如下：
 
-- 每 5 分钟物化 5 分钟流量事实。
+- 每 5 分钟按近期原始采样 upsert 可推导出的 5 分钟事实。
+- 每次物化时更新近期月度用量。
 - 每小时刷新月度快照。
-- 分块回填月度用量。
-- 在 `billing` 模式补齐缺失 5 分钟桶。
+- 与手工 5 分钟事实重建串行执行。
 
-`traffic_retention_days` 控制 5 分钟事实保留窗口。
+`traffic_retention_days` 控制 5 分钟事实保留窗口，也决定手工重建能使用的事实范围。`traffic_5m` 保持可写，并通过滚动保留策略删除旧数据；历史 P95 计费值保存在月度快照中。
+
+## 手工重建
+
+当保留窗口内的事实需要重新生成时，管理台可按节点启动流量重建。重建任务根据保留窗口内的原始 `nic_metrics` 重写该节点的 5 分钟事实，并让重叠的月度快照失效。任务是进程内单任务状态，不跨进程重启持久化。任务失败后，月度历史由后续快照维护、读取路径按保留事实计算，或重试重建恢复；超出保留窗口的数据不会自动补回。
 
 ## P95 状态
 

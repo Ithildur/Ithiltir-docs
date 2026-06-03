@@ -70,10 +70,11 @@ billing_timezone = Asia/Hong_Kong
 
 ## 节点级覆盖
 
-节点可使用系统默认，也可覆盖账期：
+节点可使用系统默认，也可覆盖账期和统计方向：
 
 ```text
 traffic_cycle_mode = default
+traffic_direction_mode = default
 ```
 
 覆盖示例：
@@ -82,6 +83,7 @@ traffic_cycle_mode = default
 traffic_cycle_mode = clamp_to_month_end
 traffic_billing_start_day = 20
 traffic_billing_timezone = Asia/Hong_Kong
+traffic_direction_mode = max
 ```
 
 归一化规则：
@@ -90,6 +92,7 @@ traffic_billing_timezone = Asia/Hong_Kong
 - `calendar_month` 会把开始日固定为 1。
 - 非 WHMCS 模式会清空 `billing_anchor_date`。
 - timezone 为空时回落到 app timezone。
+- `traffic_direction_mode=default` 继承全局 `direction_mode`。
 
 ## P95
 
@@ -109,15 +112,15 @@ P95 最少样本数为 20。新节点或刚开启计费时，短期内出现 `in
 
 ## 后台汇总
 
-流量后台行为：
+后台汇总决定账期视图可查询的数据，也决定复核时能回溯到哪里：
 
-- 5 分钟事实按配置保留。
-- 物化汇总每 5 分钟运行。
+- 5 分钟事实按 `traffic_retention_days` 保留。
+- 物化汇总每 5 分钟运行，只 upsert 可由近期原始采样推导出的事实桶。
+- 月度用量在物化时按近期原始采样更新。
 - 月度快照每小时运行。
-- catchup 按小时分块补齐。
 - 月度快照最多保留 24 个月。
 
-汇总表应由系统维护。需要修复时先备份数据库，再按运维流程处理。
+汇总表应由系统维护。需要修复时先备份数据库，再通过管理台启动手工重建，或按恢复流程处理。重建会重写保留窗口内的 5 分钟事实，并让重叠月度快照失效。
 
 ## 游客访问
 

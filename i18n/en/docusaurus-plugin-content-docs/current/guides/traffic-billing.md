@@ -14,7 +14,7 @@ Traffic accounting uses node network counters. Dash stores raw inbound and outbo
 | Lite | `lite` | Stores monthly inbound/outbound totals and estimated peak |
 | Billing | `billing` | Maintains 5-minute facts, daily summaries, P95, coverage, and monthly snapshots |
 
-Use `billing` only when daily traffic, monthly accounting, or P95 is needed.
+Use `billing` only when daily traffic, monthly accounting, or P95 is needed. `traffic_retention_days` controls both retained 5-minute facts and the raw metrics window available for manual rebuilds.
 
 ## Direction Mode
 
@@ -45,17 +45,19 @@ Cycle modes:
 | `clamp_to_month_end` | Starts on configured day; short months clamp to month end |
 | `whmcs_compatible` | WHMCS-compatible cycle; can use `billing_anchor_date` |
 
-Node-level overrides use `traffic_cycle_mode`, `traffic_billing_start_day`, `traffic_billing_anchor_date`, and `traffic_billing_timezone`. `traffic_cycle_mode=default` inherits global settings.
+Node-level overrides use `traffic_cycle_mode`, `traffic_billing_start_day`, `traffic_billing_anchor_date`, `traffic_billing_timezone`, and `traffic_direction_mode`. `traffic_cycle_mode=default` inherits global cycle settings. `traffic_direction_mode=default` inherits the global direction mode.
 
 ## P95
 
 P95 can be enabled per node. `p95_status` can be:
 
-- `disabled`
-- `insufficient_data`
 - `available`
+- `disabled`
+- `lite_mode`
+- `insufficient_samples`
+- `snapshot_without_p95`
 
-P95 fields are non-null only when status is `available`.
+P95 fields are non-null only when status is `available`. P95 requires at least 20 samples, so new nodes or newly enabled billing can return `insufficient_samples` for a short period.
 
 ## Coverage
 
@@ -68,3 +70,7 @@ Clients should display `coverage_ratio` for sample coverage and accuracy hints. 
 - `GET /api/statistics/traffic/monthly`: monthly snapshots.
 
 `daily` and `monthly` accept `period=current` or `period=previous`. `monthly` also accepts `months`, up to 24.
+
+## Manual Rebuild
+
+The admin console can rebuild one node's retained 5-minute traffic facts from raw NIC metrics. A rebuild invalidates overlapping monthly snapshots and runs serially with automatic traffic materialization. Data outside retention is not recovered automatically.

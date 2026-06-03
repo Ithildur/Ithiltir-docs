@@ -44,6 +44,19 @@ slug: /Reference/DashAPI
 
 Bearer 可选端点会把无效 Bearer 当作匿名请求。
 
+## 认证会话
+
+`POST /api/auth/login` 请求体必须包含 `password` 和 `persistence`。`persistence` 允许 `session` 或 `persistent`。成功响应包含 `access_token`、`expires_at` 和 `csrf_token`，并写入 refresh/CSRF cookie。
+
+| 方法 | 路径 | 鉴权 | 成功 |
+| --- | --- | --- | --- |
+| `GET` | `/api/auth/sessions/` | Bearer | `200` |
+| `DELETE` | `/api/auth/sessions/current` | Bearer | `204` |
+| `DELETE` | `/api/auth/sessions/` | Bearer | `204` |
+| `DELETE` | `/api/auth/sessions/{sid}` | Bearer | `204` |
+
+`GET /api/auth/sessions/` 返回当前 Bearer token 用户的 `{ "sessions": [...] }`。每项包含 `id`、`expires_at`、`session_only` 和 `current`。
+
 ## 节点接口
 
 | 方法 | 路径 | 鉴权 | Body | 成功 |
@@ -99,6 +112,8 @@ Bearer 可选端点会把无效 Bearer 当作匿名请求。
 | `PATCH` | `/api/admin/nodes/traffic-p95` | `{ "ids": [1, 2], "enabled": true }` | `204` |
 | `PATCH` | `/api/admin/nodes/{id}` | 节点补丁 | `204` |
 | `POST` | `/api/admin/nodes/{id}/upgrade` | 无 | `204` |
+| `GET` | `/api/admin/nodes/traffic/rebuild` | 无 | `200` |
+| `POST` | `/api/admin/nodes/{id}/traffic/rebuild` | 无 | `202` |
 | `DELETE` | `/api/admin/nodes/{id}` | 无 | `204` |
 
 节点补丁字段：
@@ -112,6 +127,7 @@ Bearer 可选端点会把无效 Bearer 当作匿名请求。
   "traffic_billing_start_day": 1,
   "traffic_billing_anchor_date": "",
   "traffic_billing_timezone": "Asia/Shanghai",
+  "traffic_direction_mode": "default",
   "display_order": 1,
   "tags": ["prod", "hk"],
   "secret": "new-secret",
@@ -121,7 +137,15 @@ Bearer 可选端点会把无效 Bearer 当作匿名请求。
 
 `tags` 必须是字符串数组，空值和重复值会被移除。
 
+节点账期覆盖字段是原子组。只要提交 `traffic_cycle_mode`、`traffic_billing_start_day`、`traffic_billing_anchor_date` 或 `traffic_billing_timezone` 中任意字段，就必须同时提交 `traffic_cycle_mode` 和该模式使用的全部字段，否则返回 `400 invalid_traffic_cycle_settings`。`traffic_cycle_mode` 允许 `default`、`calendar_month`、`whmcs_compatible` 和 `clamp_to_month_end`。
+
+`traffic_direction_mode` 允许 `default`、`out`、`both` 和 `max`。`default` 继承全局统计方向，其他值覆盖该节点。
+
 `/api/admin/nodes/traffic-p95` 接受 `ids` 和 `enabled`。`enabled` 必填。`ids` 必须是非空正整数数组，不能重复，最多 10000 项。该命令先校验全部节点 ID，再在一个事务中更新 P95 开关。成功返回 `204`；任一节点不存在或已删除时返回 `404 not_found`，且不会更新任何节点。
+
+`GET /api/admin/nodes/traffic/rebuild` 返回最近一次进程内重建任务状态。还没有任务时返回 `status=idle`；运行中时包含 `server_id`、`running=true` 和 `started_at`；任务结束后可能继续返回 `completed` 或 `failed`，直到下一次任务替换。该状态不会跨进程重启持久化。失败状态只暴露稳定的 `code` 和 `error`，不会返回内部错误字符串。
+
+`POST /api/admin/nodes/{id}/traffic/rebuild` 按节点启动流量重建，基于保留窗口内的 `nic_metrics` 重写该节点的 5 分钟事实。成功返回 `202` 和状态体；节点不存在或已删除时返回 `404 not_found`；已有任意重建任务运行时返回 `409 traffic_rebuild_running`；重建任务不可用时返回 `503 traffic_rebuild_unavailable`。任务启动时会让该节点保留窗口内重叠的月度快照失效，不同步重写月度快照。
 
 `GET /api/admin/nodes/` 的 `version.supports_auto_update` 表示当前节点版本是否满足 Dash 管理台自动下发更新要求。最低版本为 `0.2.1`。
 
@@ -139,10 +163,13 @@ Bearer 可选端点会把无效 Bearer 当作匿名请求。
 
 - `GET /api/statistics/traffic/daily` 要求 `usage_mode=billing`，否则返回 `409 traffic_daily_requires_billing`。`period` 可选，允许 `current`、`previous`，省略时为 `current`。
 - `GET /api/statistics/traffic/monthly` 支持 `months` 和 `period`。`months` 最大 24；`period=current` 从本账期开始，`period=previous` 从上账期开始，省略时为 `current`。响应字段 `includes_current` 在 `period=current` 时为 `true`，在 `period=previous` 时为 `false`。
+- 流量查询使用节点有效流量配置。节点 `traffic_cycle_mode=default` 时继承全局账期；节点 `traffic_direction_mode=default` 时继承全局统计方向。
 - 流量 summary、daily、monthly 响应保留原始 `in_*` 和 `out_*` 字段，并通过 `selected_bytes`、`selected_p95_bytes_per_sec`、`selected_peak_bytes_per_sec` 及其方向字段暴露当前计费视图。
 - 客户端应使用 `coverage_ratio` 展示样本覆盖率和准确性提示。`partial` 仅为兼容保留，新的展示逻辑不应依赖该字段。
 
 ## 历史指标
+
+`GET /api/front/metrics` 的节点结构可以包含 `node.tags`、`node.disk.smart`、`node.disk.temperature_devices[]` 和 `node.thermal`。SMART 和 thermal 运行时 payload 与前台节点快照分开缓存，只有 `received_at` 匹配时才会重新挂回节点快照。
 
 `GET /api/metrics/history` 支持温度指标：
 
@@ -152,6 +179,8 @@ Bearer 可选端点会把无效 Bearer 当作匿名请求。
 | `disk.temp_c` | SMART 物理磁盘温度历史 | 必须传 `device` |
 
 `disk.temp_c` 的 `device` 可以匹配物理磁盘 `name`、`ref` 或 `path`。温度历史不使用 rollup 前缀。
+
+SMART 温度历史只来自后端确认的物理盘。虚拟盘和 RAID 设备不会写入 `disk.temp_c` 历史。
 
 ## 管理：告警
 

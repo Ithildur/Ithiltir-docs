@@ -55,7 +55,7 @@ export monitor_dash_pwd='<admin-password>'
 | `listen` | 必填 | HTTP 监听地址 |
 | `grpc_port` | 当前不作为公开入口 | 保留字段 |
 | `public_url` | 必填 | 公开根 URL；不能带路径前缀 |
-| `timezone` | 空值用 `time.Local` | 告警消息和账期 fallback 时区 |
+| `timezone` | 空值用 `time.Local`；非空值必须是有效 IANA 时区名 | 告警消息和账期 fallback 时区 |
 | `language` | 默认 `zh` | `zh`、`cn`、`chinese`、`zh-cn`、`zh_hans` 归一为 `zh`；`en`、`english` 归一为 `en` |
 | `log_level` | `info` | `debug`、`info`、`warn`、`error` |
 | `log_format` | `text` | `text` 或 `json` |
@@ -64,6 +64,8 @@ export monitor_dash_pwd='<admin-password>'
 `public_url` 可以省略 scheme。IP 地址默认补 `http`，域名默认补 `https`。
 
 生产环境显式配置 HTTPS 域名，例如 `https://dash.example.com`，并通过 Nginx/Caddy 反向代理到 Dash 后端。IP+HTTP 用于临时验证。
+
+`app.timezone` 在启动时校验。无效值会导致配置加载失败，错误信息包含原始配置值。
 
 ## `http`
 
@@ -104,7 +106,7 @@ http:
 | `retention_days` | 普通指标保留天数；省略或 `0` 使用 `45` |
 | `traffic_retention_days` | 流量 5 分钟事实表保留天数；省略时为 `max(retention_days, 45)` |
 
-负数保留天数会导致配置校验失败。
+负数保留天数会导致配置校验失败。`traffic_retention_days` 同时限定 5 分钟事实保留窗口和手工流量重建可使用的原始指标窗口。
 
 ## `redis`
 

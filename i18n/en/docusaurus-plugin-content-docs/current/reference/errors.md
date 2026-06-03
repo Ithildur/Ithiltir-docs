@@ -26,6 +26,12 @@ Dash API error format:
 | `503` | `db_error` | Database read or write failed |
 | `503` | `redis_cache_error` | Redis cache sync failed |
 
+## Authentication
+
+| HTTP | code | Description |
+| --- | --- | --- |
+| `400` | `invalid_persistence` | Login `persistence` is not `session` or `persistent` |
+
 ## Node Management
 
 | code | Description |
@@ -33,9 +39,11 @@ Dash API error format:
 | `invalid_name` | Empty node name |
 | `invalid_display_order` | Display order is not positive |
 | `invalid_traffic_cycle_mode` | Invalid node billing cycle mode |
+| `invalid_traffic_cycle_settings` | Node billing cycle fields do not match the selected mode |
 | `invalid_traffic_billing_start_day` | Billing day is outside `1..31` |
 | `invalid_traffic_billing_anchor_date` | Invalid billing anchor date |
 | `invalid_traffic_billing_timezone` | Invalid billing timezone |
+| `invalid_traffic_direction_mode` | Invalid node traffic direction mode |
 | `invalid_tags` | Tags is not a string array |
 | `invalid_secret` | Invalid node secret |
 | `invalid_group_ids` | Invalid group IDs |
@@ -60,6 +68,8 @@ Dash API error format:
 | --- | --- | --- |
 | `400` | `invalid_fields` | Invalid traffic settings field |
 | `409` | `traffic_daily_requires_billing` | Daily traffic requires billing mode |
+| `409` | `traffic_rebuild_running` | A traffic rebuild task is already running |
+| `503` | `traffic_rebuild_unavailable` | Traffic rebuild is unavailable |
 
 ## Alerts and Notifications
 

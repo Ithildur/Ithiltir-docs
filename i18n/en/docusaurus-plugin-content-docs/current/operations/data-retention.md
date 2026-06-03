@@ -37,7 +37,9 @@ Changing retention affects future policy sync. Existing chunks are removed by Ti
 
 Normal metrics retention covers the metric hypertables, including disk IO, disk usage, NIC metrics, and physical disk temperature.
 
-Traffic retention covers 5-minute traffic facts. Monthly snapshots are retained separately as accounting output.
+Traffic retention covers writable 5-minute traffic facts. Old rows are removed by rolling retention, while monthly snapshots are retained separately as accounting output and store historical 95th percentile billing values.
+
+Manual traffic rebuilds use the same retention boundary. They can read only retained raw NIC metrics, so longer retention increases database size but expands the rebuild and review window.
 
 ## Backup Boundary
 
