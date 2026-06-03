@@ -73,10 +73,12 @@ Linux 节点脚本需要 root/sudo、systemd、`curl` 或 `wget`。检测到 LVM
 
 ## 构建环境
 
-只有源码构建或自定义打包需要：
+只有 Dash 源码构建或自定义打包需要：
 
 - Go 1.26+
 - Bun 1.3.11
 - Git
 - tar 或 zip
 - GoReleaser；节点构建脚本会在缺失时安装 `v2.15.2`
+
+文档站构建需要 Node.js 24（`>=24 <25`）。

@@ -74,10 +74,12 @@ The Linux node installer needs root/sudo, systemd, and `curl` or `wget`. When LV
 
 ## Build Environment
 
-Only source builds and custom packaging require:
+Only Dash source builds and custom packaging require:
 
 - Go 1.26+
 - Bun 1.3.11
 - Git
 - tar or zip
 - GoReleaser; the node build script installs `v2.15.2` when missing
+
+Docs site builds require Node.js 24 (`>=24 <25`).
