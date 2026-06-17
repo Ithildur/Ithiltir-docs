@@ -17,8 +17,13 @@ Ithiltir documentation is organized by reader goal: install the system, understa
 | Change configuration | [Config Overview](configuration/index.md), [Advanced Configuration Path](guides/advanced-configuration.md) |
 | Troubleshoot | [Logging](operations/logging.md), [Troubleshooting](operations/troubleshooting.md) |
 | Look up contracts | [Reference Overview](reference/index.md) |
+| Review release changes | [Release Notes](release-notes.md) |
 
 ## Documentation Sections
+
+### Release Notes
+
+- [Release Notes](release-notes.md)
 
 ### Overview
 

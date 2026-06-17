@@ -4,6 +4,7 @@
 const sidebars = {
   docs: [
     {type: 'doc', id: 'index', label: '文档索引'},
+    'release-notes',
     {
       type: 'category',
       label: '概览',
