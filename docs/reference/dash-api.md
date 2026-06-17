@@ -23,7 +23,8 @@ slug: /Reference/DashAPI
 | 管理员密码 | `POST /api/auth/login` |
 | refresh cookie + `X-CSRF-Token` | `POST /api/auth/refresh`、`POST /api/auth/logout` |
 | `Authorization: Bearer <access_token>` | 管理 API 和可选鉴权读取 |
-| `X-Node-Secret` | 节点上报和节点身份读取 |
+| `X-Node-Secret` | 节点上报、节点身份读取和 deploy 资产下载 |
+| `upgrade_token` query | 只给旧 Agent 自动升级使用的临时 deploy 资产下载授权 |
 
 ## 公开和可选鉴权
 
@@ -82,12 +83,16 @@ Bearer 可选端点会把无效 Bearer 当作匿名请求。
   "update": {
     "id": "release-id",
     "version": "1.2.3",
-    "url": "https://dash.example.com/deploy/windows/node_windows_amd64.exe",
+    "url": "https://dash.example.com/deploy/windows/node_windows_amd64.exe?upgrade_token=...",
     "sha256": "...",
     "size": 12345678
   }
 }
 ```
+
+`url` 可能包含短期有效的 `upgrade_token`，让旧 Agent 不发送 `X-Node-Secret` 也能下载本次升级的精确资产。客户端必须按原样使用返回的 URL。
+
+待升级任务是易失状态，Agent 上报完全相同的目标版本或 SemVer 优先级更高的版本后清除。同一 SemVer 优先级但 build metadata 不同的版本视为不同节点二进制，仍可下发。
 
 ## 管理：分组
 
@@ -137,6 +142,8 @@ Bearer 可选端点会把无效 Bearer 当作匿名请求。
 
 `tags` 必须是字符串数组，空值和重复值会被移除。
 
+提交空 `secret` 时返回 `400 invalid_secret`；提交的 `secret` 已属于其他节点时返回 `409 duplicate_secret`。
+
 节点账期覆盖字段是原子组。只要提交 `traffic_cycle_mode`、`traffic_billing_start_day`、`traffic_billing_anchor_date` 或 `traffic_billing_timezone` 中任意字段，就必须同时提交 `traffic_cycle_mode` 和该模式使用的全部字段，否则返回 `400 invalid_traffic_cycle_settings`。`traffic_cycle_mode` 允许 `default`、`calendar_month`、`whmcs_compatible` 和 `clamp_to_month_end`。
 
 `traffic_direction_mode` 允许 `default`、`out`、`both` 和 `max`。`default` 继承全局统计方向，其他值覆盖该节点。
@@ -149,7 +156,7 @@ Bearer 可选端点会把无效 Bearer 当作匿名请求。
 
 `GET /api/admin/nodes/` 的 `version.supports_auto_update` 表示当前节点版本是否满足 Dash 管理台自动下发更新要求。最低版本为 `0.2.1`。
 
-`POST /api/admin/nodes/{id}/upgrade` 要求 `version.supports_auto_update=true`。当前节点版本低于 `0.2.1` 时返回 `409 node_upgrade_unsupported`。
+`POST /api/admin/nodes/{id}/upgrade` 要求 `version.supports_auto_update=true`。当前节点版本低于 `0.2.1` 时返回 `409 node_upgrade_unsupported`；打包版本、平台或资产不可用时返回 `409`；Dash 无法生成旧 Agent 临时下载授权时返回 `503 node_upgrade_grant_error`。
 
 ## 管理：流量设置
 
@@ -169,7 +176,7 @@ Bearer 可选端点会把无效 Bearer 当作匿名请求。
 
 ## 历史指标
 
-`GET /api/front/metrics` 的节点结构可以包含 `node.tags`、`node.disk.smart`、`node.disk.temperature_devices[]` 和 `node.thermal`。SMART 和 thermal 运行时 payload 与前台节点快照分开缓存，只有 `received_at` 匹配时才会重新挂回节点快照。
+`GET /api/front/metrics` 的节点结构可以包含 `node.tags`、`disk.smart`、`disk.temperature_devices[]`、顶层 `thermal` 和顶层 `pressure`。SMART、thermal 和 pressure 运行时 payload 与前台节点快照分开缓存，只有 `received_at` 匹配时才会重新挂回节点快照。
 
 `GET /api/metrics/history` 支持温度指标：
 
@@ -181,6 +188,14 @@ Bearer 可选端点会把无效 Bearer 当作匿名请求。
 `disk.temp_c` 的 `device` 可以匹配物理磁盘 `name`、`ref` 或 `path`。温度历史不使用 rollup 前缀。
 
 SMART 温度历史只来自后端确认的物理盘。虚拟盘和 RAID 设备不会写入 `disk.temp_c` 历史。
+
+`GET /api/metrics/history` 也支持 PSI 平均值指标：
+
+- `pressure.cpu.some_avg10`、`pressure.cpu.some_avg60`、`pressure.cpu.some_avg300`
+- `pressure.memory.some_avg10`、`pressure.memory.some_avg60`、`pressure.memory.some_avg300`
+- `pressure.memory.full_avg10`、`pressure.memory.full_avg60`、`pressure.memory.full_avg300`
+- `pressure.io.some_avg10`、`pressure.io.some_avg60`、`pressure.io.some_avg300`
+- `pressure.io.full_avg10`、`pressure.io.full_avg60`、`pressure.io.full_avg300`
 
 ## 管理：告警
 

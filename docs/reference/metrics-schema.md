@@ -37,6 +37,7 @@ JSON 使用 UTF-8。时间戳是 UTC RFC3339。所有 `*Ratio` 字段都是 `0..
 | `connections` | TCP/UDP 连接数 |
 | `raid` | RAID 运行时 |
 | `thermal` | 温度传感器运行时，可缺省 |
+| `pressure` | Linux PSI pressure 运行时，可缺省 |
 
 ## CPU
 
@@ -193,6 +194,51 @@ JSON 使用 UTF-8。时间戳是 UTC RFC3339。所有 `*Ratio` 字段都是 `0..
 - `no_permission`
 - `timeout`
 - `error`
+
+## Pressure
+
+```json
+{
+  "cpu": {
+    "some": {
+      "avg10": 0.01,
+      "avg60": 0.02,
+      "avg300": 0.03,
+      "total": 123456
+    }
+  },
+  "memory": {
+    "some": {
+      "avg10": 0,
+      "avg60": 0,
+      "avg300": 0,
+      "total": 0
+    },
+    "full": {
+      "avg10": 0,
+      "avg60": 0,
+      "avg300": 0,
+      "total": 0
+    }
+  },
+  "io": {
+    "some": {
+      "avg10": 0.1,
+      "avg60": 0.2,
+      "avg300": 0.3,
+      "total": 456789
+    },
+    "full": {
+      "avg10": 0,
+      "avg60": 0,
+      "avg300": 0,
+      "total": 0
+    }
+  }
+}
+```
+
+`pressure` 是 Linux PSI（Pressure Stall Information）。`cpu`、`memory`、`io` 可缺省；每项可包含 `some` 和 `full` 数值组。每个组包含 `avg10`、`avg60`、`avg300` 百分比和累计 `total` 微秒。缺失组表示不可用，不表示 0 压力。
 
 ## `Static`
 

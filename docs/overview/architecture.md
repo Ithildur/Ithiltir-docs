@@ -17,6 +17,7 @@ Ithiltir Dash 是单实例应用。根入口只启动一个 HTTP 进程，该进
 | 进程内内存 | 节点鉴权索引、易失 Agent 更新请求、流量重建状态；`--no-redis` 时承接会话和热点运行时状态 |
 | Ithiltir-node | 上报指标和静态主机信息；Windows runner 启动时接收更新 manifest |
 | Linux SMART 缓存 timer | root 侧 `smartctl` helper 写入 `/run/ithiltir-node/smart.json`；Ithiltir-node 只读缓存 |
+| Linux 连接数缓存 timer | root 侧 `/proc` netns helper 写入 `/run/ithiltir-node/connections.json`；低权限 Linux Agent 读取缓存以获得完整主机/netns 连接数 |
 | Web UI | 读取看板数据并提交管理操作 |
 
 ## HTTP 面
@@ -50,7 +51,9 @@ Ithiltir Dash 是单实例应用。根入口只启动一个 HTTP 进程，该进
 - `--no-redis` 会把 Redis 承载的运行时状态改用进程内内存。
 - `app.timezone` 在启动时编译。空值使用本地时区；非空值必须是有效 IANA 时区名，否则配置加载失败，错误中会包含配置值。
 - 节点鉴权和待下发 Agent 更新请求使用进程内内存，不走 Redis。
-- SMART 和 thermal 指标属于运行时状态。SMART 缓存新鲜度、helper 可用性和设备健康结果保存在独立热点缓存，不写入 PostgreSQL 指标快照。确认是物理盘的 SMART 温度会归约写入 `disk_physical_metrics.temp_c`，用于按设备查询历史；虚拟盘和 RAID 设备会被忽略。同一套后端判定会生成 `disk.temperature_devices`，供前端进入硬盘温度历史。thermal 随指标快照保存，并归约写入 `cpu_temp_c`，同时在前台缓存中拆成独立字段缓存；读取前台节点视图时再组合进 JSON。
+- SMART、thermal 和完整 RAID 详情属于运行时状态。SMART 缓存新鲜度、helper 可用性、设备健康结果、完整 thermal 传感器 payload 以及完整 RAID 阵列/成员 payload 保存在当前快照或热点缓存，不写入 PostgreSQL 历史指标行。确认是物理盘的 SMART 温度会归约写入 `disk_physical_metrics.temp_c`，用于按设备查询历史；虚拟盘和 RAID 设备会被忽略。同一套后端判定会生成 `disk.temperature_devices`，供前端进入硬盘温度历史。thermal 会归约写入 `cpu_temp_c` 作为主机历史；完整 thermal 详情拆成独立前台字段缓存，读取前台节点视图时再组合进 JSON。
+- TCP/UDP 连接数是持久化数值指标，会写入 `tcp_conn` 和 `udp_conn`，并作为 `conn.tcp` 和 `conn.udp` 支持历史查询。Linux 上完整主机/netns 连接数来自 root 侧连接数缓存，因为 Agent 以低权限运行。Linux 安装脚本会在存在 `cc`、`gcc` 或 `clang` 时本地编译该 helper。缓存缺失、过期或 helper 无法编译时，Agent 使用自带连接数统计，可能缺失容器连接数据。
+- Linux PSI pressure 指标是固定数值时序数据。PSI 的 `avg10`、`avg60`、`avg300` 和 `total` 会作为可空列保存到 `server_metrics` 和 `server_current_metrics`；缺失列表示不可用，不表示 0 压力。Dashboard 持久化会忽略采集原因/状态字符串。PSI 当前不接入告警评估。
 - 告警评估读取热点快照。内置离线、RAID、SMART 健康失败和 NVMe 关键告警规则来自快照新鲜度和上报磁盘状态。
 - 告警服务启动后 1 分钟内不会新开告警事件。
 - 告警事件和运行时状态提交不依赖通知发送。可加载通知目标时，通知 payload 存入 PostgreSQL outbox，并由带租约的重试 worker 发送；通知目标不可用时，状态变更仍会提交，但不会新增通知 outbox。
@@ -71,6 +74,7 @@ Ithiltir Dash 是单实例应用。根入口只启动一个 HTTP 进程，该进
 | `/api/front/*`、`/api/metrics/*`、`/api/statistics/*` | Bearer 可选；匿名请求按系统可见性设置过滤 |
 | `/api/node/*` | `X-Node-Secret` |
 | `/api/admin/*` | `Authorization: Bearer <access_token>` |
+| `/deploy/*` 打包资产 | `X-Node-Secret` 或旧 Agent 升级临时 token；安装脚本模板仍公开 |
 
 ## 前端和反向代理
 

@@ -21,6 +21,7 @@ The default target is the latest stable release. Use `--test` for prereleases:
 ```bash
 sudo bash /opt/Ithiltir-dash/update_dash_linux.sh --check --test
 sudo bash /opt/Ithiltir-dash/update_dash_linux.sh -y --test --lang en
+sudo bash /opt/Ithiltir-dash/update_dash_linux.sh reinstall --test --lang en
 ```
 
 The updater:
@@ -35,6 +36,8 @@ The updater:
 8. Starts `dash.service`.
 
 `--check` checks the selected target channel. The default channel checks stable releases only; `--test` checks prereleases only. If the installed Dash is a prerelease newer than the latest stable release, the default update stops and tells you to use `--test`.
+
+Use `reinstall` to install the selected latest package again even when the Dash version is unchanged, for example after repacking a test release with newer bundled node assets.
 
 If migration fails, the script attempts to restore the install directory and restart the old service. Migration steps already committed to the database are not rolled back automatically, so back up the database before upgrading.
 
@@ -63,6 +66,8 @@ Dash release packages include node assets. When the admin console triggers a nod
 2. `POST /api/admin/nodes/{id}/upgrade` writes a volatile upgrade task.
 3. The node receives an update manifest in the next `POST /api/node/metrics` response.
 4. Supported managed install layouts download, verify, switch, and restart node.
+
+The manifest `url` may include a short-lived `upgrade_token` for protected `/deploy/*` asset access. Nodes must use the returned URL unchanged.
 
 Supported scope:
 

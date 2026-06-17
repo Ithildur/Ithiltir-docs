@@ -18,6 +18,8 @@ Linux supports `amd64` and `arm64`. The service name is `ithiltir-node`.
 
 The Linux installer attempts to install `smartmontools` and enables `ithiltir-node-smart-cache.timer` to refresh `/run/ithiltir-node/smart.json`. SMART setup failure does not stop base monitoring.
 
+When `cc`, `gcc`, or `clang` is available, the Linux installer compiles a root-side connections cache helper and enables `ithiltir-node-connections-cache.timer` to refresh `/run/ithiltir-node/connections.json`. Without a compiler, the node uses its built-in connection counting, which may miss container connections.
+
 Common checks:
 
 ```bash

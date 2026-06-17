@@ -46,6 +46,7 @@ Dash API error format:
 | `invalid_traffic_direction_mode` | Invalid node traffic direction mode |
 | `invalid_tags` | Tags is not a string array |
 | `invalid_secret` | Invalid node secret |
+| `duplicate_secret` | Node secret already belongs to another node |
 | `invalid_group_ids` | Invalid group IDs |
 | `secret_collision_exhausted` | Random secret collision retries exhausted |
 | `secret_generation_failed` | Secret generation failed |
@@ -61,6 +62,7 @@ Dash API error format:
 | `409` | `node_platform_unsupported` | Node platform is unsupported |
 | `409` | `node_asset_missing` | Matching node asset is missing |
 | `503` | `node_asset_error` | Upgrade asset generation failed |
+| `503` | `node_upgrade_grant_error` | Legacy temporary download grant generation failed |
 
 ## Traffic
 

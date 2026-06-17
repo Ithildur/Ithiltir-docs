@@ -45,6 +45,7 @@ Dash API 错误格式：
 | `invalid_traffic_direction_mode` | 节点统计方向非法 |
 | `invalid_tags` | tags 不是字符串数组 |
 | `invalid_secret` | 节点 secret 非法 |
+| `duplicate_secret` | 节点 secret 已属于其他节点 |
 | `invalid_group_ids` | 分组 ID 非法 |
 | `secret_collision_exhausted` | secret 随机冲突重试耗尽 |
 | `secret_generation_failed` | secret 生成失败 |
@@ -60,6 +61,7 @@ Dash API 错误格式：
 | `409` | `node_platform_unsupported` | 节点平台不支持 |
 | `409` | `node_asset_missing` | 对应节点资产缺失 |
 | `503` | `node_asset_error` | 生成升级资产失败 |
+| `503` | `node_upgrade_grant_error` | 生成旧 Agent 临时下载授权失败 |
 
 ## 流量
 

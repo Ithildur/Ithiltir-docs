@@ -20,6 +20,7 @@ sudo bash /opt/Ithiltir-dash/update_dash_linux.sh -y --lang zh
 ```bash
 sudo bash /opt/Ithiltir-dash/update_dash_linux.sh --check --test
 sudo bash /opt/Ithiltir-dash/update_dash_linux.sh -y --test --lang zh
+sudo bash /opt/Ithiltir-dash/update_dash_linux.sh reinstall --test --lang zh
 ```
 
 更新脚本会：
@@ -34,6 +35,8 @@ sudo bash /opt/Ithiltir-dash/update_dash_linux.sh -y --test --lang zh
 8. 启动 `dash.service`。
 
 `--check` 检查当前选择的目标通道。默认通道只查普通发布；`--test` 只查预发布。当前已安装版本是高于最新普通发布的预发布时，默认更新会停止并提示使用 `--test`。
+
+`reinstall` 会在 Dash 版本号不变时重新安装所选通道的最新包，适合测试发布包只更新了内置 node 资产的情况。
 
 如果迁移失败，脚本会尝试恢复安装目录并重启旧服务。数据库迁移已经提交的部分不会自动反向回滚，因此升级前必须做数据库备份。
 
@@ -62,6 +65,8 @@ Dash 发布包携带节点资产。管理台触发节点升级时：
 2. `POST /api/admin/nodes/{id}/upgrade` 写入易失升级任务。
 3. 节点下一次 `POST /api/node/metrics` 响应拿到 update manifest。
 4. 支持的托管安装布局会下载、校验、切换并重启 node。
+
+manifest 的 `url` 可能包含短期有效的 `upgrade_token`，用于访问受保护的 `/deploy/*` 资产。节点必须按原样使用返回的 URL。
 
 支持范围：
 

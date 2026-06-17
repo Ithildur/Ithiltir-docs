@@ -16,6 +16,8 @@ https://dash.example.com/deploy/linux/install.sh
 
 脚本会尝试安装 `smartmontools`，并写入 `ithiltir-node-smart-cache.service` 和 `ithiltir-node-smart-cache.timer`。SMART 安装失败或没有 `smartctl` 时，节点基础监控继续运行。
 
+脚本会在存在 `cc`、`gcc` 或 `clang` 时编译 root 侧连接数缓存 helper，并写入 `ithiltir-node-connections-cache.service` 和 `ithiltir-node-connections-cache.timer`。没有编译器时，节点会使用自带连接数统计，可能缺失容器网络命名空间里的连接数据。
+
 ## 安装命令
 
 ```bash
@@ -41,11 +43,15 @@ sudo bash install_node.sh <dash_ip> [dash_port] <secret> [interval_seconds] [--n
 | `/etc/systemd/system/ithiltir-node.service` | systemd 服务 |
 | `/run/ithiltir-node/thinpool.json` | LVM thinpool 缓存 |
 | `/run/ithiltir-node/smart.json` | SMART 缓存 |
+| `/run/ithiltir-node/connections.json` | TCP/UDP 连接数缓存 |
 | `/opt/node/collect_thinpool.sh` | LVM thinpool 采集脚本 |
 | `/etc/cron.d/ithiltir-node-thinpool` | thinpool 采集 cron |
 | `/usr/local/libexec/ithiltir-node/smart-cache` | SMART 缓存 helper |
 | `/etc/systemd/system/ithiltir-node-smart-cache.service` | SMART 缓存刷新服务 |
 | `/etc/systemd/system/ithiltir-node-smart-cache.timer` | SMART 缓存刷新 timer |
+| `/usr/local/libexec/ithiltir-node/connections-cache` | TCP/UDP 连接数缓存 helper |
+| `/etc/systemd/system/ithiltir-node-connections-cache.service` | TCP/UDP 连接数缓存刷新服务 |
+| `/etc/systemd/system/ithiltir-node-connections-cache.timer` | TCP/UDP 连接数缓存刷新 timer |
 
 服务默认使用 `ithiltir` 系统用户运行，工作目录为 `/var/lib/ithiltir-node`。
 
@@ -64,6 +70,8 @@ Linux 服务开启：
 因此节点进程只应写入数据目录。
 
 SMART 缓存由 root 侧 oneshot 服务刷新。节点进程只读取 `/run/ithiltir-node/smart.json`，不以 root 身份执行 `smartctl`。
+
+连接数缓存由 root 侧 oneshot 服务刷新。节点进程只读取 `/run/ithiltir-node/connections.json`，不以 root 身份遍历其他网络命名空间。
 
 ## LVM thinpool
 
@@ -87,6 +95,17 @@ cat /run/ithiltir-node/smart.json
 缓存目录权限为 `0750 root:<node-group>`，缓存文件权限为 `0640 root:<node-group>`。默认节点组是 `ithiltir`。
 
 没有 `smartctl`、没有权限或缓存过期时，节点会上报结构化 `disk.smart.status`，不会中断 CPU、内存、磁盘容量、网络等基础指标。
+
+## TCP/UDP 连接数缓存
+
+连接数缓存默认每 10 秒刷新：
+
+```bash
+systemctl status ithiltir-node-connections-cache.timer
+cat /run/ithiltir-node/connections.json
+```
+
+该缓存用于完整统计主机和容器网络命名空间里的 TCP/UDP 连接数。缓存缺失、过期或 helper 无法编译时，节点会回退到自带连接数统计，基础监控继续运行。
 
 ## 常用命令
 

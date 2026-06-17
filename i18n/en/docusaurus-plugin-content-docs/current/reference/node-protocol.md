@@ -77,11 +77,13 @@ Response:
 {
   "id": "release-id",
   "version": "1.2.3",
-  "url": "https://dash.example.com/deploy/windows/node_windows_amd64.exe",
+  "url": "https://dash.example.com/deploy/windows/node_windows_amd64.exe?upgrade_token=...",
   "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   "size": 12345678
 }
 ```
+
+`url` may include a short-lived `upgrade_token` for protected `/deploy/*` asset access. Nodes must use the returned URL unchanged.
 
 ## `/api/node/static`
 
@@ -128,5 +130,7 @@ Manifest requirements:
 - `size` is positive and must equal the downloaded byte count.
 
 Manifests matching the currently reported version are ignored first. If multiple remaining targets return update manifests in one cycle, `id`, `version`, `url`, `sha256`, and `size` must match exactly. Otherwise the update is skipped.
+
+Dash clears the pending upgrade task after the node reports the exact target version or a higher SemVer precedence. Different build metadata at the same SemVer precedence is treated as a distinct node binary and can still be delivered.
 
 After a successful update, Windows runner replaces `%ProgramData%\Ithiltir-node\bin\ithiltir-node.exe` and restarts node. Linux/macOS switches `/var/lib/ithiltir-node/current` to the new release directory and lets systemd/launchd restart node.

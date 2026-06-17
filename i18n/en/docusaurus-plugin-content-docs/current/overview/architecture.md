@@ -35,7 +35,11 @@ Process memory holds the node auth index, volatile agent update requests, and tr
 
 `app.timezone` is compiled during startup. Empty uses the local timezone; non-empty values must be valid IANA timezone names, otherwise config loading fails with the configured value in the error.
 
-SMART and thermal metrics are runtime state. On Linux, a root-side `smartctl` helper writes `/run/ithiltir-node/smart.json`; Ithiltir-node only reads the cache. SMART cache freshness, helper availability, and device health are kept in a separate hot cache and are not written to PostgreSQL metrics snapshots. SMART temperature for confirmed physical disks is reduced into `disk_physical_metrics.temp_c`; virtual disks and RAID devices are ignored. Thermal data is stored with metrics snapshots, reduced into `cpu_temp_c`, and composed back into front node JSON with SMART runtime data on read.
+SMART, thermal, and full RAID details are runtime state. On Linux, a root-side `smartctl` helper writes `/run/ithiltir-node/smart.json`, and a root-side `/proc` netns helper writes `/run/ithiltir-node/connections.json`; Ithiltir-node only reads those caches. SMART cache freshness, helper availability, device health, full thermal sensor payloads, and full RAID array/member payloads are kept in current snapshots or hot caches rather than historical PostgreSQL metric rows. SMART temperature for confirmed physical disks is reduced into `disk_physical_metrics.temp_c`; virtual disks and RAID devices are ignored. Thermal data is reduced into `cpu_temp_c` for host history, while full thermal details are split into a separate frontend field cache and composed back into front node JSON on read.
+
+TCP/UDP connection counts are persisted numeric metrics. They are written to `tcp_conn` and `udp_conn` and remain available to history queries as `conn.tcp` and `conn.udp`. On Linux, full host/netns connection counts come from the root-side connections cache because the agent runs with low privileges. The Linux installer compiles this helper locally when `cc`, `gcc`, or `clang` is available. If the cache is missing or stale, or the helper cannot be compiled, the agent uses its built-in connection counting, which may miss container connections.
+
+Linux PSI pressure metrics are fixed numeric time-series data. PSI `avg10`, `avg60`, `avg300`, and `total` values are stored as nullable columns on `server_metrics` and `server_current_metrics`; missing columns mean unavailable data, not zero pressure. Collection reason/status strings are ignored by dashboard persistence. PSI is not currently wired into alert evaluation.
 
 ## Node Reporting
 
@@ -46,7 +50,7 @@ Ithiltir-node -> /api/node/metrics
 Ithiltir-node -> /api/node/static
 ```
 
-Dash does not need to open inbound connections to nodes. The node secret only authenticates `/api/node/*` requests and must not be exposed in browser code.
+Dash does not need to open inbound connections to nodes. The node secret authenticates `/api/node/*` requests and packaged `/deploy/*` asset downloads, and must not be exposed in browser code.
 
 Node IP is an observation from authenticated agent requests. Dash reads the first IP in `X-Forwarded-For` when that header is present, otherwise it falls back to `RemoteAddr`; invalid values are not used. This field is for display and operations, not an auth boundary.
 

@@ -117,6 +117,13 @@ slug: /Node/API
   - `sensors[].temp_c`
   - `sensors[].high_c`
   - `sensors[].critical_c`
+- `pressure`
+  - `cpu.some.avg10|avg60|avg300|total`
+  - `cpu.full.avg10|avg60|avg300|total`
+  - `memory.some.avg10|avg60|avg300|total`
+  - `memory.full.avg10|avg60|avg300|total`
+  - `io.some.avg10|avg60|avg300|total`
+  - `io.full.avg10|avg60|avg300|total`
 
 ## `Static`
 

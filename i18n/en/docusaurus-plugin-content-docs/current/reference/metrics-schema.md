@@ -38,6 +38,7 @@ JSON uses UTF-8. Timestamps are UTC RFC3339. All `*Ratio` fields are `0..1`, not
 | `connections` | TCP/UDP connection counts |
 | `raid` | RAID runtime data |
 | `thermal` | Thermal sensor runtime data, optional |
+| `pressure` | Linux PSI pressure runtime data, optional |
 
 ## CPU
 
@@ -194,6 +195,51 @@ Common `status` values:
 - `no_permission`
 - `timeout`
 - `error`
+
+## Pressure
+
+```json
+{
+  "cpu": {
+    "some": {
+      "avg10": 0.01,
+      "avg60": 0.02,
+      "avg300": 0.03,
+      "total": 123456
+    }
+  },
+  "memory": {
+    "some": {
+      "avg10": 0,
+      "avg60": 0,
+      "avg300": 0,
+      "total": 0
+    },
+    "full": {
+      "avg10": 0,
+      "avg60": 0,
+      "avg300": 0,
+      "total": 0
+    }
+  },
+  "io": {
+    "some": {
+      "avg10": 0.1,
+      "avg60": 0.2,
+      "avg300": 0.3,
+      "total": 456789
+    },
+    "full": {
+      "avg10": 0,
+      "avg60": 0,
+      "avg300": 0,
+      "total": 0
+    }
+  }
+}
+```
+
+`pressure` is Linux PSI (Pressure Stall Information). `cpu`, `memory`, and `io` may be omitted; each resource may contain optional `some` and `full` numeric groups. Each group has `avg10`, `avg60`, `avg300` percentages and cumulative `total` microseconds. Missing groups mean unavailable data, not zero pressure.
 
 ## `Static`
 

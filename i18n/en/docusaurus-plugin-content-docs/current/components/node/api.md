@@ -67,6 +67,7 @@ Fields:
 - `connections`: TCP and UDP counts.
 - `raid`: RAID runtime state.
 - `thermal`: thermal sensor runtime state.
+- `pressure`: Linux PSI pressure runtime state.
 
 ## `Static`
 

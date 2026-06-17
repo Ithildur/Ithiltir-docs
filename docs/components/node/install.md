@@ -36,6 +36,8 @@ Linux 支持 `amd64` 和 `arm64`。安装后服务名为 `ithiltir-node`。
 
 Linux 安装脚本会尝试安装 `smartmontools`，并启用 `ithiltir-node-smart-cache.timer` 刷新 `/run/ithiltir-node/smart.json`。SMART 安装失败不影响基础监控。
 
+Linux 安装脚本会在存在 `cc`、`gcc` 或 `clang` 时编译 root 侧连接数缓存 helper，并启用 `ithiltir-node-connections-cache.timer` 刷新 `/run/ithiltir-node/connections.json`。没有编译器时，节点使用自带连接数统计，可能缺失容器连接数据。
+
 常用检查：
 
 ```bash

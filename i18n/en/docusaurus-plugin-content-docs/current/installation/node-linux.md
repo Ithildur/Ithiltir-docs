@@ -17,6 +17,8 @@ The script requires root/sudo, systemd, and `curl` or `wget`. When LVM/LVM-thin 
 
 The script attempts to install `smartmontools` and writes `ithiltir-node-smart-cache.service` and `ithiltir-node-smart-cache.timer`. If SMART setup fails or `smartctl` is unavailable, base node monitoring continues to run.
 
+When `cc`, `gcc`, or `clang` is available, the script compiles a root-side connections cache helper and writes `ithiltir-node-connections-cache.service` and `ithiltir-node-connections-cache.timer`. Without a compiler, the node uses its built-in connection counting, which may miss connections inside container network namespaces.
+
 ## Install Command
 
 ```bash
@@ -42,11 +44,15 @@ If only `<dash_ip> <secret>` are provided, the port is inferred from the rendere
 | `/etc/systemd/system/ithiltir-node.service` | systemd service |
 | `/run/ithiltir-node/thinpool.json` | LVM thinpool cache |
 | `/run/ithiltir-node/smart.json` | SMART cache |
+| `/run/ithiltir-node/connections.json` | TCP/UDP connections cache |
 | `/opt/node/collect_thinpool.sh` | LVM thinpool collector |
 | `/etc/cron.d/ithiltir-node-thinpool` | thinpool collection cron |
 | `/usr/local/libexec/ithiltir-node/smart-cache` | SMART cache helper |
 | `/etc/systemd/system/ithiltir-node-smart-cache.service` | SMART cache refresh service |
 | `/etc/systemd/system/ithiltir-node-smart-cache.timer` | SMART cache refresh timer |
+| `/usr/local/libexec/ithiltir-node/connections-cache` | TCP/UDP connections cache helper |
+| `/etc/systemd/system/ithiltir-node-connections-cache.service` | TCP/UDP connections cache refresh service |
+| `/etc/systemd/system/ithiltir-node-connections-cache.timer` | TCP/UDP connections cache refresh timer |
 
 The service runs as the `ithiltir` system user and uses `/var/lib/ithiltir-node` as its working directory.
 
@@ -65,6 +71,8 @@ The Linux service enables:
 The node process should only write to its data directory.
 
 The SMART cache is refreshed by a root-side oneshot service. The node process only reads `/run/ithiltir-node/smart.json`; it does not execute `smartctl` as root.
+
+The connections cache is refreshed by a root-side oneshot service. The node process only reads `/run/ithiltir-node/connections.json`; it does not traverse other network namespaces as root.
 
 ## LVM Thinpool
 
@@ -88,6 +96,17 @@ cat /run/ithiltir-node/smart.json
 The cache directory uses `0750 root:<node-group>`. The cache file uses `0640 root:<node-group>`. The default node group is `ithiltir`.
 
 When `smartctl` is missing, permission is unavailable, or the cache is stale, the node reports structured `disk.smart.status`. CPU, memory, disk capacity, and network metrics continue to report.
+
+## TCP/UDP Connections Cache
+
+The connections cache refreshes every 10 seconds by default:
+
+```bash
+systemctl status ithiltir-node-connections-cache.timer
+cat /run/ithiltir-node/connections.json
+```
+
+The cache is used for full TCP/UDP connection counts across the host and container network namespaces. If the cache is missing or stale, or the helper cannot be compiled, the node falls back to its built-in connection counting and base monitoring continues.
 
 ## Common Commands
 

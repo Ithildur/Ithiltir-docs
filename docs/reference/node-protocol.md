@@ -76,11 +76,13 @@ Body：
 {
   "id": "release-id",
   "version": "1.2.3",
-  "url": "https://dash.example.com/deploy/windows/node_windows_amd64.exe",
+  "url": "https://dash.example.com/deploy/windows/node_windows_amd64.exe?upgrade_token=...",
   "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   "size": 12345678
 }
 ```
+
+`url` 可能包含短期有效的 `upgrade_token`，用于访问受保护的 `/deploy/*` 资产。节点必须按原样使用返回的 URL。
 
 ## `/api/node/static`
 
@@ -127,5 +129,7 @@ manifest 必须满足：
 - `size` 为正数，并必须等于下载字节数。
 
 与当前上报版本相同的 manifest 会先被忽略。同一轮剩余多个 target 返回 manifest 时，`id`、`version`、`url`、`sha256`、`size` 必须完全一致，否则跳过更新。
+
+Dash 侧待升级任务会在节点上报完全相同的目标版本或 SemVer 优先级更高的版本后清除。同一 SemVer 优先级但 build metadata 不同的版本视为不同节点二进制，仍可下发。
 
 更新成功后，Windows runner 替换 `%ProgramData%\Ithiltir-node\bin\ithiltir-node.exe` 并重启 node。Linux/macOS 切换 `/var/lib/ithiltir-node/current` 到新的 release 目录，并交给 systemd/launchd 重启 node。

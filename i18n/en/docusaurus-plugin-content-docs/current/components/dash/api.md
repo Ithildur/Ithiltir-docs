@@ -24,7 +24,8 @@ This page summarizes stable HTTP contracts. Existing path, method, and field sem
 | Admin password | `POST /api/auth/login` |
 | refresh cookie + `X-CSRF-Token` | `POST /api/auth/refresh`, `POST /api/auth/logout` |
 | `Authorization: Bearer <access_token>` | Admin APIs and optionally authenticated reads |
-| `X-Node-Secret` | Node reporting and node identity reads |
+| `X-Node-Secret` | Node reporting, node identity reads, and deploy asset downloads |
+| `upgrade_token` query | Temporary deploy asset download grant issued only for legacy agent upgrades |
 
 Optional Bearer endpoints treat missing, malformed, expired, revoked, or otherwise invalid Bearer tokens as anonymous requests.
 
@@ -70,33 +71,38 @@ Optional Bearer endpoints treat missing, malformed, expired, revoked, or otherwi
 
 - `GET /api/admin/nodes/` includes `traffic_p95_enabled`, `traffic_cycle_mode`, `traffic_billing_start_day`, `traffic_billing_anchor_date`, `traffic_billing_timezone`, `traffic_direction_mode`, tags, and version status.
 - `tags` is always a string array.
-- `version.version` is the last reported node version. Missing, invalid, or older-than-bundled versions set `version.is_outdated=true`.
+- `version.version` is the last reported node version. Missing, invalid, or below the supported node version floor set `version.is_outdated=true`.
 - `version.supports_auto_update` shows whether the current node version meets the Dash admin console automatic update delivery requirement. The minimum version is `0.2.1`.
 - `PATCH /api/admin/nodes/{id}` accepts traffic settings, tags, secret, group IDs, and display fields. Omitted fields are unchanged.
 - Node billing cycle override fields are atomic. If any of `traffic_cycle_mode`, `traffic_billing_start_day`, `traffic_billing_anchor_date`, or `traffic_billing_timezone` is submitted, the request must also include `traffic_cycle_mode` and every field used by that mode, otherwise it returns `400 invalid_traffic_cycle_settings`.
 - `traffic_cycle_mode` allows `default`, `calendar_month`, `whmcs_compatible`, and `clamp_to_month_end`. `default` uses no billing fields; `calendar_month` uses `traffic_billing_timezone`; `clamp_to_month_end` uses `traffic_billing_start_day` and `traffic_billing_timezone`; `whmcs_compatible` uses `traffic_billing_anchor_date` and `traffic_billing_timezone`, with `traffic_billing_start_day` derived from the anchor date.
 - `traffic_direction_mode` allows `default`, `out`, `both`, and `max`. `default` inherits the global direction mode; other values override that node.
+- `PATCH /api/admin/nodes/{id}` returns `400 invalid_secret` for an empty `secret` and `409 duplicate_secret` when the submitted `secret` already belongs to another node.
 - `PATCH /api/admin/nodes/traffic-p95` validates all node IDs before updating them in one transaction.
 - `GET /api/admin/nodes/traffic/rebuild` returns the latest process-local rebuild task state. This state is not durable across process restarts. Failed states expose stable `code` and `error` values.
 - `POST /api/admin/nodes/{id}/traffic/rebuild` rebuilds the node's retained 5-minute traffic facts. Success returns `202`; missing nodes return `404 not_found`; any running task returns `409 traffic_rebuild_running`; unavailable tasks return `503 traffic_rebuild_unavailable`.
-- `POST /api/admin/nodes/{id}/upgrade` returns `204` on success. Current node versions below `0.2.1` return `409 node_upgrade_unsupported`. Unavailable bundled version, platform, or asset returns `409`.
+- `POST /api/admin/nodes/{id}/upgrade` returns `204` on success. Nodes that cannot receive automatic update delivery return `409 node_upgrade_unsupported`; unavailable bundled versions, platforms, or assets return `409`; failure to prepare the legacy temporary download grant returns `503 node_upgrade_grant_error`.
 
 ## Agent Update
 
 - Successful `POST /api/node/metrics` responses include `update`.
 - When no upgrade task is pending, `update` is `null`.
 - When an upgrade task is pending, `update` includes `id`, `version`, `url`, `sha256`, and `size`.
-- Upgrade tasks are volatile and are cleared after the node reports the target version or a newer version.
+- `url` may include a short-lived `upgrade_token` so legacy agents can download the exact update asset without sending `X-Node-Secret`. Clients must use the returned URL unchanged.
+- Upgrade tasks are volatile and clear when the agent reports the exact target version or a higher SemVer precedence. Different build metadata at the same SemVer precedence is treated as a distinct node binary and can still be delivered.
 
 ## Front Metrics and History Metrics
 
 `GET /api/front/metrics` node objects can include:
 
-- `node.disk.smart`: latest SMART runtime state.
-- `node.disk.temperature_devices[]`: physical disk names with disk temperature history.
-- `node.thermal`: latest thermal sensor runtime state.
+- `disk.smart`: latest SMART runtime state.
+- `disk.temperature_devices[]`: physical disk names with disk temperature history.
+- `thermal`: latest thermal sensor runtime state.
+- `pressure`: latest Linux PSI pressure runtime state.
 
-SMART and thermal runtime payloads are cached separately from the front node snapshot. They are reattached only when `received_at` matches the node snapshot.
+SMART, thermal, and pressure runtime payloads are cached separately from the front node snapshot. They are reattached only when `received_at` matches the node snapshot.
+
+`POST /api/node/metrics` accepts optional `metrics.pressure`. It may contain `cpu`, `memory`, and `io`, each with optional `some` and `full` numeric groups. Each group has `avg10`, `avg60`, `avg300` percentages and cumulative `total` microseconds. Missing groups mean unavailable data, not zero pressure.
 
 `GET /api/metrics/history` supports temperature metrics:
 
@@ -108,6 +114,8 @@ SMART and thermal runtime payloads are cached separately from the front node sna
 For `disk.temp_c`, `device` can match physical disk `name`, `ref`, or `path`. Temperature history does not use a rollup prefix.
 
 Disk temperature history is written only for backend-confirmed physical disks. Virtual disks and RAID devices are not persisted as `disk.temp_c`.
+
+`GET /api/metrics/history` also supports PSI average metrics: `pressure.cpu.some_avg10|avg60|avg300`, `pressure.memory.some_avg10|avg60|avg300`, `pressure.memory.full_avg10|avg60|avg300`, `pressure.io.some_avg10|avg60|avg300`, and `pressure.io.full_avg10|avg60|avg300`.
 
 ## Traffic Accounting
 
@@ -127,7 +135,7 @@ Disk temperature history is written only for backend-confirmed physical disks. V
 | `/deploy/linux/install.sh` | Linux node installer |
 | `/deploy/macos/install.sh` | macOS node installer |
 | `/deploy/windows/install.ps1` | Windows node installer |
-| `/deploy/*` | Bundled node release assets |
+| `/deploy/*` | Bundled node release assets; requires `X-Node-Secret` or a temporary `upgrade_token` |
 | `/` | SPA |
 
 ## Compatibility Rules

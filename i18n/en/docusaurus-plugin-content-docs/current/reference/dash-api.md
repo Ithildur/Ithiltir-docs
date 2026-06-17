@@ -24,7 +24,8 @@ Error format:
 | Admin password | `POST /api/auth/login` |
 | refresh cookie + `X-CSRF-Token` | `POST /api/auth/refresh`, `POST /api/auth/logout` |
 | `Authorization: Bearer <access_token>` | Admin APIs and optionally authenticated reads |
-| `X-Node-Secret` | Node reporting and node identity reads |
+| `X-Node-Secret` | Node reporting, node identity reads, and deploy asset downloads |
+| `upgrade_token` query | Temporary deploy asset download grant issued only for legacy agent upgrades |
 
 ## Public and Optional Auth
 
@@ -83,12 +84,16 @@ Or:
   "update": {
     "id": "release-id",
     "version": "1.2.3",
-    "url": "https://dash.example.com/deploy/windows/node_windows_amd64.exe",
+    "url": "https://dash.example.com/deploy/windows/node_windows_amd64.exe?upgrade_token=...",
     "sha256": "...",
     "size": 12345678
   }
 }
 ```
+
+`url` may include a short-lived `upgrade_token` so legacy agents can download the exact update asset without sending `X-Node-Secret`. Clients must use the returned URL unchanged.
+
+Pending upgrade tasks are volatile and clear when the agent reports the exact target version or a higher SemVer precedence. Different build metadata at the same SemVer precedence is treated as a distinct node binary and can still be delivered.
 
 ## Admin: Groups
 
@@ -138,6 +143,8 @@ Node patch fields:
 
 `tags` must be a string array. Empty and duplicate values are removed.
 
+An empty `secret` returns `400 invalid_secret`; a `secret` that already belongs to another node returns `409 duplicate_secret`.
+
 Node billing cycle override fields are atomic. If any of `traffic_cycle_mode`, `traffic_billing_start_day`, `traffic_billing_anchor_date`, or `traffic_billing_timezone` is submitted, the request must also include `traffic_cycle_mode` and every field used by that mode, otherwise it returns `400 invalid_traffic_cycle_settings`. `traffic_cycle_mode` allows `default`, `calendar_month`, `whmcs_compatible`, and `clamp_to_month_end`.
 
 `traffic_direction_mode` allows `default`, `out`, `both`, and `max`. `default` inherits the global direction mode; other values override that node.
@@ -150,7 +157,7 @@ Node billing cycle override fields are atomic. If any of `traffic_cycle_mode`, `
 
 `GET /api/admin/nodes/` field `version.supports_auto_update` shows whether the current node version meets the Dash admin console automatic update delivery requirement. The minimum version is `0.2.1`.
 
-`POST /api/admin/nodes/{id}/upgrade` requires `version.supports_auto_update=true`. Current node versions below `0.2.1` return `409 node_upgrade_unsupported`.
+`POST /api/admin/nodes/{id}/upgrade` requires `version.supports_auto_update=true`. Current node versions below `0.2.1` return `409 node_upgrade_unsupported`; unavailable bundled versions, platforms, or assets return `409`; failure to prepare the legacy temporary download grant returns `503 node_upgrade_grant_error`.
 
 ## Admin: Traffic Settings
 
@@ -170,7 +177,7 @@ Fields are documented in [Traffic Accounting and Billing Cycles](../configuratio
 
 ## History Metrics
 
-`GET /api/front/metrics` node objects can include `node.tags`, `node.disk.smart`, `node.disk.temperature_devices[]`, and `node.thermal`. SMART and thermal runtime payloads are cached separately from the front node snapshot and are reattached only when `received_at` matches.
+`GET /api/front/metrics` node objects can include `node.tags`, `disk.smart`, `disk.temperature_devices[]`, top-level `thermal`, and top-level `pressure`. SMART, thermal, and pressure runtime payloads are cached separately from the front node snapshot and are reattached only when `received_at` matches.
 
 `GET /api/metrics/history` supports temperature metrics:
 
@@ -182,6 +189,14 @@ Fields are documented in [Traffic Accounting and Billing Cycles](../configuratio
 For `disk.temp_c`, `device` can match physical disk `name`, `ref`, or `path`. Temperature history does not use a rollup prefix.
 
 Disk temperature history is written only for backend-confirmed physical disks. Virtual disks and RAID devices are not persisted as `disk.temp_c`.
+
+`GET /api/metrics/history` also supports PSI average metrics:
+
+- `pressure.cpu.some_avg10`, `pressure.cpu.some_avg60`, `pressure.cpu.some_avg300`
+- `pressure.memory.some_avg10`, `pressure.memory.some_avg60`, `pressure.memory.some_avg300`
+- `pressure.memory.full_avg10`, `pressure.memory.full_avg60`, `pressure.memory.full_avg300`
+- `pressure.io.some_avg10`, `pressure.io.some_avg60`, `pressure.io.some_avg300`
+- `pressure.io.full_avg10`, `pressure.io.full_avg60`, `pressure.io.full_avg300`
 
 ## Admin: Alerts
 
