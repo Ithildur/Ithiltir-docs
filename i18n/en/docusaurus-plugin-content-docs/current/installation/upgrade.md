@@ -24,6 +24,14 @@ sudo bash /opt/Ithiltir-dash/update_dash_linux.sh -y --test --lang en
 sudo bash /opt/Ithiltir-dash/update_dash_linux.sh reinstall --test --lang en
 ```
 
+The admin console System / Dash Update page uses the same release-package update boundary. It applies only to Linux/systemd release-package installs. If systemd, git, tar, curl/wget, or `/opt/Ithiltir-dash/update_dash_linux.sh` is missing, the updater is reported as unavailable.
+
+The admin console supports `release` and `prerelease` channels. Automation modes are:
+
+- `manual`: check and update only from the page.
+- `notify`: check periodically and notify when an update is available.
+- `auto`: check periodically, update automatically, and notify status.
+
 The updater:
 
 1. Checks the current version and release channel.
@@ -76,7 +84,7 @@ Supported scope:
 
 :::warning Automatic Update Delivery
 
-Automatic update delivery from the Dash admin console requires the current node version to be `0.2.1` or later. For older versions, the admin console shows a manual update notice and the install command must be rerun.
+Automatic update delivery from the Dash admin console requires the current node version to be `0.2.3` or later. For older versions, the admin console shows a manual update notice and the install command must be rerun.
 
 :::
 

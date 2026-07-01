@@ -131,7 +131,7 @@ Windows self-update works only when the node is managed by runner. Direct `node 
 
 Linux and macOS also process update manifests when using the `/var/lib/ithiltir-node/releases/<version>` and `/var/lib/ithiltir-node/current` install layout. Direct binaries outside that layout do not self-update.
 
-Automatic update delivery from the Dash admin console requires the current node version to be `0.2.1` or later. For older versions, rerun the install command.
+Automatic update delivery from the Dash admin console requires the current node version to be `0.2.3` or later. For older versions, rerun the install command.
 
 ## Network Interface Selection
 

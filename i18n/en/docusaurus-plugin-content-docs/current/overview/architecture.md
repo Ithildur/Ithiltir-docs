@@ -29,11 +29,13 @@ Dash is not designed for multiple active instances writing the same runtime stat
 | PostgreSQL | nodes, groups, metrics, traffic facts, alert rules, alert events, notification outbox, settings, theme metadata |
 | TimescaleDB | hypertables, retention policy, time-series compression path |
 | Redis | admin sessions, hot snapshots, alert runtime state |
-| Filesystem | Dash config, install identity, static assets, custom themes |
+| Filesystem | Dash config, install identity, static assets, custom themes, Dash update task state |
 
 Process memory holds the node auth index, volatile agent update requests, and traffic rebuild state. `--no-redis` moves Redis-backed runtime state into process memory. It is a fallback mode, not a production topology.
 
 `app.timezone` is compiled during startup. Empty uses the local timezone; non-empty values must be valid IANA timezone names, otherwise config loading fails with the configured value in the error.
+
+Dash self-update is available only for single-instance Linux/systemd release-package installs. The current Dash process starts the task. Status and recent logs are written under `$DASH_HOME/runtime/dash-update`, not PostgreSQL.
 
 SMART, thermal, and full RAID details are runtime state. On Linux, a root-side `smartctl` helper writes `/run/ithiltir-node/smart.json`, and a root-side `/proc` netns helper writes `/run/ithiltir-node/connections.json`; Ithiltir-node only reads those caches. SMART cache freshness, helper availability, device health, full thermal sensor payloads, and full RAID array/member payloads are kept in current snapshots or hot caches rather than historical PostgreSQL metric rows. SMART temperature for confirmed physical disks is reduced into `disk_physical_metrics.temp_c`; virtual disks and RAID devices are ignored. Thermal data is reduced into `cpu_temp_c` for host history, while full thermal details are split into a separate frontend field cache and composed back into front node JSON on read.
 

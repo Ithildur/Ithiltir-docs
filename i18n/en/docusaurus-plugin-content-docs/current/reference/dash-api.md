@@ -155,9 +155,9 @@ Node billing cycle override fields are atomic. If any of `traffic_cycle_mode`, `
 
 `POST /api/admin/nodes/{id}/traffic/rebuild` starts a per-node traffic rebuild. It rewrites that node's 5-minute facts from retained `nic_metrics` within `database.traffic_retention_days`. Success returns `202` with the status body. Missing or deleted nodes return `404 not_found`; any running rebuild returns `409 traffic_rebuild_running`; unavailable rebuild tasks return `503 traffic_rebuild_unavailable`. The task invalidates overlapping monthly snapshots in the retained window when it starts and does not synchronously rewrite monthly snapshots.
 
-`GET /api/admin/nodes/` field `version.supports_auto_update` shows whether the current node version meets the Dash admin console automatic update delivery requirement. The minimum version is `0.2.1`.
+`GET /api/admin/nodes/` field `version.supports_auto_update` shows whether the current node version meets the Dash admin console automatic update delivery requirement. The minimum version is `0.2.3`.
 
-`POST /api/admin/nodes/{id}/upgrade` requires `version.supports_auto_update=true`. Current node versions below `0.2.1` return `409 node_upgrade_unsupported`; unavailable bundled versions, platforms, or assets return `409`; failure to prepare the legacy temporary download grant returns `503 node_upgrade_grant_error`.
+`POST /api/admin/nodes/{id}/upgrade` requires `version.supports_auto_update=true`. Current node versions below `0.2.3` return `409 node_upgrade_unsupported`; unavailable bundled versions, platforms, or assets return `409`; failure to prepare the legacy temporary download grant returns `503 node_upgrade_grant_error`.
 
 ## Admin: Traffic Settings
 
@@ -210,6 +210,9 @@ Disk temperature history is written only for backend-confirmed physical disks. V
 | `PUT` | `/api/admin/alerts/mounts/` | Set mounts |
 | `GET` | `/api/admin/alerts/settings/` | Read global settings |
 | `PUT` | `/api/admin/alerts/settings/` | Replace global settings |
+| `GET` | `/api/admin/alerts/events/` | List alert records |
+| `GET` | `/api/admin/alerts/events/summary` | List open alert summaries |
+| `GET` | `/api/admin/alerts/events/servers` | List alert-record filter nodes |
 | `GET` | `/api/admin/alerts/channels/` | List channels |
 | `POST` | `/api/admin/alerts/channels/` | Create channel |
 | `GET` | `/api/admin/alerts/channels/{id}` | Read channel |
@@ -218,6 +221,10 @@ Disk temperature history is written only for backend-confirmed physical disks. V
 | `POST` | `/api/admin/alerts/channels/{id}/test` | Send test notification |
 | `DELETE` | `/api/admin/alerts/channels/{id}` | Delete channel |
 
+`GET /api/admin/alerts/events/` supports `server_id`, `status=open|closed|all`, `metric`, `from`, `to`, `cursor`, and `limit`. `from` and `to` use RFC3339. `limit` defaults to 200 and is capped at 500. The default status is `open`.
+
+Alert record responses include `items`, `next_cursor`, and `has_more`. Each item includes node, rule, metric, status, first trigger time, last trigger time, close time, current value, effective threshold, and close reason.
+
 ## Admin: System
 
 | Method | Path | Description |
@@ -225,7 +232,17 @@ Disk temperature history is written only for backend-confirmed physical disks. V
 | `GET` | `/api/admin/system/settings/` | Read system settings |
 | `PUT` | `/api/admin/system/settings/` | Replace system settings |
 | `PATCH` | `/api/admin/system/settings/` | Partial update |
+| `GET` | `/api/admin/system/dash-update/status` | Read Dash updater status |
+| `GET` | `/api/admin/system/dash-update/check` | Check Dash updates |
+| `POST` | `/api/admin/system/dash-update/run` | Start a Dash update task |
+| `GET` | `/api/admin/system/dash-update/release-notes` | Read Release Notes HTML |
 | `GET` | `/api/admin/system/themes/` | List themes |
 | `POST` | `/api/admin/system/themes/upload` | Upload theme zip |
 | `POST` | `/api/admin/system/themes/{id}/apply` | Apply theme |
 | `DELETE` | `/api/admin/system/themes/{id}` | Delete theme |
+
+System settings include `history_guest_access_mode`, `dash_update_channel`, `dash_update_mode`, `logo_url`, `page_title`, and `topbar_text`. `PATCH` accepts partial updates. `PUT` is a full replacement.
+
+`dash_update_channel` allows `release` or `prerelease`. `dash_update_mode` allows `manual`, `notify`, or `auto`.
+
+`GET /api/admin/system/dash-update/check` query `channel` allows `release` or `prerelease`. `POST /api/admin/system/dash-update/run` accepts `action`, `channel`, and `lang`. A started task returns `202`; an already running task returns `409` with the current status; unavailable updater state returns `503 dash_update_unavailable`.

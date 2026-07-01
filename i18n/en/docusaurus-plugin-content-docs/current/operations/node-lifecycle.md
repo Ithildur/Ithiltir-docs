@@ -51,7 +51,7 @@ If static info is incomplete, the node keeps retrying until a complete report is
 
 After a node upgrade is triggered in Dash, Dash returns an update manifest in the next metrics response. Windows runner, the Linux systemd install layout, and the macOS LaunchDaemon install layout can process the manifest.
 
-Automatic update delivery requires the current node version to be `0.2.1` or later. For older versions, rerun the install command or manually replace the binary.
+Automatic update delivery requires the current node version to be `0.2.3` or later. For older versions, rerun the install command or manually replace the binary.
 
 Direct binaries outside the install layout do not self-update. See [Node Update](../components/node/update.md) for update rules.
 

@@ -11,6 +11,36 @@ Prereleases are not documented separately. Changes from prerelease builds are fo
 
 ## Dash
 
+### 0.2.7
+
+Released: 2026-07-01
+
+GitHub Release: [Ithiltir 0.2.7](https://github.com/Ithildur/Ithiltir/releases/tag/0.2.7)
+
+#### Changes
+
+- Added a Dash self-update page in the admin console for release/prerelease checks, current Dash version, bundled Node version, latest version, update task status, and recent logs.
+- Dash self-update now supports manual update, reinstall, notification-only mode, and automatic mode. Automatic updates run the packaged `update_dash_linux.sh` through a systemd transient unit and store status under `DASH_HOME/runtime/dash-update`.
+- Added an alert records page with server, status, metric, time-range filters, and paginated loading.
+- Added open-alert entry points on the node list. They show the current open alert summary and link to alert records filtered to that node.
+- Alert notification channel management now has search and clearer status handling. Dash automatic update notifications reuse enabled global notification channels.
+- Added runtime system settings for `dash_update_channel` and `dash_update_mode`.
+
+#### Fixes
+
+- After a Dash update completes, the admin console resynchronizes `/api/version` and the update check result so current/latest version badges do not stay stale.
+- Dash self-update availability now reports clear reasons when systemd, git, tar, curl/wget, or `update_dash_linux.sh` is missing.
+- System settings PATCH and PUT now clearly separate partial updates from full replacement so newly added fields are not lost.
+- Alert record custom time range validation avoids querying invalid ranges.
+- The minimum Node version for automatic update delivery is now `0.2.3`; older nodes must be updated by rerunning the install command or replacing the binary manually.
+
+#### Compatibility
+
+- Dash self-update supports Linux/systemd release-package installs only. Non-systemd environments report the updater as unavailable.
+- `PUT /api/admin/system/settings` is a full replacement and must include `history_guest_access_mode`, `dash_update_channel`, `dash_update_mode`, `logo_url`, `page_title`, and `topbar_text`. Use `PATCH` for partial updates.
+- The `prerelease` channel checks prerelease tags only and does not fall back to stable releases.
+- The open-alert summary on the node list is loaded when entering the node page; it is not realtime polling.
+
 ### 0.2.6
 
 Released: 2026-06-17

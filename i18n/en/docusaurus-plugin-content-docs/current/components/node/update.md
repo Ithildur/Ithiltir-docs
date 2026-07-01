@@ -19,7 +19,7 @@ Direct binaries outside the managed install layout ignore update manifests.
 
 :::warning Automatic Update Delivery
 
-Automatic update delivery from the Dash admin console applies only to nodes running `0.2.1` or later. Nodes below `0.2.1` must be updated by rerunning the install command or manually replacing the binary.
+Automatic update delivery from the Dash admin console applies only to nodes running `0.2.3` or later. Nodes below `0.2.3` must be updated by rerunning the install command or manually replacing the binary.
 
 :::
 

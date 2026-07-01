@@ -23,6 +23,14 @@ sudo bash /opt/Ithiltir-dash/update_dash_linux.sh -y --test --lang zh
 sudo bash /opt/Ithiltir-dash/update_dash_linux.sh reinstall --test --lang zh
 ```
 
+管理台的“系统 / Dash 更新”使用同一套发布包更新边界。它只适用于 Linux/systemd 发布包安装；缺少 systemd、git、tar、curl/wget 或 `/opt/Ithiltir-dash/update_dash_linux.sh` 时会显示更新器不可用。
+
+管理台支持 `release` 和 `prerelease` 通道。自动化模式有：
+
+- `manual`：只在页面内手动检查和更新。
+- `notify`：定期检查，有可用更新时发送通知。
+- `auto`：定期检查并自动更新，发送状态通知。
+
 更新脚本会：
 
 1. 检查当前版本和发布通道。
@@ -75,7 +83,7 @@ manifest 的 `url` 可能包含短期有效的 `upgrade_token`，用于访问受
 
 :::warning 自动下发版本要求
 
-Dash 管理台自动下发更新要求当前 Node 版本为 `0.2.1` 或更高。低于该版本时，管理台提示手动更新，重新执行安装命令。
+Dash 管理台自动下发更新要求当前 Node 版本为 `0.2.3` 或更高。低于该版本时，管理台提示手动更新，重新执行安装命令。
 
 :::
 

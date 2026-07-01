@@ -57,7 +57,7 @@ Dash API error format:
 | --- | --- | --- |
 | `409` | `node_version_unavailable` | Bundled node version is unavailable |
 | `409` | `invalid_node_version` | Bundled node version is invalid |
-| `409` | `node_upgrade_unsupported` | Current node version is below `0.2.1` and does not support automatic update delivery |
+| `409` | `node_upgrade_unsupported` | Current node version is below `0.2.3` and does not support automatic update delivery |
 | `409` | `node_platform_unknown` | Node platform is unknown |
 | `409` | `node_platform_unsupported` | Node platform is unsupported |
 | `409` | `node_asset_missing` | Matching node asset is missing |

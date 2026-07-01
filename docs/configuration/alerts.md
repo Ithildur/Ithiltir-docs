@@ -90,6 +90,22 @@ CPU 核心数优先使用逻辑核心，其次物理核心。
 
 通知目标不可用时，告警事件和运行时状态仍会提交，但不会新增通知 outbox。
 
+## 告警记录
+
+告警记录保存规则打开和关闭后的事件。管理台可以按节点、状态、指标和时间范围筛选记录。
+
+接口：
+
+```text
+GET /api/admin/alerts/events
+GET /api/admin/alerts/events/summary
+GET /api/admin/alerts/events/servers
+```
+
+`GET /api/admin/alerts/events` 支持 `server_id`、`status`、`metric`、`from`、`to`、`cursor` 和 `limit`。`status` 允许 `open`、`closed` 或 `all`，未传时只返回未恢复事件。
+
+`GET /api/admin/alerts/events/summary` 返回按节点聚合的未恢复告警摘要。节点列表里的告警入口使用该摘要；它是进入节点页时加载的快照，不是实时轮询。
+
 ## 规则挂载
 
 规则挂载是 `(rule_id, server_id) -> enabled`。

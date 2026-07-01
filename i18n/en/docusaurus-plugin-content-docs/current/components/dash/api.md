@@ -45,9 +45,11 @@ Optional Bearer endpoints treat missing, malformed, expired, revoked, or otherwi
 | `/api/admin/alerts/rules` | Bearer | `GET /`, `POST /`, `PATCH /{id}`, `DELETE /{id}` |
 | `/api/admin/alerts/mounts` | Bearer | `GET /`, `PUT /` |
 | `/api/admin/alerts/settings` | Bearer | `GET /`, `PUT /` |
+| `/api/admin/alerts/events` | Bearer | `GET /`, `GET /summary`, `GET /servers` |
 | `/api/admin/alerts/channels` | Bearer | `GET /`, `POST /`, `GET /{id}`, `PUT /{id}`, `PUT /{id}/enabled`, `POST /{id}/test`, `DELETE /{id}` |
 | `/api/admin/alerts/channels/telegram/mtproto` | Bearer | `POST /code`, `POST /verify`, `POST /password`, `POST /ping` |
 | `/api/admin/system/settings` | Bearer | `GET /`, `PUT /`, `PATCH /` |
+| `/api/admin/system/dash-update` | Bearer | `GET /status`, `GET /check`, `POST /run`, `GET /release-notes` |
 | `/api/admin/system/themes` | Bearer | `GET /`, `POST /upload`, `POST /{id}/apply`, `DELETE /{id}` |
 
 ## Anonymous Reads
@@ -72,7 +74,7 @@ Optional Bearer endpoints treat missing, malformed, expired, revoked, or otherwi
 - `GET /api/admin/nodes/` includes `traffic_p95_enabled`, `traffic_cycle_mode`, `traffic_billing_start_day`, `traffic_billing_anchor_date`, `traffic_billing_timezone`, `traffic_direction_mode`, tags, and version status.
 - `tags` is always a string array.
 - `version.version` is the last reported node version. Missing, invalid, or below the supported node version floor set `version.is_outdated=true`.
-- `version.supports_auto_update` shows whether the current node version meets the Dash admin console automatic update delivery requirement. The minimum version is `0.2.1`.
+- `version.supports_auto_update` shows whether the current node version meets the Dash admin console automatic update delivery requirement. The minimum version is `0.2.3`.
 - `PATCH /api/admin/nodes/{id}` accepts traffic settings, tags, secret, group IDs, and display fields. Omitted fields are unchanged.
 - Node billing cycle override fields are atomic. If any of `traffic_cycle_mode`, `traffic_billing_start_day`, `traffic_billing_anchor_date`, or `traffic_billing_timezone` is submitted, the request must also include `traffic_cycle_mode` and every field used by that mode, otherwise it returns `400 invalid_traffic_cycle_settings`.
 - `traffic_cycle_mode` allows `default`, `calendar_month`, `whmcs_compatible`, and `clamp_to_month_end`. `default` uses no billing fields; `calendar_month` uses `traffic_billing_timezone`; `clamp_to_month_end` uses `traffic_billing_start_day` and `traffic_billing_timezone`; `whmcs_compatible` uses `traffic_billing_anchor_date` and `traffic_billing_timezone`, with `traffic_billing_start_day` derived from the anchor date.
@@ -90,6 +92,16 @@ Optional Bearer endpoints treat missing, malformed, expired, revoked, or otherwi
 - When an upgrade task is pending, `update` includes `id`, `version`, `url`, `sha256`, and `size`.
 - `url` may include a short-lived `upgrade_token` so legacy agents can download the exact update asset without sending `X-Node-Secret`. Clients must use the returned URL unchanged.
 - Upgrade tasks are volatile and clear when the agent reports the exact target version or a higher SemVer precedence. Different build metadata at the same SemVer precedence is treated as a distinct node binary and can still be delivered.
+
+## Admin: System Settings and Dash Update
+
+- `GET /api/admin/system/settings/` returns `history_guest_access_mode`, `dash_update_channel`, `dash_update_mode`, `logo_url`, `page_title`, and `topbar_text`.
+- `PATCH /api/admin/system/settings/` accepts partial updates. `PUT /api/admin/system/settings/` is a full replacement and must submit every system settings field.
+- `dash_update_channel` allows `release` or `prerelease`; `dash_update_mode` allows `manual`, `notify`, or `auto`.
+- `GET /api/admin/system/dash-update/status` returns updater availability, current task status, and recent logs.
+- `GET /api/admin/system/dash-update/check?channel=release|prerelease` checks the selected Dash update channel. Invalid channels return `400 invalid_fields`; unavailable updater state returns `503 dash_update_unavailable`.
+- `POST /api/admin/system/dash-update/run` accepts `action`, `channel`, and `lang`. A started task returns `202`; an already running task returns `409` with the current status; invalid requests return `400 invalid_fields`.
+- `GET /api/admin/system/dash-update/release-notes?lang=zh|en` returns Release Notes HTML from the documentation site. Invalid languages return `400 invalid_fields`; fetch failures return `502 release_notes_fetch_failed`.
 
 ## Front Metrics and History Metrics
 

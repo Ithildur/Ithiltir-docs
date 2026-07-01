@@ -130,7 +130,7 @@ Windows 自更新只在 runner 托管模式下生效。直接运行 `node push` 
 
 Linux 和 macOS 使用 `/var/lib/ithiltir-node/releases/<version>` 与 `/var/lib/ithiltir-node/current` 安装布局时，也会处理 update manifest。安装布局外的直接二进制不处理自更新。
 
-Dash 管理台自动下发更新要求当前 Node 版本为 `0.2.1` 或更高。低于该版本时，重新执行安装命令。
+Dash 管理台自动下发更新要求当前 Node 版本为 `0.2.3` 或更高。低于该版本时，重新执行安装命令。
 
 ## 网卡选择
 

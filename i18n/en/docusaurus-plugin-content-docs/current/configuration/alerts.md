@@ -90,3 +90,60 @@ CPU core count uses logical cores first, then physical cores.
 The alert service does not open new alert events during the first minute after startup.
 
 If notification targets are unavailable, alert events and runtime state are still committed, but no notification outbox item is added.
+
+## Alert Records
+
+Alert records store events after rules open and close. The admin console can filter records by node, status, metric, and time range.
+
+Endpoints:
+
+```text
+GET /api/admin/alerts/events
+GET /api/admin/alerts/events/summary
+GET /api/admin/alerts/events/servers
+```
+
+`GET /api/admin/alerts/events` supports `server_id`, `status`, `metric`, `from`, `to`, `cursor`, and `limit`. `status` allows `open`, `closed`, or `all`; omitted status returns only open events.
+
+`GET /api/admin/alerts/events/summary` returns open-alert summaries grouped by node. The node list alert entry uses this summary. It is loaded when entering the node page and is not realtime polling.
+
+## Rule Mounts
+
+Rule mounts are `(rule_id, server_id) -> enabled`.
+
+Endpoint:
+
+```text
+PUT /api/admin/alerts/mounts
+```
+
+Request:
+
+```json
+{
+  "rule_ids": [-1, 10],
+  "server_ids": [1, 2],
+  "mounted": true
+}
+```
+
+`rule_ids` may include built-in rule IDs. `server_ids` must reference existing nodes.
+
+## Global Alert Settings
+
+Endpoint:
+
+```text
+PUT /api/admin/alerts/settings
+```
+
+Request:
+
+```json
+{
+  "enabled": true,
+  "channel_ids": [1, 2]
+}
+```
+
+`channel_ids` can be an empty array, which enables alerts without sending notifications.

@@ -120,7 +120,7 @@ Only managed install layouts process update manifests:
 
 Direct binaries outside the managed install layout ignore update manifests.
 
-Automatic update delivery from the Dash admin console applies only to nodes currently reporting `0.2.1` or later. Older versions must be updated manually.
+Automatic update delivery from the Dash admin console applies only to nodes currently reporting `0.2.3` or later. Older versions must be updated manually.
 
 Manifest requirements:
 
