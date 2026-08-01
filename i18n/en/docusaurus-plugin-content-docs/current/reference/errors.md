@@ -21,8 +21,9 @@ Dash API error format:
 | `401` | `unauthorized` | Authentication failed |
 | `403` | `forbidden` | Request is recognized but not allowed |
 | `404` | `not_found` | Resource does not exist |
-| `413` | `body_too_large` | Request body is too large |
 | `409` | conflict code | State conflict |
+| `413` | `body_too_large` | Request body is too large |
+| `429` | `rate_limited` | Login requests exceeded the rate-limit window |
 | `503` | `db_error` | Database read or write failed |
 | `503` | `redis_cache_error` | Redis cache sync failed |
 
@@ -30,7 +31,11 @@ Dash API error format:
 
 | HTTP | code | Description |
 | --- | --- | --- |
+| `400` | `invalid_json` | Login request body is not valid JSON |
 | `400` | `invalid_persistence` | Login `persistence` is not `session` or `persistent` |
+| `400` | `invalid_session` | Session ID is empty |
+| `500` | `auth_error` | Authentication operation failed |
+| `503` | `auth_unavailable` | Session storage is temporarily unavailable |
 
 ## Node Management
 
@@ -91,8 +96,9 @@ Dash API error format:
 | --- | --- | --- |
 | `400` | `invalid_theme_package` | Invalid theme package format |
 | `404` | `not_found` | Theme does not exist |
-| `503` | `theme_storage_error` | Theme storage is unavailable |
-| `500` | `theme_unavailable` | Built-in theme or theme state is unavailable |
+| `500` | `theme_storage_unavailable` | Theme directory read, write, or deletion failed |
+| `500` | `theme_unavailable` | Built-in theme catalog is unavailable |
+| `503` | `theme_unavailable` | Active theme validation is unavailable |
 
 Theme lists can return `theme_active_missing` or `theme_active_broken` warning states.
 
@@ -100,8 +106,12 @@ Theme lists can return `theme_active_missing` or `theme_active_broken` warning s
 
 | HTTP | code | Description |
 | --- | --- | --- |
+| `400` | `invalid_fields` | Invalid update action, channel, language, or plan fields |
 | `409` | `dash_update_current` | A normal update target equals the current version |
 | `502` | `dash_update_check_failed` | Release-source check failed or timed out |
+| `503` | `dash_update_failed` | Update preparation or task start failed |
 | `503` | `dash_update_unavailable` | Install layout or recovery state prevents managed update |
+
+When a task is already running, `POST /api/admin/system/dash-update/run` returns `409` with the current status resource rather than a JSON error wrapper.
 
 Task `failure_code` may include `install_changed`, `recovery_required`, or `rolled_back`; these are status fields, not HTTP error wrapper codes.

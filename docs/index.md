@@ -93,7 +93,7 @@ Ithiltir 文档按目标组织：先完成安装，再理解系统边界，最�
 
 - [Dash 安装](components/dash/install.md)
 - [Dash 部署资产](components/dash/deploy.md)
-- [Node 安装](components/node/install.md)
+- [Linux Node 安装](installation/node-linux.md)
 - [Node 更新](components/node/update.md)
 
 ### 开发和发布

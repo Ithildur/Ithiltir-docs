@@ -97,9 +97,7 @@ const sidebars = {
           link: {type: 'doc', id: 'components/dash/index'},
           items: [
             'components/dash/install',
-            'components/dash/config',
             'components/dash/commands',
-            'components/dash/api',
             'components/dash/deploy',
           ],
         },
@@ -108,7 +106,6 @@ const sidebars = {
           label: 'Node',
           link: {type: 'doc', id: 'components/node/index'},
           items: [
-            'components/node/install',
             'components/node/commands',
             'components/node/local',
             'components/node/push',

@@ -14,7 +14,7 @@ slug: /Dash/Install
 - Redis `6.2.0+`，推荐 `8.2.3+`；本地试用可以使用 `--no-redis`。
 - 服务模式使用运行中的 systemd；其他主机显式选择 `--service-manager=none`。
 
-源码构建还需要 Go 1.26+ 和 Bun 1.3.11。
+源码构建还需要 Go 1.26.5+ 和 Bun 1.3.11。
 
 ## 发布包安装
 

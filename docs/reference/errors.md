@@ -20,8 +20,9 @@ Dash API 错误格式：
 | `401` | `unauthorized` | 鉴权失败 |
 | `403` | `forbidden` | 已识别请求但无权限 |
 | `404` | `not_found` | 资源不存在 |
-| `413` | `body_too_large` | 请求体过大 |
 | `409` | conflict code | 状态冲突 |
+| `413` | `body_too_large` | 请求体过大 |
+| `429` | `rate_limited` | 登录请求超过限流窗口 |
 | `503` | `db_error` | 数据库读写失败 |
 | `503` | `redis_cache_error` | Redis 前台缓存同步失败 |
 
@@ -29,7 +30,11 @@ Dash API 错误格式：
 
 | HTTP | code | 说明 |
 | --- | --- | --- |
+| `400` | `invalid_json` | 登录请求体不是合法 JSON |
 | `400` | `invalid_persistence` | 登录 `persistence` 不是 `session` 或 `persistent` |
+| `400` | `invalid_session` | 会话 ID 为空 |
+| `500` | `auth_error` | 认证操作失败 |
+| `503` | `auth_unavailable` | 会话存储暂时不可用 |
 
 ## 节点管理
 
@@ -90,8 +95,9 @@ Dash API 错误格式：
 | --- | --- | --- |
 | `400` | `invalid_theme_package` | 主题包格式非法 |
 | `404` | `not_found` | 主题不存在 |
-| `503` | `theme_storage_error` | 主题存储不可用 |
-| `500` | `theme_unavailable` | 内置主题或主题状态不可用 |
+| `500` | `theme_storage_unavailable` | 主题目录读取、写入或删除失败 |
+| `500` | `theme_unavailable` | 内置主题目录不可用 |
+| `503` | `theme_unavailable` | 当前主题无法校验 |
 
 主题列表可能返回 warning header：
 
@@ -104,8 +110,10 @@ Dash API 错误格式：
 | --- | --- | --- |
 | `400` | `invalid_fields` | 更新 action、channel、lang 或计划字段非法 |
 | `409` | `dash_update_current` | 普通更新的目标等于当前版本；需要显式重装 |
-| `409` | `dash_update_failed` | 更新任务无法入队或已有冲突任务 |
 | `502` | `dash_update_check_failed` | 发布源检查失败或超时 |
+| `503` | `dash_update_failed` | 更新任务准备或启动失败 |
 | `503` | `dash_update_unavailable` | 当前安装布局或恢复状态不允许受管更新 |
+
+已有任务运行时，`POST /api/admin/system/dash-update/run` 返回 `409` 和当前状态资源，不返回 JSON 错误包装。
 
 任务终态的 `failure_code` 还可能为 `install_changed`、`recovery_required` 或 `rolled_back`。这些值位于状态资源中，不是 HTTP 错误包装的 `code`。

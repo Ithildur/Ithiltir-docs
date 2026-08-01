@@ -93,7 +93,7 @@ Ithiltir documentation is organized by reader goal: install the system, understa
 
 - [Dash Install](components/dash/install.md)
 - [Dash Deployment Assets](components/dash/deploy.md)
-- [Node Install](components/node/install.md)
+- [Install Linux Node](installation/node-linux.md)
 - [Node Update](components/node/update.md)
 
 ### Development and Releases

@@ -48,10 +48,13 @@ Optional Bearer endpoints treat invalid Bearer tokens as anonymous requests.
 
 ## Auth Sessions
 
-`POST /api/auth/login` request bodies must include `password` and `persistence`. `persistence` allows `session` or `persistent`. Successful responses include `access_token`, `expires_at`, and `csrf_token`, and set refresh/CSRF cookies.
+`POST /api/auth/login` request bodies must include `password` and `persistence`. `persistence` allows `session` or `persistent`. Successful responses include `access_token`, `expires_at`, and `csrf_token`, and set refresh/CSRF cookies. Malformed login JSON returns `400 invalid_json`, invalid `persistence` returns `400 invalid_persistence`, and login rate limiting returns `429 rate_limited`.
 
 | Method | Path | Auth | Success |
 | --- | --- | --- | --- |
+| `POST` | `/api/auth/login` | Admin password | `200` |
+| `POST` | `/api/auth/refresh` | refresh cookie + `X-CSRF-Token` | `200` |
+| `POST` | `/api/auth/logout` | refresh cookie + `X-CSRF-Token` | `204` |
 | `GET` | `/api/auth/sessions/` | Bearer | `200` |
 | `DELETE` | `/api/auth/sessions/current` | Bearer | `204` |
 | `DELETE` | `/api/auth/sessions/` | Bearer | `204` |
@@ -224,6 +227,10 @@ Disk temperature history is written only for backend-confirmed physical disks. V
 | `PUT` | `/api/admin/alerts/channels/{id}/enabled` | Toggle enabled |
 | `POST` | `/api/admin/alerts/channels/{id}/test` | Send test notification |
 | `DELETE` | `/api/admin/alerts/channels/{id}` | Delete channel |
+| `POST` | `/api/admin/alerts/channels/telegram/mtproto/code` | Start MTProto login and send a code |
+| `POST` | `/api/admin/alerts/channels/telegram/mtproto/verify` | Verify the login code |
+| `POST` | `/api/admin/alerts/channels/telegram/mtproto/password` | Submit the two-step verification password |
+| `POST` | `/api/admin/alerts/channels/telegram/mtproto/ping` | Check the stored MTProto session |
 
 `GET /api/admin/alerts/events/` supports `server_id`, `status=open|closed|all`, `metric`, `from`, `to`, `cursor`, and `limit`. `from` and `to` use RFC3339. `limit` defaults to 200 and is capped at 500. The default status is `open`.
 

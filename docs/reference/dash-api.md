@@ -47,10 +47,13 @@ Bearer 可选端点会把无效 Bearer 当作匿名请求。
 
 ## 认证会话
 
-`POST /api/auth/login` 请求体必须包含 `password` 和 `persistence`。`persistence` 允许 `session` 或 `persistent`。成功响应包含 `access_token`、`expires_at` 和 `csrf_token`，并写入 refresh/CSRF cookie。
+`POST /api/auth/login` 请求体必须包含 `password` 和 `persistence`。`persistence` 允许 `session` 或 `persistent`。成功响应包含 `access_token`、`expires_at` 和 `csrf_token`，并写入 refresh/CSRF cookie。格式错误的登录 JSON 返回 `400 invalid_json`，非法 `persistence` 返回 `400 invalid_persistence`，登录限流返回 `429 rate_limited`。
 
 | 方法 | 路径 | 鉴权 | 成功 |
 | --- | --- | --- | --- |
+| `POST` | `/api/auth/login` | 管理员密码 | `200` |
+| `POST` | `/api/auth/refresh` | refresh cookie + `X-CSRF-Token` | `200` |
+| `POST` | `/api/auth/logout` | refresh cookie + `X-CSRF-Token` | `204` |
 | `GET` | `/api/auth/sessions/` | Bearer | `200` |
 | `DELETE` | `/api/auth/sessions/current` | Bearer | `204` |
 | `DELETE` | `/api/auth/sessions/` | Bearer | `204` |
@@ -225,6 +228,10 @@ SMART 温度历史只来自后端确认的物理盘。虚拟盘和 RAID 设备�
 | `PUT` | `/api/admin/alerts/channels/{id}/enabled` | 切换启用 |
 | `POST` | `/api/admin/alerts/channels/{id}/test` | 测试发送 |
 | `DELETE` | `/api/admin/alerts/channels/{id}` | 删除渠道 |
+| `POST` | `/api/admin/alerts/channels/telegram/mtproto/code` | 发起 MTProto 登录并发送验证码 |
+| `POST` | `/api/admin/alerts/channels/telegram/mtproto/verify` | 校验登录验证码 |
+| `POST` | `/api/admin/alerts/channels/telegram/mtproto/password` | 提交二次验证密码 |
+| `POST` | `/api/admin/alerts/channels/telegram/mtproto/ping` | 检查已保存的 MTProto 会话 |
 
 `GET /api/admin/alerts/events/` 支持 `server_id`、`status=open|closed|all`、`metric`、`from`、`to`、`cursor` 和 `limit`。`from`、`to` 使用 RFC3339；`limit` 默认 200，最大 500。默认 `status=open`。
 
