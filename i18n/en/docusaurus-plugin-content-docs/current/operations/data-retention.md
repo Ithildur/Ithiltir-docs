@@ -5,14 +5,15 @@ title: Data Retention
 
 # Data Retention
 
-Dash stores history data in PostgreSQL + TimescaleDB. Redis primarily stores runtime state.
+Dash stores durable history and control state in PostgreSQL + TimescaleDB. Redis stores sessions and disposable frontend caches.
 
 ## Data Classes
 
 - Metrics history.
 - Network traffic facts and rollups.
 - Nodes, groups, and system settings.
-- Alert rules, events, runtime state, and notification outbox.
+- Alert rules, open/closed events, and notification outbox.
+- Traffic Usage/Facts materialization progress and monthly usage.
 - Theme package metadata.
 
 ## Retention Config
@@ -39,7 +40,9 @@ Normal metrics retention covers the metric hypertables, including disk IO, disk 
 
 Traffic retention covers writable 5-minute traffic facts. Old rows are removed by rolling retention, while monthly snapshots are retained separately as accounting output and store historical 95th percentile billing values.
 
-Manual traffic rebuilds use the same retention boundary. They can read only retained raw NIC metrics, so longer retention increases database size but expands the rebuild and review window.
+Manual traffic rebuilds are Billing-only and can read only retained raw NIC metrics. They rewrite facts in 6-hour chunks. Usage and Facts have independent durable progress; rebuild job state itself is process-local.
+
+Clients use `data_complete`, `coverage_ratio`, `gap_count`, and `reset_count` for completeness. Deprecated `partial` has been removed.
 
 ## Backup Boundary
 

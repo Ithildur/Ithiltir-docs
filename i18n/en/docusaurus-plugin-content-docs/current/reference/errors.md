@@ -36,7 +36,7 @@ Dash API error format:
 
 | code | Description |
 | --- | --- |
-| `invalid_name` | Empty node name |
+| `invalid_name` | Node name is outside 1–64 characters or contains control characters |
 | `invalid_display_order` | Display order is not positive |
 | `invalid_traffic_cycle_mode` | Invalid node billing cycle mode |
 | `invalid_traffic_cycle_settings` | Node billing cycle fields do not match the selected mode |
@@ -44,8 +44,8 @@ Dash API error format:
 | `invalid_traffic_billing_anchor_date` | Invalid billing anchor date |
 | `invalid_traffic_billing_timezone` | Invalid billing timezone |
 | `invalid_traffic_direction_mode` | Invalid node traffic direction mode |
-| `invalid_tags` | Tags is not a string array |
-| `invalid_secret` | Invalid node secret |
+| `invalid_tags` | Invalid tags, more than 32 items, or an item over 64 characters |
+| `invalid_secret` | Node secret is outside 8–128 characters |
 | `duplicate_secret` | Node secret already belongs to another node |
 | `invalid_group_ids` | Invalid group IDs |
 | `secret_collision_exhausted` | Random secret collision retries exhausted |
@@ -69,7 +69,9 @@ Dash API error format:
 | HTTP | code | Description |
 | --- | --- | --- |
 | `400` | `invalid_fields` | Invalid traffic settings field |
+| `400` | `billing_cycle_is_per_node` | A global settings request includes per-node cycle fields |
 | `409` | `traffic_daily_requires_billing` | Daily traffic requires billing mode |
+| `409` | `traffic_rebuild_requires_billing` | Manual rebuild requires billing mode |
 | `409` | `traffic_rebuild_running` | A traffic rebuild task is already running |
 | `503` | `traffic_rebuild_unavailable` | Traffic rebuild is unavailable |
 
@@ -79,6 +81,8 @@ Dash API error format:
 | --- | --- |
 | `invalid_fields` | Invalid rule, mount, channel, or setting fields |
 | `not_logged_in` | Telegram MTProto is not logged in |
+| `login_state_error` | Telegram MTProto login state is unavailable |
+| `channel_changed` | Channel config revision changed concurrently |
 | `notify_error` | Test notification send failed |
 
 ## Themes
@@ -90,8 +94,14 @@ Dash API error format:
 | `503` | `theme_storage_error` | Theme storage is unavailable |
 | `500` | `theme_unavailable` | Built-in theme or theme state is unavailable |
 
-Theme list responses can return this warning header:
+Theme lists can return `theme_active_missing` or `theme_active_broken` warning states.
 
-```http
-X-Theme-Warning: active_theme_unavailable
-```
+## Dash Update
+
+| HTTP | code | Description |
+| --- | --- | --- |
+| `409` | `dash_update_current` | A normal update target equals the current version |
+| `502` | `dash_update_check_failed` | Release-source check failed or timed out |
+| `503` | `dash_update_unavailable` | Install layout or recovery state prevents managed update |
+
+Task `failure_code` may include `install_changed`, `recovery_required`, or `rolled_back`; these are status fields, not HTTP error wrapper codes.

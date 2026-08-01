@@ -4,18 +4,18 @@ slug: /Config/Traffic
 
 # 流量统计和账期
 
-Dash 从节点上报的网卡计数器生成流量统计。系统保存原始入站和出站计数，计费视图由方向模式决定。
+Dash 从 Node 上报的网卡计数器生成流量统计。原始入站和出站计数分开保存；方向模式只决定查询时选择的计费视图。
 
 ## 模式
 
 | 模式 | 值 | 行为 |
 | --- | --- | --- |
-| 轻量模式 | `lite` | 根据近期原始网卡采样保存月度入/出总量和估算峰值 |
-| 计费模式 | `billing` | 维护当前 5 分钟事实、日汇总、P95、覆盖率和月度快照 |
+| 轻量模式 | `lite` | 保存每个节点、网卡和账期的月度入/出总量、估算峰值和覆盖边界；不写 5 分钟事实 |
+| 计费模式 | `billing` | 保留同一月度累计，并额外维护 5 分钟事实、日汇总、P95、覆盖率和月度计费快照 |
 
-`GET /api/statistics/traffic/daily` 只在 `billing` 模式可用，否则返回 `409 traffic_daily_requires_billing`。`period` 可选，允许 `current`、`previous`，省略时为 `current`。
+`GET /api/statistics/traffic/daily` 只在 Billing 模式可用，否则返回 `409 traffic_daily_requires_billing`。
 
-`GET /api/statistics/traffic/monthly` 支持 `months` 和 `period`。`months` 最大 24；`period=current` 从本账期开始，`period=previous` 从上账期开始，省略时为 `current`。响应字段 `includes_current` 在 `period=current` 时为 `true`，在 `period=previous` 时为 `false`。
+`GET /api/statistics/traffic/monthly` 的 `months` 只接受 `1..24`。`period` 允许 `current` 或 `previous`，省略时为 `current`。
 
 ## 全局设置
 
@@ -31,54 +31,42 @@ Dash 从节点上报的网卡计数器生成流量统计。系统保存原始入
 }
 ```
 
-允许值：
+可修改字段：
 
 | 字段 | 允许值 |
 | --- | --- |
 | `guest_access_mode` | `disabled`、`by_node` |
 | `usage_mode` | `lite`、`billing` |
-| `cycle_mode` | `calendar_month`、`whmcs_compatible`、`clamp_to_month_end` |
 | `direction_mode` | `out`、`both`、`max` |
 
-## 账期模式
+`cycle_mode`、`billing_start_day`、`billing_anchor_date` 和 `billing_timezone` 只为旧响应结构兼容保留，固定表示应用时区中从 1 号开始的自然月。`PATCH /api/statistics/traffic/settings` 提交任一账期字段会返回 `400 billing_cycle_is_per_node`。
 
-| 模式 | 行为 |
-| --- | --- |
-| `calendar_month` | 自然月，`billing_start_day` 固定为 `1` |
-| `clamp_to_month_end` | 每月指定日起算；遇到短月夹到月末 |
-| `whmcs_compatible` | 按 WHMCS 兼容规则生成账期；可使用 `billing_anchor_date` 锚定 |
+## 节点账期
 
-`billing_anchor_date` 接受 `YYYY-MM-DD` 或 RFC3339，保存时规范化成 `YYYY-MM-DD`。
-
-`billing_timezone` 必须是 Go 可加载的 IANA 时区，例如：
-
-```text
-Asia/Shanghai
-Asia/Hong_Kong
-UTC
-America/Los_Angeles
-```
-
-## 节点覆盖
-
-节点可覆盖全局账期和统计方向：
+每个节点显式保存自己的账期：
 
 | 字段 | 说明 |
 | --- | --- |
-| `traffic_cycle_mode` | `default` 表示继承全局；也可使用三个账期模式 |
-| `traffic_billing_start_day` | 1 到 31 |
+| `traffic_cycle_mode` | `calendar_month`、`whmcs_compatible` 或 `clamp_to_month_end` |
+| `traffic_billing_start_day` | `1..31` |
 | `traffic_billing_anchor_date` | WHMCS 锚点 |
-| `traffic_billing_timezone` | 节点账期时区 |
-| `traffic_direction_mode` | `default` 表示继承全局；也可使用 `out`、`both`、`max` |
+| `traffic_billing_timezone` | IANA 时区 |
+| `traffic_direction_mode` | `default`、`out`、`both` 或 `max` |
 | `traffic_p95_enabled` | 是否为该节点计算 P95 |
 
-规范化规则：
+账期模式：
 
-- `default` 清空节点账期字段并继承全局。
-- `calendar_month` 保存 `traffic_billing_start_day=1`。
-- 非 `whmcs_compatible` 模式保存空 `traffic_billing_anchor_date`。
-- 非默认模式下空 `traffic_billing_timezone` 在读取时使用应用时区。
-- `traffic_direction_mode=default` 继承全局统计方向；`out`、`both`、`max` 覆盖该节点。
+| 模式 | 行为 |
+| --- | --- |
+| `calendar_month` | 自然月，开始日固定为 1 |
+| `clamp_to_month_end` | 每月指定日起算；短月夹到月末 |
+| `whmcs_compatible` | 使用 `traffic_billing_anchor_date` 对齐 WHMCS 兼容账期 |
+
+`traffic_billing_anchor_date` 接受 `YYYY-MM-DD` 或 RFC3339，保存时规范化为 `YYYY-MM-DD`。时区必须是可加载的 IANA 时区，例如 `Asia/Hong_Kong` 或 `UTC`；空值读取时使用应用时区。
+
+新节点默认保存 `calendar_month` 和开始日 1。旧客户端仍可提交 `traffic_cycle_mode=default`，但该值只是不带账期字段时可用的输入别名，会保存为显式自然月，后续读取不再返回 `default`。
+
+节点账期改变后立即生效。Dash 会删除该节点受影响的月度派生数据，并从新旧当前账期较早的起点局部修复仍在原始指标保留期内的数据。修复期间只暂停该节点的 Lite 实时累计，不影响其他节点；追平前可能暂时没有当前账期统计或只有部分覆盖。
 
 ## 方向模式
 
@@ -86,44 +74,47 @@ America/Los_Angeles
 | --- | --- |
 | `out` | 只使用出站 |
 | `both` | 入站 + 出站 |
-| `max` | 每项指标选择入站/出站较大值 |
+| `max` | 每项指标取入站和出站的较大值 |
 
-全局 `direction_mode` 是默认计费视图。节点设置 `traffic_direction_mode=default` 时继承全局值。
+全局 `direction_mode` 是方向默认值。节点 `traffic_direction_mode=default` 时继承全局方向；其他值覆盖该节点。
 
-响应仍保留原始字段：
+响应保留原始入/出字段，并提供 `selected_bytes`、`selected_p95_bytes_per_sec`、`selected_peak_bytes_per_sec` 及对应方向字段。
 
-- `in_bytes`
-- `out_bytes`
-- `in_p95_bytes_per_sec`
-- `out_p95_bytes_per_sec`
-- `in_peak_bytes_per_sec`
-- `out_peak_bytes_per_sec`
+## 后台物化
 
-当前计费视图字段：
+后台服务维护两个独立进度：
 
-- `selected_bytes`
-- `selected_p95_bytes_per_sec`
-- `selected_peak_bytes_per_sec`
-- `selected_bytes_direction`
-- `selected_p95_direction`
-- `selected_peak_direction`
+- Usage：Lite 和 Billing 都运行，维护月度累计和覆盖边界；
+- Facts：只在 Billing 运行，维护 `traffic_5m`。
 
-客户端应使用 `coverage_ratio` 展示样本覆盖率和准确性提示。`partial` 仅为兼容保留，新的展示逻辑不应依赖该字段。
+每 5 分钟调度一次。每个物化器按 1 小时分块处理，派生数据和对应进度在同一事务提交。一个物化器失败不会推进自己的进度，也不会阻止另一个物化器后续追赶。
 
-## 后台服务
+Lite 切换到 Billing 时，Facts 进度从最近 30 分钟开始，使当前统计先恢复。Lite 期间更早、但仍在原始指标保留期内的数据不会自动进入主追赶路径；需要在 Billing 模式下按节点手工重建。
 
-后台服务负责把节点上报的原始计数器整理成查询使用的流量事实和月度结果。写入节奏如下：
-
-- 每 5 分钟按近期原始采样 upsert 可推导出的 5 分钟事实。
-- 每次物化时更新近期月度用量。
-- 每小时刷新月度快照。
-- 与手工 5 分钟事实重建串行执行。
-
-`traffic_retention_days` 控制 5 分钟事实保留窗口，也决定手工重建能使用的事实范围。`traffic_5m` 保持可写，并通过滚动保留策略删除旧数据；历史 P95 计费值保存在月度快照中。
+Billing 切换到 Lite 不等待正在运行的手工重建。当前 6 小时分块完成后，任务在下一次模式检查停止。
 
 ## 手工重建
 
-当保留窗口内的事实需要重新生成时，管理台可按节点启动流量重建。重建任务根据保留窗口内的原始 `nic_metrics` 重写该节点的 5 分钟事实，并让重叠的月度快照失效。任务是进程内单任务状态，不跨进程重启持久化。任务失败后，月度历史由后续快照维护、读取路径按保留事实计算，或重试重建恢复；超出保留窗口的数据不会自动补回。
+节点手工重建只在 Billing 模式可用。Lite 模式返回 `409 traffic_rebuild_requires_billing`。
+
+重建范围取普通指标保留期与 `database.traffic_retention_days` 的交集。任务按 6 小时分块重写该节点的 5 分钟事实，并在同一事务中使重叠月度快照失效。分块之间释放流量写入门。
+
+同一 Dash 进程一次只运行一个重建任务。任务状态和游标不持久化；Dash 重启会取消任务并把状态恢复为 `idle`。超出保留窗口的数据无法通过重建恢复。
+
+## 数据完整性
+
+响应使用以下字段表达覆盖范围：
+
+- `sample_count`
+- `expected_sample_count`
+- `coverage_ratio`
+- `gap_count`
+- `reset_count`
+- `cycle_complete`
+- `data_complete`
+- `status`
+
+废弃字段 `partial` 已删除。客户端应使用 `data_complete`、`coverage_ratio`、`gap_count` 和 `reset_count`。
 
 ## P95 状态
 

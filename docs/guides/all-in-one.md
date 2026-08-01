@@ -53,7 +53,7 @@ redis:
 ```bash
 tar -xzf Ithiltir_dash_linux_amd64.tar.gz
 cd Ithiltir-dash
-sudo bash install_dash_linux.sh --lang zh
+sudo bash install_dash_linux.sh --lang zh --service-manager=systemd
 ```
 
 安装脚本会准备：
@@ -173,5 +173,7 @@ tar -czf /root/ithiltir-dash-config.tgz \
   /opt/Ithiltir-dash/themes \
   /opt/Ithiltir-dash/install_id
 ```
+
+另行备份 `/opt/Ithiltir-dash/configs/notify-config.key`，并与 PostgreSQL dump 分开保存。没有匹配密钥时，通知渠道凭据无法恢复。
 
 恢复流程见 [备份和恢复](../operations/backup-restore.md)。

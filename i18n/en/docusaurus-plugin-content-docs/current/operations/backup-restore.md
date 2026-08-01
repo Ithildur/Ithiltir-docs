@@ -16,6 +16,8 @@ pg_dump -Fc -d <db_name> -f ithiltir-$(date +%Y%m%d%H%M%S).dump
 tar -C /opt -czf ithiltir-dash-config-$(date +%Y%m%d%H%M%S).tar.gz Ithiltir-dash/configs Ithiltir-dash/install_id
 ```
 
+Back up `/opt/Ithiltir-dash/configs/notify-config.key` separately from the PostgreSQL dump. It is a raw 32-byte encryption key; a database backup cannot recover notification credentials without the matching key.
+
 Node config:
 
 Linux/macOS:
@@ -30,14 +32,14 @@ Windows:
 Copy-Item "$env:ProgramData\Ithiltir-node\report.yaml" .\report.yaml.bak
 ```
 
-Redis is optional for backup. Redis loss affects sessions, hot snapshots, and alert runtime state. Persistent settings and history data are in PostgreSQL.
+Redis is optional for backup. Redis loss affects sessions and frontend caches. Persistent config, open alert events, notification outbox rows, traffic materialization progress, and history are in PostgreSQL.
 
 ## Restore Dash
 
 1. Install the same or a compatible release package.
 2. Stop `dash.service`.
 3. Restore PostgreSQL.
-4. Restore `/opt/Ithiltir-dash/configs/config.local.yaml` and `/opt/Ithiltir-dash/install_id` when available.
+4. Restore `config.local.yaml`, the matching `notify-config.key`, and `install_id` when available. Set the key to owner-readable-only.
 5. Run migration.
 6. Start `dash.service`.
 
@@ -74,6 +76,7 @@ Before upgrading, back up at least:
 
 - PostgreSQL database.
 - `/opt/Ithiltir-dash/configs/config.local.yaml`.
+- `/opt/Ithiltir-dash/configs/notify-config.key`, stored separately from PostgreSQL.
 - `/opt/Ithiltir-dash/install_id`.
 
-The update script backs up the install directory, but it does not create a database backup.
+The updater does not create a database backup. Restore must use a binary whose embedded schema is compatible; normal startup requires an exact schema match.

@@ -5,7 +5,7 @@ title: Dash Config
 
 # Dash Config
 
-Dash config is YAML. The admin password is read only from `monitor_dash_pwd`, not from the config file.
+Dash accepts one YAML document and rejects unknown fields. Legacy top-level `alerts` and `notify` keys are accepted but ignored. The admin password is read only from `monitor_dash_pwd`.
 
 ## File Path
 
@@ -66,7 +66,7 @@ redis:
   db: 0
 ```
 
-Without `--no-redis`, Dash connects to Redis and exits on failure.
+Without `--no-redis`, Dash runs `PING`, `INFO server`, and a Redis `6.2.0+` check. `8.2.3+` is recommended. Redis pool values must be non-negative; `pool_size=0` requires `min_idle_conns=0`.
 
 ## Auth
 
@@ -76,6 +76,10 @@ auth:
 ```
 
 Changing `auth.jwt_signing_key` invalidates existing browser sessions.
+
+The signing key requires at least 32 bytes and no surrounding whitespace. `monitor_dash_pwd` requires at least 8 visible ASCII characters and no whitespace.
+
+A present environment variable overrides YAML even when empty. Empty integers mean `0`; non-empty invalid integers stop config loading. Redis overrides are skipped in `--no-redis` and migration modes.
 
 ## Logging
 

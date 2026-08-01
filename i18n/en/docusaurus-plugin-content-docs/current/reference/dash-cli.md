@@ -11,49 +11,50 @@ title: Dash CLI
 dash [-debug] [--no-redis]
 ```
 
-| Argument | Description |
-| --- | --- |
-| `-debug` | Enable debug logs and print redacted config |
-| `--no-redis` | Do not connect to Redis; use in-process runtime state |
+`--no-redis` skips Redis config and connection; admin sessions and frontend caches use process memory.
 
-Startup sequence:
+Normal startup requires an exact `goose_db_version` match and successful decryption of every notification config. Redis mode runs `PING`, `INFO server`, and a `6.2.0+` version check; versions below recommended `8.2.3` produce a warning.
 
-1. Load config.
-2. Initialize logging.
-3. Validate the admin password.
-4. Connect to PostgreSQL + TimescaleDB.
-5. Sync retention policies.
-6. Connect to Redis unless `--no-redis` is set.
-7. Initialize store, theme directory, default group, and JWT.
-8. Start HTTP, alert, and traffic background services.
-
-## Database Migration
+## Migrate
 
 ```bash
 dash migrate [-config path] [-debug]
 ```
 
-Output:
+Migration advances older schemas and rejects newer schemas. It does not load or connect Redis. Notification encryption migration creates `$DASH_HOME/configs/notify-config.key` and never replaces a missing key when ciphertext exists.
 
-```text
-migrate: total=<n> applied=<n> skipped=<n>
+## Check Redis
+
+```bash
+dash check-redis --addr <host:port> [--password-file path]
 ```
 
-Migration also syncs TimescaleDB retention policies.
+Runs `PING`, `INFO server`, and the minimum-version check against the specified endpoint. The password file is limited to 4 KiB and must contain only the password, without a trailing newline.
 
-## Theme Packing
+## Linux Update
+
+```text
+dash update [--check] [--test] [-y|--yes] [--lang zh|en] [--service-manager auto|systemd|none]
+dash update reinstall [--check] [--test] [-y|--yes] [--lang zh|en] [--service-manager auto|systemd|none]
+dash update recover
+```
+
+`--check` does not install. `--test` selects the latest prerelease. `reinstall` reapplies the selected version. `recover` resolves a persistent transaction; after migration starts, recovery is forward-only.
+
+## Pack Theme
 
 ```bash
 dash pack-theme -src <theme-dir> [-out <theme.zip>]
 ```
 
-`-src` is required. If `-out` is omitted, output is `<theme-id>.zip`. A missing `.zip` extension is added automatically.
+Omitting `-out` writes `<theme-id>.zip`.
 
 ## Version
 
 ```bash
 dash --version
 dash -v
+dash update --node-version
 ```
 
-Prints the current Dash version.
+The first two commands print the Dash version. `dash update --node-version` prints the bundled Node version for package validation.

@@ -5,41 +5,45 @@ title: Themes
 
 # Themes
 
-Dash supports built-in themes and custom theme packages. Themes affect the admin shell, dashboard summary layout, density, and CSS tokens.
+Theme package format v1 is frozen and deprecated but remains supported for upload, apply, and runtime use.
 
-## Theme Package
+## Package Layout
 
-A theme package is a zip file containing allowed root-level files:
+A ZIP may contain only these regular root-level files:
 
 ```text
-manifest.json
+theme.json
 tokens.css
 recipes.css
 preview.png
+README.md
 ```
 
-See [Theme Package](../reference/theme-package.md) for package format and validation rules.
+Directories, symlinks, nested paths, duplicate names, and extra files are rejected. Limits are 20 MiB compressed, 50 MiB extracted, 20 MiB per entry, and 32 entries.
 
-## Upload
+## Manifest
 
-Theme packages can be uploaded from the admin console or through the system theme API. Invalid packages are rejected and do not change the active theme.
+`theme.json` must be valid UTF-8, no larger than 64 KiB, contain one JSON object, and have no unknown fields. It requires all four skin fields:
 
-## Apply
+- `skin.admin.shell`: `sidebar` or `topbar`
+- `skin.admin.frame`: `layered` or `flat`
+- `skin.dashboard.summary`: `cards` or `strip`
+- `skin.dashboard.density`: `comfortable` or `compact`
 
-Applying a theme updates the active theme setting. The browser loads the active CSS from:
+There are no skin defaults. Text fields reject control characters. ID, name, version, author, and description have explicit format and length limits; see [Theme Package](../reference/theme-package.md).
 
-```text
-/theme/active.css
-```
+## CSS
 
-The active manifest is available at:
+`tokens.css` and `recipes.css` must be UTF-8, at most 1 MiB each, and may contain only custom-property declarations. Across both files, at most 1024 declarations are allowed. Property names are limited to 128 bytes and values to 4096 Unicode characters.
 
-```text
-/theme/active.json
-```
+At-rules, nested rules, normal CSS properties, `!important`, and resource-loading functions such as `url()`, `image-set()`, `-webkit-image-set()`, `src()`, and `expression()` are rejected, including escaped function names. Those words remain valid inside CSS strings.
 
-The default theme can return `404` for `active.json`.
+## Optional Files
 
-## Storage
+`preview.png` must fully decode as PNG and have dimensions from 1 to 4096 pixels. `README.md` must be UTF-8 and no larger than 256 KiB.
 
-Theme metadata and active theme setting are stored in PostgreSQL. Theme files are stored under Dash theme storage in `DASH_HOME`.
+## Installation and Fallback
+
+Upload validation completes before an atomic install. Applying a theme updates its configured ID. If that package later becomes missing or invalid, the configured ID remains and the UI exposes a repairable `missing` or `broken` entry while runtime CSS falls back to the built-in default.
+
+`POST /api/admin/system/themes/upload` accepts a `file` part up to 20 MiB; the complete multipart body is limited to 21 MiB, with a five-minute read/write window. Root path `/theme-bootstrap.js` uses `Cache-Control: no-store`.

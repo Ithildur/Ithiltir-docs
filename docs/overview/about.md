@@ -24,7 +24,9 @@ Ithiltir 是一套自托管服务器监控系统。它由单实例主控端 `Ith
 ## 部署模型
 
 - Dash 以单实例运行，持久状态写入 PostgreSQL + TimescaleDB。
-- Redis 保存会话、热点快照和告警运行时状态。
+- Redis 默认保存管理员会话和可丢弃的前台缓存。
+- PostgreSQL 保存节点当前投影、开放告警事件、通知 outbox 和流量物化进度。
+- 告警 pending/cooldown、MTProto 登录握手、节点更新请求和流量重建任务保存在进程内存。
 - 节点默认使用 Push 模式向 Dash 上报，不要求 Dash 主动连接节点。
 - 生产环境推荐使用 HTTPS 域名和 Nginx/Caddy 反向代理，不推荐长期使用 IP+HTTP。
 
@@ -33,7 +35,7 @@ Ithiltir 当前不提供多 Dash 实例协调能力。多个 Dash 实例不应�
 ## 运行要求
 
 - PostgreSQL 16+ 和 TimescaleDB。
-- Redis。小型单实例可以用 `--no-redis` 启动，但会话、热点快照和告警运行时状态会落到进程内存，重启后丢失。
+- Redis `6.2.0+`，推荐 `8.2.3+`。小型单实例可以用 `--no-redis` 启动；此时会话和前台缓存落到进程内存，重启后丢失。
 - 从源码运行或打包需要 Go 1.26+。
 - 构建前端需要 Bun 1.3.11。
 

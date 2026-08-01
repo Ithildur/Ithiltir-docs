@@ -47,6 +47,8 @@ Built-in rules are mounted by default. Rule mounts can disable or enable rules f
 
 `disk.smart.attribute_failing` counts only `failing_attrs[].when_failed=FAILING_NOW`. If no failing attribute data is available, the metric is not evaluated.
 
+SMART notifications list at most 3 affected devices in the title, 5 devices in detail, and 8 failing attributes per device. Device and attribute labels replace control/format characters with spaces and are limited to 128 Unicode characters; the full detail is limited to 2048 characters. NVMe details include the raw critical warning and `media_errors` when available, labeled with SMART UI item `0E`.
+
 ## Operators
 
 - `>`
@@ -66,6 +68,8 @@ Allowed values:
 
 Unit is seconds. Missing `duration_sec` defaults to `60` when creating a rule.
 
+Rule names are trimmed, contain 1–128 Unicode characters, and cannot contain control characters. `threshold` and `threshold_offset` must be finite. `cooldown_min` must be in `0..525600`.
+
 ## Threshold Mode
 
 | Mode | Description |
@@ -79,17 +83,19 @@ CPU core count uses logical cores first, then physical cores.
 
 ## Lifecycle
 
-1. A node report marks the node for alert evaluation.
-2. The alert service reads the hot snapshot.
+1. A node report places the latest snapshot in a process-local dirty queue.
+2. The alert service reads that snapshot or the current PostgreSQL projection.
 3. Enabled rules and node mount state are compiled.
 4. Matching conditions open events after duration is met.
 5. Non-matching conditions close events.
 6. If notification targets can be loaded, payloads are written to the notification outbox according to global settings.
-7. A leased worker retries notification delivery.
+7. One process-local worker delivers PostgreSQL outbox rows without runtime leases.
 
 The alert service does not open new alert events during the first minute after startup.
 
-If notification targets are unavailable, alert events and runtime state are still committed, but no notification outbox item is added.
+Open firing events persist in PostgreSQL and are restored after restart. Pending and cooldown state and the dirty queue are process-local and reset on restart. Startup reconciliation, restored open events, and later reports resume evaluation.
+
+Alert events and notification outbox rows share one persistence boundary. If the first target load fails without a last-good snapshot, the transition is delayed; an available last-good snapshot is used to commit the event and outbox. Delivery failures do not roll back alert events. Retry, pause, block, and discard behavior is documented under [Notifications](./notifications.md).
 
 ## Alert Records
 
@@ -106,6 +112,8 @@ GET /api/admin/alerts/events/servers
 `GET /api/admin/alerts/events` supports `server_id`, `status`, `metric`, `from`, `to`, `cursor`, and `limit`. `status` allows `open`, `closed`, or `all`; omitted status returns only open events.
 
 `GET /api/admin/alerts/events/summary` returns open-alert summaries grouped by node. The node list alert entry uses this summary. It is loaded when entering the node page and is not realtime polling.
+
+Its `open_count` is the number of open alert events. The dashboard summary “Anomalies” count uses offline, RAID, CPU, and disk conditions and is not this field.
 
 ## Rule Mounts
 

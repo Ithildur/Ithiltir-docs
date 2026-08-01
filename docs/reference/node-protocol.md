@@ -101,6 +101,17 @@ Body：
 - JSON 中其他顶层字段：忽略。
 - `ok` 不是必填字段。
 
+## 接收约束
+
+- 字节数、容量、计数器和 uptime 必须是有符号 64 位范围内的非负 JSON 整数。
+- 进程数和连接数必须在有符号 32 位范围内。
+- 静态上报间隔必须在有符号 32 位范围内，CPU 拓扑计数必须在有符号 16 位范围内。
+- 整数超出接收类型时返回 `400 invalid_request`；负数、非法比例或速率返回 `422 invalid_metrics` 或 `422 invalid_static_payload`。
+- Node 版本最多 64 字符；hostname 和磁盘名称最多 255；磁盘 ref 最多 320；磁盘 kind、role 和 RAID health 最多 16；网卡名最多 64；文件系统类型及逻辑盘 health、level 最多 32。
+- 静态 OS、platform、arch 最多 32 字符；platform 和 kernel version 最多 255。路径、挂载点和硬件描述使用不定长文本。
+
+并发上报按服务端接收顺序决定当前投影。较晚完成的旧接收样本仍写入历史，但不会覆盖当前指标、前台缓存或触发新的告警评估。请求中的 `timestamp` 不参与当前投影排序。
+
 ## HTTPS 回落
 
 默认情况下，HTTPS target 可以按客户端规则回落 HTTP，用于处理误配、IP 访问、证书异常等场景。
@@ -132,4 +143,4 @@ manifest 必须满足：
 
 Dash 侧待升级任务会在节点上报完全相同的目标版本或 SemVer 优先级更高的版本后清除。同一 SemVer 优先级但 build metadata 不同的版本视为不同节点二进制，仍可下发。
 
-更新成功后，Windows runner 替换 `%ProgramData%\Ithiltir-node\bin\ithiltir-node.exe` 并重启 node。Linux/macOS 切换 `/var/lib/ithiltir-node/current` 到新的 release 目录，并交给 systemd/launchd 重启 node。
+更新成功后，Windows runner 替换 `%ProgramData%\Ithiltir-node\bin\ithiltir-node.exe` 并重启 Node。Linux/macOS 原子切换 `/var/lib/ithiltir-node/current` 到新的 release 目录，再由既有运行方式重启 Node。

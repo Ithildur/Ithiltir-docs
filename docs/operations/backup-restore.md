@@ -12,6 +12,7 @@ Dash 主控端：
 
 ```text
 /opt/Ithiltir-dash/configs/config.local.yaml
+/opt/Ithiltir-dash/configs/notify-config.key
 /opt/Ithiltir-dash/themes
 /opt/Ithiltir-dash/install_id
 ```
@@ -31,9 +32,11 @@ pg_dump -Fc -d <db_name> -f ithiltir-$(date +%Y%m%d%H%M%S).dump
 
 ## 可选备份
 
-Redis 可选。Redis 丢失会影响在线会话、热点快照和告警运行时状态，但持久化配置和历史数据在 PostgreSQL。
+Redis 可选。Redis 丢失会影响在线会话和前台缓存，但持久化配置、开放告警事件、通知 outbox 和流量物化进度在 PostgreSQL。
 
-如果业务要求会话不断、告警运行时状态不丢，可以按 Redis 自身机制备份 RDB/AOF。
+如果业务要求会话在 Redis 故障后继续有效，可以按 Redis 自身机制备份 RDB/AOF。
+
+`notify-config.key` 必须与 PostgreSQL 备份分开保存。没有匹配密钥的数据库备份无法恢复 Telegram、SMTP 或 Webhook 凭据。
 
 ## 恢复 Dash
 
@@ -44,13 +47,15 @@ Redis 可选。Redis 丢失会影响在线会话、热点快照和告警运行�
 systemctl stop dash.service
 ```
 
-3. 恢复配置、主题和 `install_id`：
+3. 恢复配置、通知密钥、主题和 `install_id`：
 
 ```bash
 cp config.local.yaml /opt/Ithiltir-dash/configs/config.local.yaml
+cp notify-config.key /opt/Ithiltir-dash/configs/notify-config.key
 cp -a themes /opt/Ithiltir-dash/themes
 cp install_id /opt/Ithiltir-dash/install_id
 chmod 0600 /opt/Ithiltir-dash/configs/config.local.yaml
+chmod 0600 /opt/Ithiltir-dash/configs/notify-config.key
 ```
 
 4. 恢复 PostgreSQL：
@@ -98,6 +103,7 @@ Start-Service ithiltir-node
 
 - PostgreSQL dump。
 - `/opt/Ithiltir-dash/configs/config.local.yaml`。
+- `/opt/Ithiltir-dash/configs/notify-config.key`。
 - `/opt/Ithiltir-dash/themes`。
 
 更新脚本会备份安装目录，但不包含数据库备份。

@@ -5,6 +5,8 @@ title: Manual Install
 
 # Manual Install
 
+Source runs are intended for development, configuration validation, and troubleshooting. Use release packages for production deployments.
+
 The source path does not invoke the release installer. Provide PostgreSQL, TimescaleDB, Redis, Go, and Bun yourself.
 
 ## Run Dash from Source
@@ -15,6 +17,14 @@ export monitor_dash_pwd='<password>'
 go run ./cmd/dash migrate -config config.local.yaml
 go run ./cmd/dash -debug
 ```
+
+For local use without Redis:
+
+```bash
+go run ./cmd/dash -debug --no-redis
+```
+
+With `--no-redis`, admin sessions and frontend caches are process-local and disappear on restart. Alert pending/cooldown state and MTProto login state are process-local in both modes; open alert events and notification outbox rows persist in PostgreSQL.
 
 Frontend development server:
 
@@ -30,13 +40,27 @@ The Vite development server proxies only `/api` and `/theme`. Frontend code stil
 Local mode:
 
 ```bash
-go run ./cmd/node
+./node local 0.0.0.0 9100
 ```
 
 Push mode:
 
 ```bash
-go run ./cmd/node push 3 https://dash.example.com/api/node/metrics '<node-secret>'
+./node report install https://dash.example.com/api/node/metrics '<node-secret>'
+./node push 3
+```
+
+Select interfaces:
+
+```bash
+./node push 3 --net eth0,eth1
+```
+
+Require HTTPS:
+
+```bash
+./node report install https://dash.example.com/api/node/metrics '<node-secret>' --require-https
+./node push 3 --require-https
 ```
 
 ## Build Release Packages
@@ -52,13 +76,12 @@ bash scripts/package.sh \
   --tar-gz
 ```
 
-Node snapshot build:
+Node build:
 
 ```bash
-cd /home/dev/Ithiltir-node
-./scripts/build.sh
+./scripts/build.sh --version 1.2.3
 ```
 
 ## Manual Service Boundary
 
-Manual installs must provide their own service units, log rotation, reverse proxy, TLS, and backups. For production, prefer the release package installer unless you need source-level validation.
+Manual installs must provide their own service units, log rotation, reverse proxy, TLS, and backups.

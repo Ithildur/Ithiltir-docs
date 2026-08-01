@@ -25,7 +25,7 @@ This page summarizes stable HTTP contracts. Existing path, method, and field sem
 | refresh cookie + `X-CSRF-Token` | `POST /api/auth/refresh`, `POST /api/auth/logout` |
 | `Authorization: Bearer <access_token>` | Admin APIs and optionally authenticated reads |
 | `X-Node-Secret` | Node reporting, node identity reads, and deploy asset downloads |
-| `upgrade_token` query | Temporary deploy asset download grant issued only for legacy agent upgrades |
+| `upgrade_token` query | Temporary deploy asset download grant issued only for legacy Node upgrades |
 
 Optional Bearer endpoints treat missing, malformed, expired, revoked, or otherwise invalid Bearer tokens as anonymous requests.
 
@@ -77,7 +77,7 @@ Optional Bearer endpoints treat missing, malformed, expired, revoked, or otherwi
 - `version.supports_auto_update` shows whether the current node version meets the Dash admin console automatic update delivery requirement. The minimum version is `0.2.3`.
 - `PATCH /api/admin/nodes/{id}` accepts traffic settings, tags, secret, group IDs, and display fields. Omitted fields are unchanged.
 - Node billing cycle override fields are atomic. If any of `traffic_cycle_mode`, `traffic_billing_start_day`, `traffic_billing_anchor_date`, or `traffic_billing_timezone` is submitted, the request must also include `traffic_cycle_mode` and every field used by that mode, otherwise it returns `400 invalid_traffic_cycle_settings`.
-- `traffic_cycle_mode` allows `default`, `calendar_month`, `whmcs_compatible`, and `clamp_to_month_end`. `default` uses no billing fields; `calendar_month` uses `traffic_billing_timezone`; `clamp_to_month_end` uses `traffic_billing_start_day` and `traffic_billing_timezone`; `whmcs_compatible` uses `traffic_billing_anchor_date` and `traffic_billing_timezone`, with `traffic_billing_start_day` derived from the anchor date.
+- Stored `traffic_cycle_mode` values are `calendar_month`, `whmcs_compatible`, and `clamp_to_month_end`. Legacy `default` is only an input alias without other cycle fields and is stored as an explicit calendar month.
 - `traffic_direction_mode` allows `default`, `out`, `both`, and `max`. `default` inherits the global direction mode; other values override that node.
 - `PATCH /api/admin/nodes/{id}` returns `400 invalid_secret` for an empty `secret` and `409 duplicate_secret` when the submitted `secret` already belongs to another node.
 - `PATCH /api/admin/nodes/traffic-p95` validates all node IDs before updating them in one transaction.
@@ -85,13 +85,13 @@ Optional Bearer endpoints treat missing, malformed, expired, revoked, or otherwi
 - `POST /api/admin/nodes/{id}/traffic/rebuild` rebuilds the node's retained 5-minute traffic facts. Success returns `202`; missing nodes return `404 not_found`; any running task returns `409 traffic_rebuild_running`; unavailable tasks return `503 traffic_rebuild_unavailable`.
 - `POST /api/admin/nodes/{id}/upgrade` returns `204` on success. Nodes that cannot receive automatic update delivery return `409 node_upgrade_unsupported`; unavailable bundled versions, platforms, or assets return `409`; failure to prepare the legacy temporary download grant returns `503 node_upgrade_grant_error`.
 
-## Agent Update
+## Node Update
 
 - Successful `POST /api/node/metrics` responses include `update`.
 - When no upgrade task is pending, `update` is `null`.
 - When an upgrade task is pending, `update` includes `id`, `version`, `url`, `sha256`, and `size`.
-- `url` may include a short-lived `upgrade_token` so legacy agents can download the exact update asset without sending `X-Node-Secret`. Clients must use the returned URL unchanged.
-- Upgrade tasks are volatile and clear when the agent reports the exact target version or a higher SemVer precedence. Different build metadata at the same SemVer precedence is treated as a distinct node binary and can still be delivered.
+- `url` may include a short-lived `upgrade_token` so legacy Nodes can download the exact update asset without sending `X-Node-Secret`. Clients must use the returned URL unchanged.
+- Upgrade tasks are volatile and clear when Node reports the exact target version or a higher SemVer precedence.
 
 ## Admin: System Settings and Dash Update
 
@@ -132,8 +132,10 @@ Disk temperature history is written only for backend-confirmed physical disks. V
 ## Traffic Accounting
 
 - `GET /api/statistics/traffic/settings` returns guest access, usage mode, cycle settings, timezone, and direction mode.
-- `PATCH /api/statistics/traffic/settings` accepts partial updates. Unknown values return `400 invalid_fields`.
-- Traffic queries use the node's effective traffic configuration. Nodes with `traffic_cycle_mode=default` inherit the global cycle fields; nodes with `traffic_direction_mode=default` inherit the global direction mode.
+- `PATCH /api/statistics/traffic/settings` accepts only guest access, usage mode, and direction. Cycle fields return `400 billing_cycle_is_per_node`.
+- Traffic queries use each node's explicit cycle. Only `traffic_direction_mode=default` inherits globally.
+- Manual rebuild requires Billing and otherwise returns `409 traffic_rebuild_requires_billing`.
+- Completeness uses `data_complete`, `coverage_ratio`, `gap_count`, and `reset_count`; deprecated `partial` is removed.
 - Daily traffic requires `usage_mode=billing`.
 - P95 fields are non-null only when `p95_status=available`.
 

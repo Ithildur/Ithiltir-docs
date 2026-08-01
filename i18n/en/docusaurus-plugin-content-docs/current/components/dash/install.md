@@ -1,94 +1,52 @@
 ---
 slug: /Dash/Install
-title: Dash Install
+title: Install Dash
 ---
 
 # Install Dash
 
-Dash supports source runs and Linux release package installation. Use release packages for production.
+Production uses a Linux release package. The installer is first-install-only; later version changes use native `dash update`.
 
 ## Requirements
 
-- Linux amd64 or Linux arm64 release package.
-- systemd Linux distribution.
+- Linux amd64 or arm64.
+- PostgreSQL 16+ and TimescaleDB built for that PostgreSQL major.
+- Redis 6.2.0+; 8.2.3+ recommended, or `--no-redis` for local trials.
+- Running systemd for service mode, or explicit `--service-manager=none`.
 
-The release installer detects and prepares PostgreSQL 16+, TimescaleDB, and Redis. Debian/Ubuntu systems that use `apt-get` do not need these dependencies installed manually first.
+Source builds also require Go 1.26+ and Bun 1.3.11.
 
-Source runs require you to prepare:
-
-- Go 1.26+.
-- Bun 1.3.11.
-- PostgreSQL 16+ and TimescaleDB.
-- Redis, or `--no-redis` for local trials.
-
-## Release Package Install
-
-Extract the package:
+## Install
 
 ```bash
 tar -xzf Ithiltir_dash_linux_amd64.tar.gz
 cd Ithiltir-dash
+sudo bash install_dash_linux.sh --lang en --service-manager=systemd
 ```
 
-Run the installer:
+Manual runtime mode uses `--service-manager=none`.
 
-```bash
-sudo bash install_dash_linux.sh --lang en
-```
+The installer validates `release.env` and the candidate binary, writes `/opt/Ithiltir-dash/releases/<version>`, and atomically switches `current`. Config, logs, themes, update state, and `install_id` stay outside releases.
 
-The installer writes:
-
-- Install directory: `/opt/Ithiltir-dash`
-- Config file: `/opt/Ithiltir-dash/configs/config.local.yaml`
-- systemd unit: `dash.service`
-
-The script prompts for database, Redis, admin password, public URL, language, retention, and trusted reverse proxies.
-
-When dependencies are missing, the script uses the system package manager where supported. If the Redis package is too old, it prompts for source install/upgrade.
+See [Install Dash](../../installation/dash-linux.md) for the complete boundary.
 
 ## Source Run
 
 ```bash
 cp configs/config.example.yaml config.local.yaml
-export monitor_dash_pwd='<password>'
+export monitor_dash_pwd='<at least 8 visible ASCII characters>'
 go run ./cmd/dash migrate -config config.local.yaml
 go run ./cmd/dash -debug
 ```
 
-Frontend development server:
-
-```bash
-cd web
-FRONT_TEST_API=http://127.0.0.1:8080 bun run dev
-```
-
-The Vite development server only proxies `/api` and `/theme`; frontend code still uses same-origin relative paths.
-
 ## Update
 
-Installed Linux services can be checked and updated with:
-
 ```bash
-sudo bash /opt/Ithiltir-dash/update_dash_linux.sh --check
-sudo bash /opt/Ithiltir-dash/update_dash_linux.sh -y --lang en
+sudo /opt/Ithiltir-dash/bin/dash update --check
+sudo /opt/Ithiltir-dash/bin/dash update
+sudo /opt/Ithiltir-dash/bin/dash update reinstall
 ```
 
-The default target is the latest stable release. Use `--test` for prereleases:
+Use `--test` for prereleases. `update_dash_linux.sh` is only a legacy wrapper. Recovery uses `sudo /opt/Ithiltir-dash/bin/dash update recover`.
 
-```bash
-sudo bash /opt/Ithiltir-dash/update_dash_linux.sh --check --test
-sudo bash /opt/Ithiltir-dash/update_dash_linux.sh -y --test --lang en
-```
-
-The updater follows the target release channel, downloads the matching GitHub Release asset, and keeps existing configuration.
-
-## Reverse Proxy
-
-The reverse proxy must keep same-origin paths:
-
-- `/api`
-- `/theme`
-- `/deploy`
-- `/`
-
-Do not deploy Dash under a URL subpath. `app.public_url` must not be `https://example.com/dash`.
+Dash supports only root-path deployment. Reverse proxies must preserve `/api`, `/theme`, `/deploy`, and `/`.

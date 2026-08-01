@@ -24,7 +24,7 @@ Default deployment:
 Dash + PostgreSQL 16+ + TimescaleDB + Redis
 ```
 
-Small single-instance deployments can use `--no-redis`, but this is degraded mode: sessions, hot snapshots, and alert runtime state live in process memory and disappear after restart.
+Small single-instance deployments can use `--no-redis`: admin sessions and frontend caches move to process memory and disappear on restart. Alert pending/cooldown and MTProto login state are process-local in both modes; open alerts and notification outbox rows persist in PostgreSQL.
 
 ## Entrypoints
 

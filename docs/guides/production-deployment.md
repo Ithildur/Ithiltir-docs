@@ -36,7 +36,7 @@ slug: /Guides/ProductionDeployment
 ```bash
 tar -xzf Ithiltir_dash_linux_amd64.tar.gz
 cd Ithiltir-dash
-sudo bash install_dash_linux.sh --lang zh
+sudo bash install_dash_linux.sh --lang zh --service-manager=systemd
 ```
 
 安装后固定路径：
@@ -148,9 +148,9 @@ Dash 的 `:8080` 这类后端端口应只对本机或内网开放，公网入口
 
 - 会话保存在 Dash 进程内存。
 - 热点快照保存在 Dash 进程内存。
-- 告警运行时状态保存在 Dash 进程内存。
-- Dash 重启后这些运行时状态丢失。
-- PostgreSQL 中的指标历史、节点、告警规则和系统设置不受影响。
+- Dash 重启后会话和前台缓存丢失。
+- 告警 pending/cooldown 和 MTProto 登录态无论是否使用 Redis 都在进程内存。
+- PostgreSQL 中的指标历史、节点、开放告警事件、通知 outbox、流量进度和系统设置不受影响。
 
 ## 节点接入
 
@@ -174,7 +174,7 @@ journalctl -u ithiltir-node.service -n 100 --no-pager
 /var/lib/ithiltir-node/current/ithiltir-node report list
 ```
 
-Linux 节点脚本会下载 Dash 打包携带的节点二进制并注册 systemd 服务；检测到 LVM/LVM-thin 时会安装/启用 cron 采集 thinpool 缓存。`apt-get` 系统不需要提前手工安装 cron。
+Linux Node 脚本支持 systemd 和 Alpine/OpenRC。systemd 使用 timer 调度 SMART、连接数和 LVM thinpool 采集；OpenRC 使用 `supervise-daemon` 与 BusyBox cron，连接数由 Node 自带逻辑统计。
 
 ## 备份
 
@@ -182,6 +182,7 @@ Linux 节点脚本会下载 Dash 打包携带的节点二进制并注册 systemd
 
 - PostgreSQL 数据库。
 - `/opt/Ithiltir-dash/configs/config.local.yaml`。
+- `/opt/Ithiltir-dash/configs/notify-config.key`，与 PostgreSQL 分开保存。
 - `/opt/Ithiltir-dash/themes`。
 
 建议备份：
@@ -189,7 +190,7 @@ Linux 节点脚本会下载 Dash 打包携带的节点二进制并注册 systemd
 - `/opt/Ithiltir-dash/install_id`。
 - 节点本机 `report.yaml`。
 
-Redis 通常不作为恢复主数据。恢复后用户重新登录、热点快照重建、告警运行时重新开始。
+Redis 通常不作为恢复主数据。恢复后用户重新登录，前台缓存重建；开放告警事件和通知 outbox 从 PostgreSQL 恢复，pending/cooldown 和 MTProto 登录态重置。
 
 ## 上线验证
 

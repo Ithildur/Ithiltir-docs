@@ -5,11 +5,62 @@ title: Release Notes
 
 # Release Notes
 
-Release Notes record stable-release changes that affect deployment, upgrades, configuration, APIs, and runtime behavior.
-
-Prereleases are not documented separately. Changes from prerelease builds are folded into the matching stable release.
+Release Notes record version changes that affect deployment, upgrades, configuration, APIs, and runtime behavior.
 
 ## Dash
+
+### 0.3.0
+
+Release date: 2026-08-01
+
+GitHub Release: [Ithiltir 0.3.0](https://github.com/Ithildur/Ithiltir/releases/tag/0.3.0)
+
+#### Upgrade and Runtime State
+
+- Linux update logic moved into the native `dash update` command. Jobs, phases, logs, and recovery state persist under `$DASH_HOME/runtime/dash-update`; `update_dash_linux.sh` remains only as a compatibility entry point.
+- Managed installs now use immutable `releases/<version>` directories and one atomic `current` symlink. Before stopping the service, the updater validates the release manifest, Dash/Node versions, and SHA-256 values for all seven bundled Node/runner assets.
+- Failures before database migration restore the previous release. Once migration starts, recovery is forward-only; an old binary cannot be restarted against an advanced schema.
+- Normal startup requires the database `goose_db_version` to exactly match the binary. `dash migrate` advances older schemas and rejects newer schemas.
+- PostgreSQL persists open alerts, notification outbox rows, traffic materialization progress, current node projections, and monthly traffic usage. Alert pending/cooldown state, MTProto login handshakes, node update requests, and traffic rebuild jobs remain process-local.
+
+#### Configuration and Security
+
+- YAML rejects unknown fields, multiple documents, and invalid explicit durations. A present environment variable overrides YAML even when empty; an empty integer variable means `0`, while a non-empty invalid integer stops startup.
+- `monitor_dash_pwd` requires at least 8 visible ASCII characters and no whitespace. `auth.jwt_signing_key` requires at least 32 bytes and no surrounding whitespace.
+- `app.public_url` accepts only IP literals or ASCII DNS hosts. Internationalized domains must use IDNA/punycode, and ports must be in `1..65535`.
+- Runtime Redis support starts at `6.2.0`; `8.2.3+` is recommended. Dash runs `PING` and `INFO server` against the configured endpoint. `--no-redis` skips Redis config, connection, and version validation.
+- API responses add CSP, Permissions Policy, Referrer Policy, `nosniff`, and framing protection. Refresh cookies use `SameSite=Strict`.
+- JSON bodies above a route limit return `413 body_too_large` instead of `400 invalid_request`.
+
+#### Notifications and Alerts
+
+- `dash migrate` encrypts complete notification channel configurations with AES-256-GCM and creates `$DASH_HOME/configs/notify-config.key`. Back up this key separately from PostgreSQL; Dash refuses to start without the matching key.
+- Notification channels use strict schemas. Invalid stored channels remain visible with `config=null` and can only be deleted and recreated.
+- The notification outbox adds `paused`, `blocked`, and `discarded` states. Channel delivery health is `unknown`, `healthy`, `degraded`, or `disabled`.
+- Webhook, Telegram, and SMTP fields now have explicit size, address, URL, and redirect limits. Notification HTTP requests follow at most five safe same-host redirects; POST follows only `307` and `308`.
+- SMART alert messages include affected devices, failing ATA attributes, NVMe critical warnings, and `media_errors` when available. Node-provided labels are sanitized and bounded.
+- Rule names, durations, cooldowns, finite thresholds, and offsets are validated at the write boundary. Invalid stored rules close open events with `rule_invalid`.
+
+#### Traffic and Node Contracts
+
+- Every node now owns an explicit billing cycle. Upgrade migration freezes inherited cycles to their pre-upgrade effective values; new nodes use a calendar month starting on day 1.
+- Global traffic settings no longer accept billing-cycle fields. Legacy `traffic_cycle_mode=default` is only an input alias and is stored as an explicit calendar month.
+- Usage and Facts have independent materialization progress. Switching Lite to Billing starts Facts from the latest 30 minutes; older retained raw data requires a per-node rebuild.
+- Traffic rebuild is available only in Billing mode. Switching to Lite lets the current chunk finish, then stops the job.
+- Traffic responses remove the deprecated `partial` field. `GET /api/statistics/traffic/monthly` accepts `months` only in `1..24`.
+- Node names, secrets, tags, group names, and remarks have explicit length and control-character limits. Node payload integer ranges, ratios, rates, and fixed-column text are validated before database writes, returning stable `400` or `422` errors.
+
+#### Installation, Packaging, and UI
+
+- `install_dash_linux.sh` is first-install-only. Non-systemd hosts must explicitly use `--service-manager=none`; all later version changes use `dash update`.
+- The Linux Node installer supports systemd, Alpine/OpenRC, and explicit `none`. It stages and executes the candidate before stopping existing processes and switching the release. Rerunning it is a force install, not the Node updater's rollback path.
+- Linux, macOS, and Windows Node installers follow at most five safe same-host redirects while carrying `X-Node-Secret`, and reject cross-host redirects and HTTPS downgrade.
+- Release packages include only `configs/config.example.yaml`, never local config. Format-v1 `release.env` records Dash/Node versions, the target platform, and every bundled Node/runner digest.
+- While the document is visible, the browser checks local `/api/version` and reloads after the installed Dash version changes. A remote Release lookup failure does not block the locally installed frontend.
+- The admin console adds skip-to-content, keyboard selection, focus trapping/restoration, dialog semantics, accessible loading and tooltip labels, and reduced-motion behavior.
+- The dashboard summary label “Alerts” is now “Anomalies.” It counts offline, RAID, CPU, and disk conditions, not configured alert events.
+
+Read [Upgrade](./installation/upgrade.md) before upgrading from `0.2.7`.
 
 ### 0.2.7
 
@@ -65,7 +116,6 @@ GitHub Release: [Ithiltir 0.2.6](https://github.com/Ithildur/Ithiltir/releases/t
 
 #### Compatibility
 
-- Prereleases are not listed as separate Release Notes entries.
 - The minimum node version for automatic update delivery from the Dash admin console remains `0.2.1`.
 - Install script templates under `/deploy/*` remain public. Bundled node binaries and runner assets require authentication.
 - Back up the database before production upgrades. The release-package updater runs migrations; manual binary replacement requires manual migration.

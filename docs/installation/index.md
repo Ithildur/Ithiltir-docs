@@ -17,7 +17,7 @@ Ithiltir 的部署对象有两个：Dash 主控端和 Ithiltir-node 节点端。
 
 ## 部署顺序
 
-1. 确认系统属于安装脚本支持的 systemd Linux 发行版。
+1. 确认 Linux 架构和服务管理方式。systemd 使用服务模式；没有 systemd 时显式选择 `--service-manager=none`。
 2. 下载并解压 Dash 发布包。
 3. 执行 `install_dash_linux.sh`。
 4. 按提示配置 `app.public_url`、数据库、Redis、管理员密码和反向代理信任网段。
@@ -36,7 +36,7 @@ Ithiltir 的部署对象有两个：Dash 主控端和 Ithiltir-node 节点端。
 | --- | --- |
 | Dash | 单实例运行，不支持多个 Dash 同时写同一套状态 |
 | PostgreSQL | 保存节点、指标、流量、告警、设置和主题元数据 |
-| Redis | 保存会话、热点快照和告警运行时状态 |
+| Redis | 保存管理员会话和可丢弃的前台缓存 |
 | 反向代理 | 生产环境推荐前置 Nginx/Caddy/负载均衡，并保持同源根路径 |
 | 节点 | 通过 Push 模式访问 Dash 的 `/api/node/*` |
 
@@ -70,7 +70,7 @@ https://dash.example.com/api/node/static
 - 反向代理保持同源路径；跨域后端地址需要同时配置 CORS、cookie 和 CSRF 策略。
 - 节点 secret 仅用于 `/api/node/*`，不得放入浏览器代码。
 - Dash 是单实例应用，不能多进程同时写同一个数据库。
-- `--no-redis` 是降级模式，运行时状态重启后丢失。
+- `--no-redis` 使会话和前台缓存改用进程内存，重启后丢失。告警 pending/cooldown 和 MTProto 登录态在两种模式下都不持久化。
 
 ## 相关文档
 

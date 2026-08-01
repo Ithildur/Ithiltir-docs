@@ -41,7 +41,7 @@ When a node reports normally, Dash updates:
 - History metrics.
 - Front hot snapshot.
 - Node static info.
-- Agent version.
+- Node version.
 - Alert dirty mark.
 - Traffic accounting input data.
 
@@ -49,9 +49,9 @@ If static info is incomplete, the node keeps retrying until a complete report is
 
 ## Node Update
 
-After a node upgrade is triggered in Dash, Dash returns an update manifest in the next metrics response. Windows runner, the Linux systemd install layout, and the macOS LaunchDaemon install layout can process the manifest.
+After a node upgrade is triggered in Dash, the next metrics response contains an update manifest. Windows runner and Linux/macOS `releases` + `current` managed layouts can process it.
 
-Automatic update delivery requires the current node version to be `0.2.3` or later. For older versions, rerun the install command or manually replace the binary.
+Automatic delivery requires Node `0.2.3+`. For an older version, run the current installer as a force install or replace the binary manually.
 
 Direct binaries outside the install layout do not self-update. See [Node Update](../components/node/update.md) for update rules.
 

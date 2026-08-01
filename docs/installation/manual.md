@@ -35,7 +35,7 @@ go run ./cmd/dash -debug
 go run ./cmd/dash -debug --no-redis
 ```
 
-`--no-redis` 下会话、热点快照和告警运行时状态存在进程内存，重启即失效。
+`--no-redis` 下管理员会话和前台缓存存在进程内存，重启即失效。告警 pending/cooldown 和 MTProto 登录态无论是否使用 Redis 都属于进程内存；开放告警事件和通知 outbox 保存在 PostgreSQL。
 
 ## 前端开发
 

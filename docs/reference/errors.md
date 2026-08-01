@@ -23,7 +23,7 @@ Dash API 错误格式：
 | `413` | `body_too_large` | 请求体过大 |
 | `409` | conflict code | 状态冲突 |
 | `503` | `db_error` | 数据库读写失败 |
-| `503` | `redis_cache_error` | Redis 缓存同步失败 |
+| `503` | `redis_cache_error` | Redis 前台缓存同步失败 |
 
 ## 认证
 
@@ -35,7 +35,7 @@ Dash API 错误格式：
 
 | code | 说明 |
 | --- | --- |
-| `invalid_name` | 节点名为空 |
+| `invalid_name` | 节点名不满足 1～64 字符或含控制字符 |
 | `invalid_display_order` | 排序值不是正数 |
 | `invalid_traffic_cycle_mode` | 节点账期模式非法 |
 | `invalid_traffic_cycle_settings` | 节点账期字段与账期模式不匹配 |
@@ -43,8 +43,8 @@ Dash API 错误格式：
 | `invalid_traffic_billing_anchor_date` | 锚点日期非法 |
 | `invalid_traffic_billing_timezone` | 时区非法 |
 | `invalid_traffic_direction_mode` | 节点统计方向非法 |
-| `invalid_tags` | tags 不是字符串数组 |
-| `invalid_secret` | 节点 secret 非法 |
+| `invalid_tags` | tags 非法、超过 32 项或单项超过 64 字符 |
+| `invalid_secret` | 节点 secret 不满足 8～128 字符 |
 | `duplicate_secret` | 节点 secret 已属于其他节点 |
 | `invalid_group_ids` | 分组 ID 非法 |
 | `secret_collision_exhausted` | secret 随机冲突重试耗尽 |
@@ -61,14 +61,16 @@ Dash API 错误格式：
 | `409` | `node_platform_unsupported` | 节点平台不支持 |
 | `409` | `node_asset_missing` | 对应节点资产缺失 |
 | `503` | `node_asset_error` | 生成升级资产失败 |
-| `503` | `node_upgrade_grant_error` | 生成旧 Agent 临时下载授权失败 |
+| `503` | `node_upgrade_grant_error` | 生成旧 Node 临时下载授权失败 |
 
 ## 流量
 
 | HTTP | code | 说明 |
 | --- | --- | --- |
 | `400` | `invalid_fields` | 流量设置字段非法 |
+| `400` | `billing_cycle_is_per_node` | 全局设置提交了仅允许按节点修改的账期字段 |
 | `409` | `traffic_daily_requires_billing` | 日统计要求 billing 模式 |
+| `409` | `traffic_rebuild_requires_billing` | 手工重建要求 billing 模式 |
 | `409` | `traffic_rebuild_running` | 已有流量重建任务运行中 |
 | `503` | `traffic_rebuild_unavailable` | 流量重建任务不可用 |
 
@@ -78,6 +80,8 @@ Dash API 错误格式：
 | --- | --- |
 | `invalid_fields` | 规则、挂载、渠道或设置字段非法 |
 | `not_logged_in` | Telegram MTProto 未登录 |
+| `login_state_error` | Telegram MTProto 登录状态不可用 |
+| `channel_changed` | 渠道配置 revision 已并发变化 |
 | `notify_error` | 测试通知发送失败 |
 
 ## 主题
@@ -93,3 +97,15 @@ Dash API 错误格式：
 
 - `theme_active_missing`
 - `theme_active_broken`
+
+## Dash 更新
+
+| HTTP | code | 说明 |
+| --- | --- | --- |
+| `400` | `invalid_fields` | 更新 action、channel、lang 或计划字段非法 |
+| `409` | `dash_update_current` | 普通更新的目标等于当前版本；需要显式重装 |
+| `409` | `dash_update_failed` | 更新任务无法入队或已有冲突任务 |
+| `502` | `dash_update_check_failed` | 发布源检查失败或超时 |
+| `503` | `dash_update_unavailable` | 当前安装布局或恢复状态不允许受管更新 |
+
+任务终态的 `failure_code` 还可能为 `install_changed`、`recovery_required` 或 `rolled_back`。这些值位于状态资源中，不是 HTTP 错误包装的 `code`。

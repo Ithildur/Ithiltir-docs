@@ -45,11 +45,15 @@ my-theme/
   "name": "Ops Dark",
   "version": "1.0.0",
   "description": "Dark operator theme",
-  "skins": {
-    "admin.shell": "sidebar",
-    "admin.frame": "layered",
-    "dashboard.summary": "cards",
-    "dashboard.density": "comfortable"
+  "skin": {
+    "admin": {
+      "shell": "sidebar",
+      "frame": "layered"
+    },
+    "dashboard": {
+      "summary": "cards",
+      "density": "comfortable"
+    }
   }
 }
 ```
@@ -67,18 +71,18 @@ my-theme/
 - `name` 应短而稳定。
 - `version` 使用普通版本字符串。
 
-## skins
+## Skin
 
 支持的 skin：
 
-| 区域 | 可选值 | 默认 |
-| --- | --- | --- |
-| `admin.shell` | `sidebar`、`topbar` | `sidebar` |
-| `admin.frame` | `layered`、`flat` | `layered` |
-| `dashboard.summary` | `cards`、`strip` | `cards` |
-| `dashboard.density` | `comfortable`、`compact` | `comfortable` |
+| 区域 | 可选值 |
+| --- | --- |
+| `skin.admin.shell` | `sidebar`、`topbar` |
+| `skin.admin.frame` | `layered`、`flat` |
+| `skin.dashboard.summary` | `cards`、`strip` |
+| `skin.dashboard.density` | `comfortable`、`compact` |
 
-只配置要改变的项。未配置项使用默认值。
+四个字段全部必填。省略字段不会补默认值。Manifest 不允许未知字段。
 
 ## `tokens.css`
 
@@ -126,13 +130,14 @@ CSS 中禁止：
 
 - `url(`
 - `expression(`
-- `javascript:`
+- `image-set(`、`-webkit-image-set(`、`src(`
+- `!important`
 - `@import`
 - `@layer`
 - `@media`
-- `<style`
-- `</style`
 - 嵌套块
+
+校验会解码 CSS 转义并识别函数 token。禁用单词可以出现在普通引号文本中，但不能通过转义组成禁用函数名。
 
 主题包不能包含脚本，也不能包含额外路径。
 
@@ -140,12 +145,7 @@ CSS 中禁止：
 
 `preview.png` 用于管理台预览。
 
-建议：
-
-- 使用 PNG。
-- 文件体积保持小。
-- 展示实际仪表盘或管理台视觉。
-- 不放敏感节点名、IP、密钥或客户信息。
+文件必须是可完整解码的 PNG，宽高分别为 `1..4096` 像素。预览内容不得包含敏感节点名、IP、密钥或客户信息。
 
 ## 打包
 
@@ -162,6 +162,10 @@ dash pack-theme -src ./my-theme -out ops-dark.zip
 - archive 最大 20 MiB。
 - 解压后最大 50 MiB。
 - 单个 entry 最大 20 MiB。
+- 最多 32 个 entry。
+- `theme.json` 最大 64 KiB。
+- 单个 CSS 文件最大 1 MiB，两者合计最多 1024 条声明。
+- `README.md` 最大 256 KiB，必须是有效 UTF-8。
 
 ## 上传和应用
 
@@ -178,7 +182,7 @@ dash pack-theme -src ./my-theme -out ops-dark.zip
 - ID 非法。
 - 缺少 `theme.json` 或 `tokens.css`。
 - 包含不允许的文件。
-- CSS 包含禁止 token。
+- CSS 包含禁止函数、`!important` 或非法语法。
 - CSS 选择器不在允许范围内。
 - 包体超过限制。
 

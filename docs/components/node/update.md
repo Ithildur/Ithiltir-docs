@@ -11,7 +11,7 @@ Dash 的节点更新通过 `/api/node/metrics` 响应里的 update manifest 下�
 | 平台 | 条件 | 行为 |
 | --- | --- | --- |
 | Windows | 由 `ithiltir-runner.exe` 启动，且 `ITHILTIR_NODE_RUNNER=1` | 暂存新二进制，退出 node，由 runner 替换并重启 |
-| Linux | 当前进程位于 `/var/lib/ithiltir-node/current/ithiltir-node` 或 `/var/lib/ithiltir-node/releases/<version>/ithiltir-node` | 下载到新 release 目录，切换 `current` 软链接，退出并交给 systemd 重启 |
+| Linux | 当前进程位于 `/var/lib/ithiltir-node/current/ithiltir-node` 或 `/var/lib/ithiltir-node/releases/<version>/ithiltir-node` | 下载到新 release 目录，切换 `current` 软链接，退出并由既有运行方式重启 |
 | macOS | 当前进程位于 `/var/lib/ithiltir-node/current/ithiltir-node` 或 `/var/lib/ithiltir-node/releases/<version>/ithiltir-node` | 下载到新 release 目录，切换 `current` 软链接，退出并交给 launchd 重启 |
 
 安装布局外直接运行的二进制会忽略 update manifest。
@@ -73,6 +73,6 @@ JSON 格式错误、manifest 非法、下载失败、大小不匹配或校验和
 2. node 下载并校验文件大小和 SHA-256。
 3. 成功暂存更新后，`node push` 干净退出。
 4. Windows runner 替换 `%ProgramData%\Ithiltir-node\bin\ithiltir-node.exe` 并重启 node。
-5. Linux/macOS 切换 `/var/lib/ithiltir-node/current` 到新 release，并由 systemd/launchd 重启 node。
+5. Linux/macOS 切换 `/var/lib/ithiltir-node/current` 到新 release，并由既有 Linux 服务管理器或 launchd 重启 Node。
 
 如果当前托管 release 已经是 manifest 指定版本，节点不会重复安装。

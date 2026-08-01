@@ -32,6 +32,8 @@ APP_LOG_FORMAT=json
 
 `-debug` 启动参数会把日志级别提升到 debug。
 
+HTTP 访问日志只在 `app.log_level=debug` 或使用 `-debug` 时输出。
+
 ## Dash 状态
 
 ```bash
@@ -69,6 +71,25 @@ systemctl daemon-reload
 systemctl restart ithiltir-node.service
 curl http://127.0.0.1:9101/
 ```
+
+OpenRC：
+
+```bash
+rc-service ithiltir-node status
+rc-service ithiltir-node restart
+```
+
+OpenRC 使用 `/opt/node/run_node_openrc.sh` 和 `supervise-daemon`。SMART/LVM 采集计划写入 root 的 BusyBox crontab。
+
+## Dash 更新状态
+
+更新任务和事务文件位于：
+
+```text
+$DASH_HOME/runtime/dash-update
+```
+
+管理 API 返回最近任务的 `phase`、`failure_code`、`recovery_path` 和 `log_tail`。需要恢复时使用 `dash update recover`，不要手工清理事务文件。
 
 ## macOS 节点日志
 

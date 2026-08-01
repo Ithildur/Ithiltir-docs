@@ -157,11 +157,12 @@ Optional `devices[]` fields:
 - `power_on_hours`
 - `lifetime_used_percent`
 - `critical_warning`
+- `media_errors`
 - `failing_attrs[]`
 
 `devices[]` returns `[]` when empty. Unavailable SMART values are omitted.
 
-`critical_warning` is the raw NVMe critical warning bitset. `failing_attrs[]` contains only ATA SMART attributes that are currently failing:
+`critical_warning` is the raw NVMe critical warning bitset. `media_errors` is the NVMe SMART media-error counter and appears as SMART UI item `0E` in alerts. `failing_attrs[]` contains only ATA SMART attributes that are currently failing:
 
 - `id`
 - `name`

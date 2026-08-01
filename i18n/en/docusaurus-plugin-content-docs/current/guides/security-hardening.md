@@ -5,74 +5,42 @@ title: Security Hardening
 
 # Security Hardening
 
-Ithiltir security boundaries are the admin plane, node plane, and same-origin browser access.
+## Admin Credentials
 
-## Admin Password
-
-Set the admin password through `monitor_dash_pwd`. Do not store it in `config.local.yaml`.
-
-Rotate by changing the environment variable and restarting Dash.
-
-## JWT and Cookies
-
-Configure stable secrets before production use:
-
-```yaml
-security:
-  jwt_secret: "<random>"
-  cookie_hash_key: "<random>"
-  cookie_block_key: "<random>"
-```
-
-Changing these values invalidates existing sessions.
+`monitor_dash_pwd` requires at least 8 visible ASCII characters with no whitespace and must not be stored in YAML. `auth.jwt_signing_key` requires at least 32 random bytes with no surrounding whitespace.
 
 ## Node Secrets
 
-Each node should use a distinct secret. Rotate from Dash admin console, then update the local node config:
+Use a distinct secret per node. After trimming, it must contain 8–128 Unicode characters. Rotate it in Dash, update `report.yaml`, and restart the Node service.
+
+## HTTPS and Proxy
+
+Expose Dash through an HTTPS domain at root. Forward `/api`, `/theme`, `/deploy`, and `/`, preserve forwarding headers, and trust only the actual proxy CIDRs. Dash does not support URL subpaths.
+
+## Redis and PostgreSQL
+
+Do not expose Redis publicly. Restrict its network and credentials; the ACL user must allow `PING` and `INFO server`. `--no-redis` is not a hardening feature: sessions and frontend cache move to process memory.
+
+PostgreSQL contains durable metrics, node metadata, open alert events, notification outbox, traffic progress, and settings. Back it up before upgrades and migrations.
+
+## Notification Key
+
+Restrict both config and key:
 
 ```bash
-/var/lib/ithiltir-node/current/ithiltir-node report update <id> '<new-secret>'
-sudo systemctl restart ithiltir-node.service
+sudo chmod 600 /opt/Ithiltir-dash/configs/config.local.yaml
+sudo chmod 600 /opt/Ithiltir-dash/configs/notify-config.key
 ```
 
-## Public URL and Reverse Proxy
+Back up `notify-config.key` separately from PostgreSQL. If ciphertext exists, never replace a lost key with a new one.
 
-Production deployments should expose Dash through an HTTPS domain at the root path. Dash does not support URL subpaths such as `/dash`.
+## Webhooks
 
-The reverse proxy should forward:
+Validate `X-Webhook-Signature` and deduplicate by the event headers. Dash follows at most five same-host redirects, preserves same-scheme ports, permits only HTTP-to-HTTPS upgrade, and follows POST only through `307` or `308`.
 
-- `/api`
-- `/theme`
-- `/deploy`
-- `/`
-
-Preserve Host, X-Forwarded-For, and X-Forwarded-Proto. Configure trusted proxy CIDRs in Dash config.
-
-## Database
-
-PostgreSQL contains metrics history, node metadata, settings, alert rules, and notification outbox. Back up PostgreSQL before upgrades and migrations.
-
-TimescaleDB chunks are maintained by Dash migrations and retention policies.
-
-## Config File Permissions
-
-Dash config contains database passwords and signing keys. Release install keeps sensitive files restricted.
-
-Linux node service runs under the `ithiltir` user and restricts writable paths to `/var/lib/ithiltir-node`.
-
-## Webhook Signing
-
-When a webhook channel has `secret`, Dash sends:
-
-```http
-X-Webhook-Signature: sha256=<hex>
-```
-
-The signature is HMAC-SHA256 over the raw request body.
-
-## Unsupported Production Patterns
+## Unsupported Patterns
 
 - Dash under a URL subpath.
-- Multiple Dash instances writing to the same database and Redis.
-- Public exposure of the backend port without HTTPS reverse proxy.
-- Shared node secret across multiple hosts.
+- Multiple active Dash writers for one state set.
+- Public PostgreSQL, Redis, backend ports, Node local pages, or Push debug ports.
+- Shared Node secrets.

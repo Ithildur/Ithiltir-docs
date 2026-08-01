@@ -23,7 +23,9 @@ sudo bash install_node.sh dash.example.com 443 '<node-secret>'
 参数：
 
 ```text
-sudo bash install_node.sh <dash_ip> [dash_port] <secret> [interval_seconds] [--net iface1,iface2]
+sudo bash install_node.sh <dash_ip> [dash_port] <secret> [interval_seconds] \
+  [--net iface1,iface2] [--require-https] \
+  [--service-manager=auto|systemd|openrc|none]
 ```
 
 示例：
@@ -32,11 +34,13 @@ sudo bash install_node.sh <dash_ip> [dash_port] <secret> [interval_seconds] [--n
 sudo bash install_node.sh 10.0.0.2 8080 'my secret' 3 --net eth0,eth1
 ```
 
-Linux 支持 `amd64` 和 `arm64`。安装后服务名为 `ithiltir-node`。
+Linux 支持 `amd64` 和 `arm64`。服务管理器支持 systemd、Alpine/OpenRC 和显式 `none`；其他 OpenRC 发行版为尽力兼容。Alpine 需要 `bash`、`ca-certificates`、`curl` 和 `coreutils`。
 
 Linux 安装脚本会尝试安装 `smartmontools`，并启用 `ithiltir-node-smart-cache.timer` 刷新 `/run/ithiltir-node/smart.json`。SMART 安装失败不影响基础监控。
 
-Linux 安装脚本会在存在 `cc`、`gcc` 或 `clang` 时编译 root 侧连接数缓存 helper，并启用 `ithiltir-node-connections-cache.timer` 刷新 `/run/ithiltir-node/connections.json`。没有编译器时，节点使用自带连接数统计，可能缺失容器连接数据。
+systemd 下，安装脚本会在存在 `cc`、`gcc` 或 `clang` 时编译 root 侧连接数 helper，并每秒刷新 `/run/ithiltir-node/connections.json`。OpenRC 和没有编译器时使用 Node 自带连接数统计，可能缺失容器连接数据。
+
+安装器先暂存并执行候选二进制，再停止已有运行方式和切换 `current`。每次执行都会强制替换受管 release、上报配置、服务定义和采集器；相同版本也会替换。版本升级和回滚由 Node 自更新负责。
 
 常用检查：
 
@@ -107,6 +111,8 @@ Linux 示例：
 ```bash
 sudo bash install_node.sh dash.example.com 443 '<node-secret>' 3 --require-https
 ```
+
+三个平台的安装器最多跟随 5 次 Node 资产重定向。目标必须保持初始主机；同协议保持有效端口；只允许 HTTP 升级到 HTTPS。通过检查后才向下一跳发送 `X-Node-Secret`。
 
 ## 手动运行
 

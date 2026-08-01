@@ -4,90 +4,66 @@ slug: /Dash/Install
 
 # 安装 Dash
 
-Dash 支持源码运行和 Linux 发布包安装。生产部署使用发布包。
+生产环境使用 Linux 发布包。安装器只负责全新主机的首次安装；后续版本变化使用原生 `dash update`。
 
 ## 运行要求
 
-- Linux amd64 或 Linux arm64 发布包。
-- systemd Linux 发行版。
+- Linux `amd64` 或 `arm64`。
+- PostgreSQL 16+。
+- 与 PostgreSQL 主版本匹配的 TimescaleDB。
+- Redis `6.2.0+`，推荐 `8.2.3+`；本地试用可以使用 `--no-redis`。
+- 服务模式使用运行中的 systemd；其他主机显式选择 `--service-manager=none`。
 
-发布包安装脚本会检测并准备 PostgreSQL 16+、TimescaleDB 和 Redis。Debian/Ubuntu 等 `apt-get` 系统不需要先手工安装这些依赖。
-
-源码运行额外需要自己准备：
-
-- Go 1.26+。
-- Bun 1.3.11。
-- PostgreSQL 16+、TimescaleDB。
-- Redis，或本地试用时使用 `--no-redis`。
+源码构建还需要 Go 1.26+ 和 Bun 1.3.11。
 
 ## 发布包安装
-
-解压发布包：
 
 ```bash
 tar -xzf Ithiltir_dash_linux_amd64.tar.gz
 cd Ithiltir-dash
+sudo bash install_dash_linux.sh --lang zh --service-manager=systemd
 ```
 
-执行安装脚本：
+手工运行模式：
 
 ```bash
-sudo bash install_dash_linux.sh --lang zh
+sudo bash install_dash_linux.sh --lang zh --service-manager=none
 ```
 
-安装脚本会写入：
+安装器校验 `release.env` 和候选二进制，写入 `/opt/Ithiltir-dash/releases/<version>`，再原子切换 `current`。配置、日志、主题、更新状态和 `install_id` 位于 release 外部。
 
-- 安装目录：`/opt/Ithiltir-dash`
-- 配置文件：`/opt/Ithiltir-dash/configs/config.local.yaml`
-- systemd 服务：`dash.service`
-
-脚本会交互填写数据库、Redis、管理员密码、公开 URL、语言、历史保留时长和反向代理信任网段。
-
-依赖缺失时，脚本会按系统包管理器处理；Redis 包版本不足时会提示源码安装/升级。
+完整安装边界见 [安装 Dash](../../installation/dash-linux.md)。
 
 ## 源码运行
 
 ```bash
 cp configs/config.example.yaml config.local.yaml
-export monitor_dash_pwd='<password>'
+export monitor_dash_pwd='<至少 8 个可见 ASCII 字符>'
 go run ./cmd/dash migrate -config config.local.yaml
 go run ./cmd/dash -debug
 ```
 
-前端开发服务器单独启动：
+前端开发服务器：
 
 ```bash
 cd web
 FRONT_TEST_API=http://127.0.0.1:8080 bun run dev
 ```
 
-Vite 开发服务器只代理 `/api` 和 `/theme`，前端代码仍使用同源相对路径。
-
 ## 更新
 
-已安装的 Linux 服务可用更新脚本检查和更新：
-
 ```bash
-sudo bash /opt/Ithiltir-dash/update_dash_linux.sh --check
-sudo bash /opt/Ithiltir-dash/update_dash_linux.sh -y --lang zh
+sudo /opt/Ithiltir-dash/bin/dash update --check
+sudo /opt/Ithiltir-dash/bin/dash update
+sudo /opt/Ithiltir-dash/bin/dash update reinstall
 ```
 
-默认更新目标是最新普通发布。预发布使用 `--test`：
+预发布通道使用 `--test`。`update_dash_linux.sh` 仅作为旧命令兼容包装，不实现更新事务。需要恢复时执行：
 
 ```bash
-sudo bash /opt/Ithiltir-dash/update_dash_linux.sh --check --test
-sudo bash /opt/Ithiltir-dash/update_dash_linux.sh -y --test --lang zh
+sudo /opt/Ithiltir-dash/bin/dash update recover
 ```
-
-更新脚本按目标发布通道查找更新的 Git tag，下载对应 GitHub Release asset，并保留现有配置。
 
 ## 反向代理
 
-反向代理必须保留同源路径：
-
-- `/api`
-- `/theme`
-- `/deploy`
-- `/`
-
-Dash 不支持部署到 URL 子路径。`app.public_url` 不能是 `https://example.com/dash`。
+反向代理必须保留同源路径 `/api`、`/theme`、`/deploy` 和 `/`。Dash 只支持根路径部署，`app.public_url` 不得包含路径前缀。

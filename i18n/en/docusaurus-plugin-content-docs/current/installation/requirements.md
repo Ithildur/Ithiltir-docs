@@ -9,77 +9,49 @@ title: Requirements
 
 | Item | Requirement |
 | --- | --- |
-| Operating system | Release packages currently target Linux amd64 and Linux arm64 |
+| Operating system | Release packages target Linux amd64 and arm64 |
 | Database | PostgreSQL 16+ |
-| Time-series extension | TimescaleDB |
-| Cache | Redis |
-| Memory | Minimum 2 GB RAM recommended; enable swap below 4 GB |
-| Disk | SSD/NVMe recommended, 40 GB minimum starting point |
+| Time-series extension | TimescaleDB built for the same PostgreSQL major version |
+| Cache | Redis 6.2.0+; 8.2.3+ recommended |
+| Memory | 2 GB RAM recommended minimum; enable swap below 4 GB |
+| Disk | SSD/NVMe recommended; 40 GB starting point |
 | Time sync | NTP, chrony, or systemd-timesyncd must be enabled |
 
-These are runtime dependencies, not a list of packages you must install before running the release installer. The release installer detects, installs, or reuses them as needed.
+These are runtime dependencies. The release installer detects and reuses or prepares them where supported.
 
 ## Linux Installer Scope
 
-`install_dash_linux.sh` from the Dash release package supports:
+`install_dash_linux.sh` supports Debian 11+, Ubuntu 22+, RHEL-family 8+, Fedora 33+, Arch/Manjaro, and Alpine with preinstalled services.
 
-- Debian 11+
-- Ubuntu 22+
-- RHEL / Rocky / Alma / Oracle / CentOS 8+
-- Fedora 33+
-- Arch / Manjaro
+Service-manager modes are `systemd` and explicit `none`. Auto-detection selects systemd only when it is actually running. `none` installs files and a manual start script without registering or starting a service.
 
-The install script depends on systemd. Systems without `systemctl` should use manual installation.
-
-| Family | Package manager | Installer behavior |
-| --- | --- | --- |
-| Debian / Ubuntu | `apt-get` | Installs base tools, configures PostgreSQL PGDG and TimescaleDB repositories, installs PostgreSQL 16, TimescaleDB, and Redis |
-| RHEL / Rocky / Alma / Oracle / CentOS / Fedora | `dnf` / `yum` | Configures PostgreSQL repositories and installs PostgreSQL 16, TimescaleDB, and Redis |
-| Arch / Manjaro | `pacman` | Uses system repositories for PostgreSQL, TimescaleDB, and Redis |
-
-Existing PostgreSQL 16+, TimescaleDB, or Redis services are reused when they satisfy requirements. Manual setup is for restricted hosts, offline hosts, external database/Redis deployments, or unsupported distributions.
+Alpine must already have PostgreSQL 16+, matching TimescaleDB, and Redis 6.2.0+ running.
 
 ## Redis
 
-The install script treats Redis 8.2+ as the target. If an existing Redis installation satisfies the requirement, it is reused. If Redis is missing or too old, the script first tries the package manager and then prompts for source install/upgrade.
+Dash runs `PING` and `INFO server` against the configured endpoint. The Redis ACL user must allow both commands. An unavailable service, unknown version, or version below `6.2.0` stops startup; versions below `8.2.3` run with a warning.
 
-Redis stores:
+When the installer manages local Redis, it targets `8.2.3+`; the default source version is `8.2.5`. Remote-only Redis does not require a local `redis-server` binary.
 
-- Admin sessions.
-- Hot frontend snapshots.
-- Alert runtime state.
-
-`dash --no-redis` starts without Redis, but those states move into process memory and disappear after restart.
+Redis stores admin sessions and disposable frontend caches. With `--no-redis`, those move to process memory and disappear on restart. Alert pending/cooldown state and MTProto login handshakes are process-local in both modes.
 
 ## Retention
 
-Defaults:
+- Normal metrics default to `45 days`.
+- Traffic 5-minute facts default to `max(database.retention_days, 45)`.
 
-- Normal metrics: `45 days`.
-- Traffic 5-minute fact table: `max(database.retention_days, 45)`.
-
-For 95th percentile billing review, set `database.traffic_retention_days` to `90` or higher.
+For 95th-percentile billing review, set `database.traffic_retention_days` to `90` or higher.
 
 ## Ithiltir-node
 
 | Platform | Architecture | Service manager |
 | --- | --- | --- |
-| Linux | amd64, arm64 | systemd |
+| Linux | amd64, arm64 | systemd, Alpine/OpenRC, explicit `none` |
 | macOS | arm64 | LaunchDaemon |
 | Windows | amd64, arm64 | Windows Service + runner |
 
-Nodes must be able to reach Dash `app.public_url`. Push mode reports over HTTP(S); Dash does not connect back to the node.
-
-The Linux node installer needs root/sudo, systemd, and `curl` or `wget`. When LVM/LVM-thin is detected, it enables thinpool cache collection; on `apt-get` systems it installs `cron` automatically.
+The Linux installer needs root/sudo, `pgrep`, and `curl` or `wget`. Alpine/OpenRC also requires `bash`, `ca-certificates`, `curl`, and `coreutils`, and uses `supervise-daemon`. Other OpenRC distributions are best-effort.
 
 ## Build Environment
 
-Only Dash source builds and custom packaging require:
-
-- Go 1.26+
-- Bun 1.3.11
-- Git
-- tar or zip
-- GoReleaser; the node build script installs `v2.15.2` when missing
-
-Docs site builds require Node.js 24 (`>=24 <25`).
+Source builds and custom packaging require Go 1.26+, Bun 1.3.11, Git, tar or zip, and GoReleaser for Node builds. The docs site requires Node.js 24 (`>=24 <25`).

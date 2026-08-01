@@ -25,6 +25,10 @@ sudo bash install_node.sh dash.example.com 443 '<node-secret>'
 sudo bash install_node.sh <dash_ip> [dash_port] <secret> [interval_seconds] [--net iface1,iface2] [--require-https]
 ```
 
+脚本最多跟随 5 次 Node 资产下载重定向。目标必须保持初始主机；同协议跳转保持有效端口；只允许 HTTP 升级到 HTTPS。通过检查后才向下一跳发送 `X-Node-Secret`。
+
+候选二进制会先执行 `--version`，再写入版本 release 并切换 `current`。重复执行会覆盖对应 release 和 LaunchDaemon 配置。
+
 ## 安装结果
 
 | 路径 | 内容 |

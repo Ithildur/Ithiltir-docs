@@ -50,8 +50,7 @@ dash --no-redis
 Redis stores:
 
 - Sessions.
-- Hot snapshots.
-- Alert runtime state.
+- Disposable frontend caches.
 
 PostgreSQL stores:
 
@@ -59,8 +58,11 @@ PostgreSQL stores:
 - Traffic facts and summaries.
 - Nodes and groups.
 - Alert rules and notification outbox.
+- Open alert events and traffic materialization progress.
 - System settings.
 - Theme metadata.
+
+Alert pending/cooldown, MTProto login handshakes, pending Node update requests, and traffic rebuild job state are process-local and do not use Redis.
 
 ## 3. Set Retention
 

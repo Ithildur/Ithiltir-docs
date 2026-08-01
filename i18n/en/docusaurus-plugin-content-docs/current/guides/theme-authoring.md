@@ -5,18 +5,19 @@ title: Theme Authoring
 
 # Theme Authoring
 
-A theme package changes Dash UI tokens, density, shell layout, and dashboard summary styling.
+Theme format v1 customizes supported skin choices and CSS custom properties. It is frozen and deprecated but remains usable.
 
-## Package Files
+## Files
 
 ```text
-manifest.json
+theme.json
 tokens.css
 recipes.css
 preview.png
+README.md
 ```
 
-Only these root-level files are accepted.
+All files are at archive root. `preview.png` and `README.md` are optional.
 
 ## Manifest
 
@@ -24,15 +25,28 @@ Only these root-level files are accepted.
 {
   "id": "dark-modern",
   "name": "Dark Modern",
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "author": "Example",
+  "description": "Dark operations theme",
+  "skin": {
+    "admin": { "shell": "sidebar", "frame": "layered" },
+    "dashboard": { "summary": "cards", "density": "comfortable" }
+  }
 }
 ```
 
-`id` uses lowercase letters, digits, `_`, and `-`. It must not collide with built-in theme IDs.
+All four skin values are required:
 
-## Tokens
+| Field | Values |
+| --- | --- |
+| `skin.admin.shell` | `sidebar`, `topbar` |
+| `skin.admin.frame` | `layered`, `flat` |
+| `skin.dashboard.summary` | `cards`, `strip` |
+| `skin.dashboard.density` | `comfortable`, `compact` |
 
-`tokens.css` defines CSS custom properties:
+## CSS
+
+Use `tokens.css` and `recipes.css` only for custom-property declarations:
 
 ```css
 :root {
@@ -41,26 +55,14 @@ Only these root-level files are accepted.
 }
 ```
 
-Allowed selectors are `:root`, `[data-theme="dark"]`, and `[data-theme="light"]`.
+Do not use at-rules, nested rules, normal properties, `!important`, or resource-loading functions. The combined declaration limit is 1024; each CSS file is limited to 1 MiB.
 
-## Recipes
-
-`recipes.css` can define additional custom properties consumed by supported Dash components. It follows the same selector and CSS restrictions as `tokens.css`.
-
-## Preview
-
-`preview.png` is optional. It is used in the theme management UI.
-
-## Pack
-
-Use Dash CLI:
+## Package and Apply
 
 ```bash
 dash pack-theme -src <theme-dir> -out <theme.zip>
 ```
 
-The pack command validates file names, manifest fields, CSS restrictions, archive size, and duplicate entries.
+Upload and installation are validated before an atomic replacement. A missing or broken active package keeps its configured ID visible for repair while runtime falls back to the built-in skin.
 
-## Upload and Apply
-
-Upload in the admin console or through the system theme API. Applying a theme changes the active theme for Dash UI. Invalid packages are rejected and do not change the current active theme.
+See [Theme Package](../reference/theme-package.md) for exact limits.

@@ -41,6 +41,7 @@ Get-Service ithiltir-node
 | --- | --- | --- |
 | 指标历史、节点、告警、设置 | PostgreSQL | 是 |
 | Dash 配置 | `/opt/Ithiltir-dash/configs/config.local.yaml` | 是 |
+| 通知配置密钥 | `/opt/Ithiltir-dash/configs/notify-config.key` | 是；与 PostgreSQL 分开保存 |
 | Dash 安装身份 | `/opt/Ithiltir-dash/install_id` | 建议 |
 | 自定义主题 | `/opt/Ithiltir-dash/themes` | 是 |
 | Redis 状态 | Redis | 可选，通常不作为恢复主数据 |

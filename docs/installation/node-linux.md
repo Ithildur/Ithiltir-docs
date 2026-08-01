@@ -2,117 +2,108 @@
 slug: /Install/NodeLinux
 ---
 
-# 安装 Linux 节点
+# 安装 Linux Node
 
-Linux 节点安装脚本由 Dash 提供：
+Linux Node 安装脚本由 Dash 提供：
 
 ```text
 https://dash.example.com/deploy/linux/install.sh
 ```
 
-脚本会下载 Dash 当前打包的 `node_linux_<arch>`，配置 Push 上报，并注册 systemd 服务。节点侧不需要单独下载 GitHub Release 二进制。
+脚本支持 `amd64` 和 `arm64`，并从当前 Dash 发布包下载受保护的 Node 资产。下载请求携带 `X-Node-Secret`。
 
-脚本要求 root/sudo、systemd、`curl` 或 `wget`。检测到 LVM/LVM-thin 时会安装并启用 thinpool 采集所需的 cron；Debian/Ubuntu 等 `apt-get` 系统不需要提前手工安装 cron。
+## 运行方式
 
-脚本会尝试安装 `smartmontools`，并写入 `ithiltir-node-smart-cache.service` 和 `ithiltir-node-smart-cache.timer`。SMART 安装失败或没有 `smartctl` 时，节点基础监控继续运行。
+| 模式 | 支持范围 | 结果 |
+| --- | --- | --- |
+| `systemd` | 运行中的 systemd | 注册 Node 服务和采集 timer |
+| `openrc` | Alpine/OpenRC | 使用 `supervise-daemon`；其他 OpenRC 发行版为尽力兼容 |
+| `none` | 手工运行 | 只安装文件和启动命令，不注册服务 |
+| `auto` | 自动检测 | 没有可用服务管理器时失败 |
 
-脚本会在存在 `cc`、`gcc` 或 `clang` 时编译 root 侧连接数缓存 helper，并写入 `ithiltir-node-connections-cache.service` 和 `ithiltir-node-connections-cache.timer`。没有编译器时，节点会使用自带连接数统计，可能缺失容器网络命名空间里的连接数据。
+Alpine 需要预先安装 `bash`、`ca-certificates`、`curl` 和 `coreutils`。所有模式都要求 `pgrep`，用于停止受管安装路径中的旧进程。
 
 ## 安装命令
 
 ```bash
 curl -fsSL https://dash.example.com/deploy/linux/install.sh -o install_node.sh
-sudo bash install_node.sh dash.example.com 443 '<node-secret>'
+sudo bash install_node.sh dash.example.com 443 '<node-secret>' \
+  --require-https --service-manager=systemd
 ```
 
 完整参数：
 
 ```text
-sudo bash install_node.sh <dash_ip> [dash_port] <secret> [interval_seconds] [--net iface1,iface2] [--require-https]
+sudo bash install_node.sh <dash_ip> [dash_port] <secret> [interval_seconds] \
+  [--net iface1,iface2] [--require-https] \
+  [--service-manager=auto|systemd|openrc|none]
 ```
 
-如果只传 `<dash_ip> <secret>`，端口按脚本渲染出的 `DOWNLOAD_SCHEME` 推断：HTTPS 用 `443`，HTTP 用 `80`。
+只传 `<dash_ip> <secret>` 时，HTTPS 使用端口 `443`，HTTP 使用端口 `80`。`--require-https` 同时约束写入的上报地址。
 
-## 安装结果
+安装器最多跟随 5 次下载重定向。目标必须保持初始主机；同协议重定向必须保持有效端口；只允许从 HTTP 升级到 HTTPS，不允许降级。该规则避免把 Node secret 发送到其他主机。
+
+## 强制安装语义
+
+脚本每次执行都会强制替换受管安装：
+
+1. 把候选二进制暂存到 `releases` 下。
+2. 执行候选二进制的 `--version`。
+3. 停止已有 systemd、OpenRC 或匹配的手工进程。
+4. 替换目标 release、上报配置、服务定义和采集器。
+5. 原子切换 `current` 并启动选定运行方式。
+
+相同版本也会被替换。该路径用于安装或强制重装；Node 版本升级和回滚由 Node 自更新负责。
+
+## 文件布局
+
+```text
+/var/lib/ithiltir-node/
+  report.yaml
+  releases/<version>/ithiltir-node
+  current -> releases/<version>
+```
+
+运行用户拥有数据目录和 release 树，以便非特权自更新器创建 release 并切换 `current`。root 所有的服务与采集器资产位于该目录之外。
 
 | 路径 | 内容 |
 | --- | --- |
-| `/var/lib/ithiltir-node/releases/<version>/ithiltir-node` | 当前版本节点二进制 |
-| `/var/lib/ithiltir-node/current` | 指向当前 release 的软链接 |
-| `/var/lib/ithiltir-node/report.yaml` | 上报目标配置 |
 | `/etc/systemd/system/ithiltir-node.service` | systemd 服务 |
-| `/run/ithiltir-node/thinpool.json` | LVM thinpool 缓存 |
+| `/etc/init.d/ithiltir-node` | OpenRC 服务 |
+| `/opt/node/run_node_openrc.sh` | OpenRC 启动脚本 |
 | `/run/ithiltir-node/smart.json` | SMART 缓存 |
 | `/run/ithiltir-node/connections.json` | TCP/UDP 连接数缓存 |
-| `/opt/node/collect_thinpool.sh` | LVM thinpool 采集脚本 |
-| `/etc/cron.d/ithiltir-node-thinpool` | thinpool 采集 cron |
-| `/usr/local/libexec/ithiltir-node/smart-cache` | SMART 缓存 helper |
-| `/etc/systemd/system/ithiltir-node-smart-cache.service` | SMART 缓存刷新服务 |
-| `/etc/systemd/system/ithiltir-node-smart-cache.timer` | SMART 缓存刷新 timer |
-| `/usr/local/libexec/ithiltir-node/connections-cache` | TCP/UDP 连接数缓存 helper |
-| `/etc/systemd/system/ithiltir-node-connections-cache.service` | TCP/UDP 连接数缓存刷新服务 |
-| `/etc/systemd/system/ithiltir-node-connections-cache.timer` | TCP/UDP 连接数缓存刷新 timer |
+| `/run/ithiltir-node/thinpool.json` | LVM thinpool 缓存 |
 
-服务默认使用 `ithiltir` 系统用户运行，工作目录为 `/var/lib/ithiltir-node`。
+## 采集器
 
-`current` 软链接和 `releases/<version>` 目录也是 Linux 托管自更新的边界。安装布局外直接运行的二进制不会处理 Dash 返回的 update manifest。
+systemd 使用 timer 调度：
 
-## systemd 安全边界
+- SMART：每 5 分钟。
+- TCP/UDP 连接数 helper：每 1 秒。
+- 检测到 LVM 时启用 thinpool timer。
 
-Linux 服务开启：
+连接数 helper 需要 `cc`、`gcc` 或 `clang`。无法编译时，Node 使用内置统计，可能缺少容器网络命名空间中的连接。
 
-- `NoNewPrivileges=true`
-- `PrivateTmp=true`
-- `ProtectSystem=strict`
-- `ProtectHome=true`
-- `ReadWritePaths=/var/lib/ithiltir-node`
+Alpine/OpenRC 使用 BusyBox `crond` 每 5 分钟刷新 SMART，检测到 LVM 时每分钟刷新 thinpool。OpenRC 不运行 1 秒连接数 helper，使用 Node 内置统计。
 
-因此节点进程只应写入数据目录。
+SMART、连接数或 LVM 缓存不可用时，不影响 CPU、内存、容量和网络等基础指标上报。
 
-SMART 缓存由 root 侧 oneshot 服务刷新。节点进程只读取 `/run/ithiltir-node/smart.json`，不以 root 身份执行 `smartctl`。
+## 服务管理
 
-连接数缓存由 root 侧 oneshot 服务刷新。节点进程只读取 `/run/ithiltir-node/connections.json`，不以 root 身份遍历其他网络命名空间。
-
-## LVM thinpool
-
-安装脚本检测到 LVM / LVM-thin 后，会启用 thinpool 缓存采集：
-
-```bash
-cat /run/ithiltir-node/thinpool.json
-```
-
-如果系统没有 LVM，脚本会删除旧的 cron 和采集脚本。
-
-## SMART 缓存
-
-SMART 缓存默认每 5 分钟刷新：
-
-```bash
-systemctl status ithiltir-node-smart-cache.timer
-cat /run/ithiltir-node/smart.json
-```
-
-缓存目录权限为 `0750 root:<node-group>`，缓存文件权限为 `0640 root:<node-group>`。默认节点组是 `ithiltir`。
-
-没有 `smartctl`、没有权限或缓存过期时，节点会上报结构化 `disk.smart.status`，不会中断 CPU、内存、磁盘容量、网络等基础指标。
-
-## TCP/UDP 连接数缓存
-
-连接数缓存默认每 10 秒刷新：
-
-```bash
-systemctl status ithiltir-node-connections-cache.timer
-cat /run/ithiltir-node/connections.json
-```
-
-该缓存用于完整统计主机和容器网络命名空间里的 TCP/UDP 连接数。缓存缺失、过期或 helper 无法编译时，节点会回退到自带连接数统计，基础监控继续运行。
-
-## 常用命令
+systemd：
 
 ```bash
 systemctl status ithiltir-node.service
 journalctl -u ithiltir-node.service -f
 systemctl restart ithiltir-node.service
+```
+
+OpenRC：
+
+```bash
+rc-service ithiltir-node status
+rc-service ithiltir-node restart
 ```
 
 查看上报配置：

@@ -52,7 +52,7 @@ redis:
 ```bash
 tar -xzf Ithiltir_dash_linux_amd64.tar.gz
 cd Ithiltir-dash
-sudo bash install_dash_linux.sh --lang en
+sudo bash install_dash_linux.sh --lang en --service-manager=systemd
 ```
 
 The installer prepares:
@@ -170,5 +170,7 @@ tar -czf /root/ithiltir-dash-config.tgz \
   /opt/Ithiltir-dash/themes \
   /opt/Ithiltir-dash/install_id
 ```
+
+Back up `/opt/Ithiltir-dash/configs/notify-config.key` separately from the PostgreSQL dump. Notification credentials cannot be restored without the matching key.
 
 Restore flow: [Backup and Restore](../operations/backup-restore.md).

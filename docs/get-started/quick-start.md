@@ -37,7 +37,7 @@ curl -fL -o "Ithiltir_dash_linux_${ARCH}.tar.gz" \
 ```bash
 tar -xzf "Ithiltir_dash_linux_${ARCH}.tar.gz"
 cd Ithiltir-dash
-sudo bash install_dash_linux.sh --lang zh
+sudo bash install_dash_linux.sh --lang zh --service-manager=systemd
 ```
 
 安装时 `app.public_url` 填写 HTTPS 域名根地址，例如 `https://dash.example.com`，并用 Nginx 或 Caddy 反向代理到本机 Dash。`http://IP:端口` 适用于本机验证或临时内网测试。
@@ -46,7 +46,7 @@ sudo bash install_dash_linux.sh --lang zh
 
 - PostgreSQL 16+。
 - TimescaleDB。
-- Redis 8.2+。
+- Redis 6.2.0+；推荐 8.2.3+。
 - 迁移、服务文件、管理员密码环境变量。
 
 Debian/Ubuntu 这类 `apt-get` 系统不需要先手工安装 PostgreSQL、TimescaleDB 或 Redis；脚本会按提示使用包管理器和对应仓库处理。只有源码运行、受限服务器、外部数据库/Redis 或不支持的发行版才需要自己准备依赖。
@@ -80,7 +80,7 @@ sudo bash install_node.sh 10.0.0.2 8080 '<node-secret>' 3 --net eth0,eth1
 
 节点安装后默认以 Push 模式运行，向 Dash 的 `/api/node/metrics` 上报指标。
 
-Linux 节点脚本会下载 Dash 打包携带的节点二进制并注册 systemd 服务。检测到 LVM/LVM-thin 时，会尝试安装并启用 cron 采集 thinpool 缓存；`apt-get` 系统不需要提前手工安装 cron。
+Linux Node 脚本支持 systemd、Alpine/OpenRC 和显式 `none`。systemd 使用 timer 采集 SMART、连接数和 LVM thinpool；OpenRC 使用 BusyBox cron 采集 SMART 和 LVM，并由 Node 自行统计连接数。
 
 ## 5. 验证
 
@@ -120,6 +120,8 @@ cp configs/config.example.yaml config.local.yaml
 ```bash
 export monitor_dash_pwd='<password>'
 ```
+
+密码至少 8 个可见 ASCII 字符且不得包含空白。`auth.jwt_signing_key` 至少 32 字节且不得有首尾空白。
 
 `app.public_url` 必须是根路径 URL。正式部署使用 `https://dash.example.com`；`http://10.0.0.2:8080` 这类 IP+HTTP 用于临时验证。不能带 `/dash` 这类路径前缀。
 

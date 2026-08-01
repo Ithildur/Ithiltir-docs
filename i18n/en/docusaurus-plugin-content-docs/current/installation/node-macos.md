@@ -26,6 +26,10 @@ Full arguments:
 sudo bash install_node.sh <dash_ip> [dash_port] <secret> [interval_seconds] [--net iface1,iface2] [--require-https]
 ```
 
+The script follows at most five asset redirects. They must keep the original host; same-scheme redirects keep the effective port; HTTP may upgrade to HTTPS only. `X-Node-Secret` is sent after hop validation.
+
+The candidate runs `--version` before being written into its release and selected through `current`. Rerunning the installer replaces the corresponding release and LaunchDaemon config.
+
 ## Installed Files
 
 | Path | Content |

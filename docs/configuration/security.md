@@ -18,8 +18,8 @@ monitor_dash_pwd
 
 要求：
 
-- 可见 ASCII 字符。
-- 足够长。
+- 至少 8 个可见 ASCII 字符。
+- 不得包含空白字符。
 - 不与节点 secret 或数据库密码复用。
 
 ## JWT 签名密钥
@@ -31,7 +31,22 @@ auth:
   jwt_signing_key: "<high-entropy-secret>"
 ```
 
-这是 HS256 签名密钥。泄露后应立即轮换，所有现有 session 都应视为不可信。
+这是 HS256 签名密钥。它至少为 32 字节，且不得包含首尾空白。泄露后应立即轮换；轮换会使所有现有 session 失效。
+
+## 通知配置密钥
+
+`dash migrate` 会创建：
+
+```text
+$DASH_HOME/configs/notify-config.key
+```
+
+该文件是 32 字节 AES-256 密钥，只允许所有者读取。它用于解密 PostgreSQL 中保存的 Telegram、SMTP 和 Webhook 完整配置。
+
+- 必须与 PostgreSQL 备份分开保存。
+- 不得提交到仓库或放入公开 release 包。
+- 数据库中已有密文时，密钥缺失、权限错误、格式错误或不匹配都会阻止 Dash 启动。
+- 密钥丢失后，现有通知凭据无法恢复。Dash 不会生成替代密钥或回退读取旧明文。
 
 ## 节点 secret
 
@@ -51,7 +66,7 @@ X-Node-Secret: <secret>
 
 ## HTTPS
 
-生产环境要求按 HTTPS 域名暴露：
+生产环境应按 HTTPS 域名暴露：
 
 - Dash 对外只暴露 HTTPS。
 - Nginx/Caddy/负载均衡终止 TLS，并反向代理到 Dash 后端。
@@ -89,6 +104,20 @@ X-Webhook-Signature: sha256=<hmac>
 ```
 
 接收端应使用共享 secret 对原始 body 做 HMAC-SHA256 校验。
+
+Webhook URL 只允许绝对 HTTP(S) URL，不得包含用户信息或 fragment。生产环境应使用 HTTPS。通知客户端只跟随最多五次保持初始主机的安全重定向；POST 只接受 `307` 和 `308`。
+
+## HTTP 响应头
+
+Dash 对页面和 API 统一发送：
+
+- Content Security Policy；
+- `Permissions-Policy`；
+- `Referrer-Policy: no-referrer`；
+- `X-Content-Type-Options: nosniff`；
+- `X-Frame-Options: DENY`。
+
+Refresh cookie 使用 `SameSite=Strict`。`POST /api/auth/refresh` 和 `/api/auth/logout` 仍要求匹配的 `X-CSRF-Token`。
 
 ## 不支持的部署方式
 

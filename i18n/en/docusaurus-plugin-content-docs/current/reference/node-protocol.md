@@ -102,6 +102,17 @@ The `/api/node/metrics` response body only affects updates:
 - Other top-level JSON fields: ignored.
 - `ok` is not required.
 
+## Receive Constraints
+
+- Bytes, capacities, counters, and uptime are non-negative signed 64-bit JSON integers.
+- Process and connection counts use signed 32-bit ranges.
+- Static report interval uses signed 32-bit range; CPU topology counts use signed 16-bit range.
+- Out-of-range JSON integers return `400 invalid_request`; negative values or invalid ratios/rates return `422 invalid_metrics` or `422 invalid_static_payload`.
+- Node version is limited to 64 characters; hostname and disk names to 255; disk ref to 320; disk kind/role and RAID health to 16; interface names to 64; filesystem type and logical health/level to 32.
+- Static OS/platform/arch is limited to 32 characters; platform/kernel version to 255. Paths, mount points, and hardware descriptions are text columns.
+
+Concurrent reports use server receive order for the current projection. An older receive that finishes later still enters history but cannot overwrite current metrics, frontend cache, or newer alert evaluation. Node `timestamp` does not select the current projection.
+
 ## HTTPS Fallback
 
 By default, HTTPS targets can fall back to HTTP according to client rules. This covers misconfiguration, IP access, certificate errors, and similar cases.
@@ -133,4 +144,4 @@ Manifests matching the currently reported version are ignored first. If multiple
 
 Dash clears the pending upgrade task after the node reports the exact target version or a higher SemVer precedence. Different build metadata at the same SemVer precedence is treated as a distinct node binary and can still be delivered.
 
-After a successful update, Windows runner replaces `%ProgramData%\Ithiltir-node\bin\ithiltir-node.exe` and restarts node. Linux/macOS switches `/var/lib/ithiltir-node/current` to the new release directory and lets systemd/launchd restart node.
+After a successful update, Windows runner replaces `%ProgramData%\Ithiltir-node\bin\ithiltir-node.exe`. Linux/macOS atomically switches `/var/lib/ithiltir-node/current`, then the existing runtime manager restarts Node.

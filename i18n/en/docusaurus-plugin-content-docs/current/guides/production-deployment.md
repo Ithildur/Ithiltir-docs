@@ -37,7 +37,7 @@ Use a release package:
 ```bash
 tar -xzf Ithiltir_dash_linux_amd64.tar.gz
 cd Ithiltir-dash
-sudo bash install_dash_linux.sh --lang en
+sudo bash install_dash_linux.sh --lang en --service-manager=systemd
 ```
 
 Fixed paths after install:
@@ -175,7 +175,7 @@ Check report config:
 /var/lib/ithiltir-node/current/ithiltir-node report list
 ```
 
-The Linux node installer downloads the node binary bundled with Dash and registers a systemd service. When LVM/LVM-thin is detected, it installs/enables cron for thinpool cache collection; `apt-get` systems do not need cron installed ahead of time.
+The Linux Node installer supports systemd and Alpine/OpenRC. systemd uses timers for SMART, connections, and LVM thinpool collection; OpenRC uses `supervise-daemon`, BusyBox cron for SMART/LVM, and Node's built-in connection count.
 
 ## Backup
 
@@ -183,6 +183,7 @@ Must back up:
 
 - PostgreSQL database.
 - `/opt/Ithiltir-dash/configs/config.local.yaml`.
+- `/opt/Ithiltir-dash/configs/notify-config.key`, stored separately from PostgreSQL.
 - `/opt/Ithiltir-dash/themes`.
 
 Recommended:
@@ -190,7 +191,7 @@ Recommended:
 - `/opt/Ithiltir-dash/install_id`.
 - Node-local `report.yaml`.
 
-Redis is normally not the primary recovery data. After recovery, users log in again, hot snapshots rebuild, and alert runtime state starts fresh.
+Redis is normally not primary recovery data. After recovery, users log in again and frontend caches rebuild. Open alerts and notification outbox rows recover from PostgreSQL; pending/cooldown and MTProto login state reset.
 
 ## Go-Live Checks
 

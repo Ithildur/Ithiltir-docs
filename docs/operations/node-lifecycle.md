@@ -40,7 +40,7 @@ node report install <dash-url>/api/node/metrics <secret>
 - 历史指标。
 - 前台热点快照。
 - 节点静态信息。
-- Agent 版本。
+- Node 版本。
 - 告警 dirty 标记。
 - 流量统计输入数据。
 
@@ -48,9 +48,9 @@ node report install <dash-url>/api/node/metrics <secret>
 
 ## 节点更新
 
-Dash 管理台触发节点升级后，Dash 会在下一次指标响应里返回 update manifest。Windows runner、Linux systemd 安装布局和 macOS LaunchDaemon 安装布局可以处理该 manifest。
+Dash 管理台触发节点升级后，Dash 会在下一次指标响应里返回 update manifest。Windows runner 以及 Linux/macOS 的 `releases` + `current` 受管布局可以处理该 manifest。
 
-自动下发更新要求当前 Node 版本为 `0.2.3` 或更高。低于该版本时，重新执行安装命令或手工替换二进制。
+自动下发更新要求当前 Node 版本为 `0.2.3` 或更高。低于该版本时，执行当前安装命令进行强制安装，或手工替换二进制。
 
 安装布局外直接运行的二进制不会处理自更新。更新规则见 [节点更新](../components/node/update.md)。
 

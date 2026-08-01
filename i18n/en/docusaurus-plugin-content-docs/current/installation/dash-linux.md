@@ -5,86 +5,67 @@ title: Install Dash
 
 # Install Dash
 
-Use release packages for production. Source runs are for development and validation.
+Use a Linux release package for production. `install_dash_linux.sh` is first-install-only; reinstall, repair, rollback, and version changes use `dash update`.
 
-## Release Package
+## Package
 
-After extraction, the Dash package directory is `Ithiltir-dash`:
-
-```text
-Ithiltir-dash/
-  bin/dash
-  configs/config.example.yaml
-  dist/
-  deploy/
-  install_dash_linux.sh
-  update_dash_linux.sh
-  logs/
-```
-
-`dist/` contains frontend assets. `deploy/` contains node install scripts and node binaries.
+A format-v1 package contains `release.env`, `bin/dash`, `configs/config.example.yaml`, frontend output, deploy assets, and the Linux install/update scripts. `release.env` binds Dash/Node versions, target platform, and all bundled Node/runner assets by SHA-256. Local config is never packaged.
 
 ## Install
+
+On systemd:
 
 ```bash
 tar -xzf Ithiltir_dash_linux_amd64.tar.gz
 cd Ithiltir-dash
-sudo bash install_dash_linux.sh --lang en
+sudo bash install_dash_linux.sh --lang en --service-manager=systemd
 ```
 
-On supported systemd Linux hosts, do not preinstall PostgreSQL or Redis with `apt` first. The script checks the OS and existing services, then decides whether to reuse them, install packages, or prompt for a Redis source install.
+Without systemd, explicitly select manual mode:
 
-The install script:
+```bash
+sudo bash install_dash_linux.sh --lang en --service-manager=none
+```
 
-1. Checks the OS and package manager.
-2. Detects and prepares PostgreSQL 16+, TimescaleDB, and Redis.
-3. Copies the release package to `/opt/Ithiltir-dash`.
-4. Interactively writes `/opt/Ithiltir-dash/configs/config.local.yaml`.
-5. Writes the admin password environment variable to the systemd unit.
-6. Runs `dash migrate`.
-7. Writes and starts `/etc/systemd/system/dash.service`.
+`auto` selects systemd only when it is running. `none` installs files and `run_dash.sh` but does not register, start, or enable a service.
 
-Dependency handling:
+The installer requires `pgrep`. Supported Debian/Ubuntu hosts can have PostgreSQL 16+, matching TimescaleDB, and Redis prepared by the installer. Alpine must have those services preinstalled.
 
-| Scenario | Behavior |
-| --- | --- |
-| Debian / Ubuntu | Uses `apt-get` for base tools, PostgreSQL 16, TimescaleDB, and Redis |
-| Existing PostgreSQL / Redis satisfies the version requirement | Reuses the existing service |
-| Redis package is too old | Prompts for source install or upgrade to Redis 8.2+ |
-| No systemd or no supported package manager | Stops automatic install; use manual deployment |
+Redis runtime support starts at `6.2.0`; `8.2.3+` is recommended and is the managed install target. The default source version is `8.2.5`. Remote Redis is checked at its configured endpoint with `PING` and `INFO server`.
 
-## Install Paths
+## Layout
 
-| Path | Content |
-| --- | --- |
-| `/opt/Ithiltir-dash/bin/dash` | Dash executable |
-| `/opt/Ithiltir-dash/configs/config.local.yaml` | Local config |
-| `/opt/Ithiltir-dash/dist` | SPA assets |
-| `/opt/Ithiltir-dash/deploy` | Node deployment assets |
-| `/opt/Ithiltir-dash/themes` | Custom themes |
-| `/opt/Ithiltir-dash/install_id` | Dash install identity |
-| `/etc/systemd/system/dash.service` | systemd unit |
+```text
+/opt/Ithiltir-dash/
+  releases/<version>/
+  current -> releases/<version>
+  bin/dash -> ../current/bin/dash
+  dist -> current/dist
+  deploy -> current/deploy
+  configs/
+    config.example.yaml
+    config.local.yaml
+    notify-config.key
+  runtime/
+  logs/
+  themes/
+  install_id
+  run_dash.sh
+```
 
-Config and service files are tightened to root ownership and `0600`.
+Config, runtime, logs, themes, and `install_id` stay outside immutable releases. Flat paths are compatibility aliases.
 
-## Required Install Inputs
+## Required Boundaries
 
-| Item | Meaning |
-| --- | --- |
-| `app.listen` | Dash listen address, for example `:8080` |
-| `app.public_url` | Root URL exposed to browsers and nodes |
-| `app.language` | `zh` or `en` |
-| `app.node_offline_threshold` | Offline threshold, default `14s` |
-| `database.user` | Dash database user |
-| `database.password` | Database password |
-| `database.name` | Database name |
-| `database.retention_days` | Normal metrics retention days |
-| `redis.addr` | Redis address |
-| `http.trusted_proxies` | Trusted reverse proxy CIDRs |
+- `app.public_url` is an HTTP(S) root URL; production should use an HTTPS domain.
+- `monitor_dash_pwd` has at least 8 visible ASCII characters and no whitespace.
+- `auth.jwt_signing_key` has at least 32 bytes and no surrounding whitespace.
+- PostgreSQL is 16+ and TimescaleDB matches its major version.
+- Redis is 6.2.0+ and the ACL user permits `PING` and `INFO server`.
 
-Use an HTTPS domain for `app.public_url`, for example `https://dash.example.com`. Production deployments should put Nginx or Caddy in front of Dash and proxy to the local backend port. Direct IP+HTTP is only for temporary testing.
+Migration creates `configs/notify-config.key`; back it up separately from PostgreSQL.
 
-## Service Management
+## Service
 
 ```bash
 systemctl status dash.service
@@ -92,14 +73,12 @@ journalctl -u dash.service -f
 systemctl restart dash.service
 ```
 
-## Re-run the Installer
+Manual mode runs `/opt/Ithiltir-dash/run_dash.sh`.
 
-If `/opt/Ithiltir-dash/configs/config.local.yaml` and `dash.service` already exist, the installer reports an existing installation. Choosing file-only update copies the current package into the install directory, runs migrations, and restarts the service without redoing interactive configuration.
-
-## Manual Migration
+After a successful first install, do not rerun the installer. Use:
 
 ```bash
-sudo env DASH_HOME=/opt/Ithiltir-dash \
-  /opt/Ithiltir-dash/bin/dash migrate \
-  -config /opt/Ithiltir-dash/configs/config.local.yaml
+sudo /opt/Ithiltir-dash/bin/dash update
 ```
+
+See [Upgrade](./upgrade.md).

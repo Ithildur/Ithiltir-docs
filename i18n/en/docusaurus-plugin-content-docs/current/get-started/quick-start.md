@@ -38,7 +38,7 @@ curl -fL -o "Ithiltir_dash_linux_${ARCH}.tar.gz" \
 ```bash
 tar -xzf "Ithiltir_dash_linux_${ARCH}.tar.gz"
 cd Ithiltir-dash
-sudo bash install_dash_linux.sh --lang en
+sudo bash install_dash_linux.sh --lang en --service-manager=systemd
 ```
 
 For `app.public_url`, prefer a domain HTTPS root URL such as `https://dash.example.com`, with Nginx or Caddy reverse-proxying to the local Dash backend. Direct `http://IP:port` access is only for local checks or temporary internal testing, not for formal deployment.
@@ -47,7 +47,7 @@ On supported systemd Linux distributions, the installer detects and prepares run
 
 - PostgreSQL 16+.
 - TimescaleDB.
-- Redis 8.2+.
+- Redis 6.2.0+; 8.2.3+ recommended.
 - Migrations, service files, and the admin password environment variable.
 
 On Debian/Ubuntu systems that use `apt-get`, do not preinstall PostgreSQL, TimescaleDB, or Redis manually. The installer handles the package manager and repositories when needed. Manual dependency setup is only for source runs, restricted hosts, external database/Redis deployments, or unsupported distributions.
@@ -81,7 +81,7 @@ Formal node enrollment should use domain HTTPS, with `--require-https` where app
 
 The node runs in push mode by default and reports metrics to `/api/node/metrics`.
 
-The Linux node script downloads the node binary bundled in Dash and registers a systemd service. When LVM/LVM-thin is detected, it attempts to install and enable cron for thinpool cache collection; `apt-get` systems do not need cron installed ahead of time.
+The Linux Node script supports systemd, Alpine/OpenRC, and explicit `none`. systemd uses timers for SMART, connections, and LVM thinpool collection; OpenRC uses BusyBox cron for SMART/LVM and Node's built-in connection count.
 
 ## 5. Verify
 
@@ -121,6 +121,8 @@ The administrator password is read only from the environment:
 ```bash
 export monitor_dash_pwd='<password>'
 ```
+
+The password requires at least 8 visible ASCII characters with no whitespace. `auth.jwt_signing_key` requires at least 32 bytes with no surrounding whitespace.
 
 `app.public_url` must be a root URL. Use `https://dash.example.com` for formal deployments; `http://10.0.0.2:8080` style IP+HTTP URLs are for temporary checks only. Do not use a path prefix such as `/dash`.
 

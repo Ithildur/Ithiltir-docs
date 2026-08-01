@@ -24,6 +24,8 @@ install_node.ps1 <dash_ip> [dash_port] <secret> [interval_seconds] [extra args..
 
 If the port is omitted, the script infers it from the rendered scheme: HTTPS uses `443`, HTTP uses `80`.
 
+The script follows at most five Node/runner asset redirects. They must keep the original host; same-scheme redirects keep the effective port; HTTP may upgrade to HTTPS only. `X-Node-Secret` is sent after hop validation.
+
 ## Installed Files
 
 | Path | Content |

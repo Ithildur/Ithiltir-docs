@@ -5,85 +5,62 @@ title: Traffic Accounting and Billing Cycles
 
 # Traffic Accounting and Billing Cycles
 
-Dash builds traffic statistics from network counters reported by nodes. The system stores raw inbound and outbound counters; the accounting view is determined by direction mode.
-
-## Modes
-
-| Mode | Value | Behavior |
-| --- | --- | --- |
-| Lite | `lite` | Stores monthly inbound/outbound totals and estimated peaks from recent raw NIC samples |
-| Billing | `billing` | Maintains current 5-minute facts, daily summaries, P95, coverage, and monthly snapshots |
-
-`GET /api/statistics/traffic/daily` is available only in `billing` mode. Otherwise it returns `409 traffic_daily_requires_billing`.
+Dash stores raw inbound and outbound counters. Direction mode selects the accounting view; every node owns an explicit billing cycle.
 
 ## Global Settings
 
-| Field | Description |
+Only these fields are writable globally:
+
+| Field | Values |
 | --- | --- |
-| `guest_access_mode` | Anonymous access mode |
-| `usage_mode` | `lite` or `billing` |
-| `cycle_mode` | Billing cycle mode |
-| `billing_start_day` | Day from 1 to 31 |
-| `billing_anchor_date` | WHMCS anchor date |
-| `billing_timezone` | IANA timezone |
-| `direction_mode` | Accounting direction mode |
+| `guest_access_mode` | `disabled`, `by_node` |
+| `usage_mode` | `lite`, `billing` |
+| `direction_mode` | `out`, `both`, `max` |
 
-## Billing Cycle Modes
+The settings response retains `cycle_mode`, `billing_start_day`, `billing_anchor_date`, and `billing_timezone` only as a fixed compatibility shape representing a calendar month. Sending any billing-cycle field to the global PATCH returns `400 billing_cycle_is_per_node`.
 
-| Mode | Behavior |
+## Node Billing Cycles
+
+| Mode | Required fields | Behavior |
+| --- | --- | --- |
+| `calendar_month` | `traffic_billing_timezone` | Starts on day 1 |
+| `clamp_to_month_end` | start day and timezone | Starts on configured day; short months clamp to month end |
+| `whmcs_compatible` | anchor date and timezone | Aligns to the anchor date |
+
+Node cycle fields are atomic: a request that includes one must include `traffic_cycle_mode` and every field required by that mode.
+
+New nodes store `calendar_month` and day 1. Legacy clients may send `traffic_cycle_mode=default` only without other cycle fields; it is stored as an explicit calendar month and is never returned. Upgrade migration freezes old inherited cycles to their pre-upgrade effective values.
+
+`traffic_billing_anchor_date` accepts `YYYY-MM-DD` or RFC3339 and is stored as `YYYY-MM-DD`. Empty timezone falls back to the app timezone on read.
+
+Only `traffic_direction_mode=default` inherits the global direction. `out`, `both`, and `max` override it per node.
+
+## Usage Modes
+
+| Mode | Stored data |
 | --- | --- |
-| `calendar_month` | Calendar month, `billing_start_day=1` |
-| `clamp_to_month_end` | Starts on configured day; short months clamp to month end |
-| `whmcs_compatible` | WHMCS-compatible cycle; can use `billing_anchor_date` |
+| `lite` | Monthly per-interface inbound/outbound totals and estimated peaks |
+| `billing` | The same monthly usage plus 5-minute facts, daily output, P95, coverage, and snapshots |
 
-`billing_anchor_date` accepts `YYYY-MM-DD` or RFC3339 and is stored as `YYYY-MM-DD`.
+Usage and Facts have independent PostgreSQL progress. Both advance in hourly chunks on a 5-minute schedule; Facts runs only in Billing mode.
 
-`billing_timezone` must be an IANA timezone loadable by Go.
+Switching Lite to Billing starts Facts from the latest 30 minutes and does not automatically replay older Lite history. Older raw samples still inside retention can be recovered with a per-node rebuild. Switching Billing to Lite lets the current rebuild chunk finish, then stops further chunks.
 
-## Node Override
+## Billing-Cycle Changes
 
-Nodes can override the global billing cycle and direction mode:
+A per-node cycle change immediately invalidates affected monthly derived rows and schedules a local repair from the earlier of the old and new current-cycle starts. Only that node pauses realtime Usage while repair catches up; other nodes continue.
 
-| Field | Description |
-| --- | --- |
-| `traffic_cycle_mode` | `default` inherits global settings; otherwise one of the cycle modes |
-| `traffic_billing_start_day` | 1 to 31 |
-| `traffic_billing_anchor_date` | WHMCS anchor date |
-| `traffic_billing_timezone` | Node billing timezone |
-| `traffic_direction_mode` | `default` inherits the global direction; otherwise `out`, `both`, or `max` |
-| `traffic_p95_enabled` | Whether P95 is calculated for the node |
-
-Normalization:
-
-- `default` clears node billing fields and inherits global settings.
-- `calendar_month` stores `traffic_billing_start_day=1`.
-- Non-`whmcs_compatible` modes store an empty `traffic_billing_anchor_date`.
-- Empty `traffic_billing_timezone` in non-default mode uses the app timezone on read.
-- `traffic_direction_mode=default` inherits the global direction mode; `out`, `both`, and `max` override that node.
-
-## Direction Mode
-
-| Mode | Accounting view |
-| --- | --- |
-| `out` | Outbound only |
-| `both` | Inbound + outbound |
-| `max` | Larger value from inbound and outbound for each metric |
-
-Global `direction_mode` is the default accounting view. Nodes with `traffic_direction_mode=default` inherit it.
-
-Responses keep raw fields and expose selected view fields such as `selected_bytes`, `selected_peak_bytes_per_sec`, and `selected_p95_bytes_per_sec`.
-
-## Background Service
-
-The background service turns raw counters reported by nodes into traffic facts and monthly accounting output. Its write path is:
-
-- Upserts derivable 5-minute facts from recent raw samples every 5 minutes.
-- Updates recent monthly usage during materialization.
-- Refreshes monthly snapshots hourly.
-- Runs serially with manual 5-minute fact rebuilds.
-
-`traffic_retention_days` controls the 5-minute fact retention window and the fact range available to manual rebuilds. `traffic_5m` stays writable and old rows are removed by rolling retention; historical 95th percentile billing values live in monthly snapshots.
+Coverage is limited by retained raw data. Clients use `data_complete`, `coverage_ratio`, `gap_count`, and `reset_count`. The deprecated `partial` field has been removed.
 
 ## Manual Rebuild
 
-When retained facts need to be generated again, the admin console can start a per-node traffic rebuild. The task rewrites the node's 5-minute facts from retained raw `nic_metrics` and invalidates overlapping monthly snapshots. Rebuild state is process-local and is not durable across process restarts. If the task fails, affected monthly history is regenerated by later snapshot maintenance, computed from retained facts on reads, or restored by retrying the rebuild; data outside retention is not recovered automatically.
+Per-node rebuild is Billing-only. It is a process-local singleton, rewrites 5-minute facts in 6-hour chunks, and invalidates overlapping snapshots. Dash restart resets its state to `idle`.
+
+Lite mode returns `409 traffic_rebuild_requires_billing`; a concurrent task returns `409 traffic_rebuild_running`.
+
+## Queries
+
+- Daily traffic requires Billing and otherwise returns `409 traffic_daily_requires_billing`.
+- Monthly `months` must be in `1..24`.
+- Responses keep raw `in_*` and `out_*` fields and expose selected-view fields.
+- P95 fields are non-null only when `p95_status=available`.

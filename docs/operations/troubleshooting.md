@@ -23,7 +23,9 @@ journalctl -u dash.service -n 200 --no-pager
 - 缺少 `auth.jwt_signing_key`。
 - `monitor_dash_pwd` 未设置或包含非法字符。
 - PostgreSQL 连接失败。
-- Redis 连接失败。
+- PostgreSQL `goose_db_version` 与二进制不一致。
+- `notify-config.key` 缺失、权限错误或与数据库密文不匹配。
+- Redis 连接失败、账号无权执行 `PING`/`INFO server`，或版本低于 6.2.0。
 - TimescaleDB 不可用。
 
 手工验证迁移：
@@ -34,6 +36,35 @@ env DASH_HOME=/opt/Ithiltir-dash \
   -config /opt/Ithiltir-dash/configs/config.local.yaml \
   -debug
 ```
+
+单独检查 Redis：
+
+```bash
+env DASH_HOME=/opt/Ithiltir-dash \
+  /opt/Ithiltir-dash/bin/dash check-redis \
+  --addr 127.0.0.1:6379
+```
+
+Redis 使用密码时，将密码写入不带换行符、仅所有者可读的临时文件，并增加 `--password-file <path>`。该命令不会读取 Dash 配置文件。
+
+正常启动要求 schema 与二进制完全一致。Schema 落后时执行迁移；schema 超前时不得启动旧二进制或降级数据库。
+
+## Dash 更新要求恢复
+
+查看更新状态和日志：
+
+```bash
+sudo /opt/Ithiltir-dash/bin/dash update --check
+ls -la /opt/Ithiltir-dash/runtime/dash-update
+```
+
+错误包含 `recovery_required` 或存在未完成事务时执行：
+
+```bash
+sudo /opt/Ithiltir-dash/bin/dash update recover
+```
+
+迁移开始前，恢复可以回到原 release；迁移开始后只会激活候选 release 并向前完成。不得手工删除 `transaction.env` 或 `update.block`。
 
 ## 页面打开但 API 失败
 
@@ -110,6 +141,8 @@ usage_mode=billing
 { "code": "traffic_daily_requires_billing", "message": "daily traffic requires billing mode" }
 ```
 
+流量手工重建同样要求 Billing 模式。Lite 模式返回 `traffic_rebuild_requires_billing`。重建状态只在当前 Dash 进程中保存，重启后恢复为 `idle`。
+
 ## P95 是 null
 
 只有 `p95_status=available` 时 P95 字段才有值。常见状态：
@@ -128,3 +161,7 @@ Get-Service ithiltir-node
 ```
 
 直接运行 `ithiltir-node.exe push` 不会应用更新。runner 才会设置 `ITHILTIR_NODE_RUNNER=1` 并替换二进制。
+
+## 通知渠道无法编辑
+
+存量渠道无法按当前严格 schema 解码时，渠道列表仍会返回该项，但 `config` 为 `null`。该渠道只能删除后重新创建。若所有通知渠道都导致 Dash 启动失败，先确认恢复了与 PostgreSQL 备份匹配的 `configs/notify-config.key`；不要生成新密钥覆盖旧文件。

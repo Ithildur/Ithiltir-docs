@@ -24,7 +24,9 @@ Common causes:
 - `auth.jwt_signing_key` is missing.
 - `monitor_dash_pwd` is missing or contains invalid characters.
 - PostgreSQL connection failed.
-- Redis connection failed.
+- PostgreSQL `goose_db_version` does not match the binary.
+- `notify-config.key` is missing, too permissive, or does not match channel ciphertext.
+- Redis connection failed, ACL denies `PING`/`INFO server`, or Redis is below 6.2.0.
 - TimescaleDB is unavailable.
 
 Validate migration manually:
@@ -35,6 +37,18 @@ env DASH_HOME=/opt/Ithiltir-dash \
   -config /opt/Ithiltir-dash/configs/config.local.yaml \
   -debug
 ```
+
+Check Redis separately with `dash check-redis --addr 127.0.0.1:6379`. Add `--password-file <path>` when required; the file must not have a trailing newline. This command does not read the Dash config file. A schema behind the binary must be migrated; a schema ahead of the binary cannot be used with that old binary.
+
+## Dash Update Requires Recovery
+
+When status contains `recovery_required`, run:
+
+```bash
+sudo /opt/Ithiltir-dash/bin/dash update recover
+```
+
+Before migration, recovery can restore the old release. After migration starts, recovery completes forward. Do not delete `transaction.env` or `update.block` manually.
 
 ## Page Loads but API Fails
 
@@ -111,6 +125,8 @@ Otherwise it returns:
 { "code": "traffic_daily_requires_billing", "message": "daily traffic requires billing mode" }
 ```
 
+Manual traffic rebuild also requires Billing; Lite returns `traffic_rebuild_requires_billing`. Rebuild state resets to `idle` after Dash restart.
+
 ## P95 Is null
 
 P95 fields have values only when `p95_status=available`. Common states:
@@ -129,3 +145,7 @@ Get-Service ithiltir-node
 ```
 
 Running `ithiltir-node.exe push` directly does not apply updates. The runner sets `ITHILTIR_NODE_RUNNER=1` and replaces the binary.
+
+## Notification Channel Cannot Be Edited
+
+An invalid stored channel remains listed with `config=null` and can only be deleted and recreated. If Dash itself cannot start, restore the `configs/notify-config.key` that matches the PostgreSQL backup; never overwrite it with a new key.

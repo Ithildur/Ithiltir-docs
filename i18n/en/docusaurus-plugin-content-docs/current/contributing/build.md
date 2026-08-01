@@ -8,12 +8,18 @@ title: Build
 ## Dash Frontend
 
 ```bash
-cd web
-bun install
-bun run build
+bash scripts/build_frontend.sh --version 0.0.0-dev -o build/frontend/dist
 ```
 
-The frontend build writes static assets consumed by the Dash release package.
+`--version` embeds the Dash version so an open browser reloads matching assets after the backend changes. Release packaging passes its resolved Dash version; the development default is `0.0.0-dev`.
+
+Success requires non-empty `dist/index.html` and `dist/theme-bootstrap.js`.
+
+PowerShell:
+
+```powershell
+powershell -File scripts/build_frontend.ps1 -Version 0.0.0-dev -OutDir build/frontend/dist
+```
 
 ## Dash Backend
 
@@ -45,20 +51,22 @@ Common options:
 
 Dash release packages currently target Linux amd64 and Linux arm64. macOS and Windows deploy assets are for nodes.
 
+Each package writes format-v1 `release.env` with Dash/Node versions, target OS/architecture, and SHA-256 for all Node/runner assets. Only `configs/config.example.yaml` is copied; local config is excluded.
+
 PowerShell package script:
 
 ```powershell
-.\scripts\package.ps1 -Version 1.2.3 -NodeVersion 1.2.3 -OutDir release -Target linux/amd64 -TarGz
+powershell -File scripts/package.ps1 -Version 1.2.3 -NodeVersion 1.2.3 -OutDir release -Targets linux/amd64 -Zip
 ```
 
 ## Ithiltir-node
 
 Build config is in `.goreleaser.yaml`.
 
-Local snapshot build:
+Local build:
 
 ```bash
-./scripts/build.sh
+./scripts/build.sh --version 1.2.3-alpha.1
 ```
 
 Release build:
@@ -81,5 +89,7 @@ The script installs GoReleaser `v2.15.2` when missing.
 npm install
 npm run build
 ```
+
+Release checks also run Go tests, frontend lint/typecheck/build, package the target, and verify the manifest, seven bundled Node/runner assets, frontend entries, and install/update scripts are present and non-empty.
 
 Docs build does not require tests first. Code changes should add tests when they affect public contracts, state machines, error paths, concurrency, serialization, or historical bug areas.

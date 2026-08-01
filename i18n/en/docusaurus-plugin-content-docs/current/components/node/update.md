@@ -12,14 +12,14 @@ Dash delivers node updates through the update manifest in the `/api/node/metrics
 | Platform | Requirement | Behavior |
 | --- | --- | --- |
 | Windows | Started by `ithiltir-runner.exe` with `ITHILTIR_NODE_RUNNER=1` | Stages the new binary, exits node, then runner replaces and restarts it |
-| Linux | Current process is `/var/lib/ithiltir-node/current/ithiltir-node` or `/var/lib/ithiltir-node/releases/<version>/ithiltir-node` | Downloads into a new release directory, switches the `current` symlink, exits, and lets systemd restart node |
+| Linux | Current process is `/var/lib/ithiltir-node/current/ithiltir-node` or `/var/lib/ithiltir-node/releases/<version>/ithiltir-node` | Downloads into a new release directory, switches `current`, exits, and lets the existing runtime manager restart Node |
 | macOS | Current process is `/var/lib/ithiltir-node/current/ithiltir-node` or `/var/lib/ithiltir-node/releases/<version>/ithiltir-node` | Downloads into a new release directory, switches the `current` symlink, exits, and lets launchd restart node |
 
 Direct binaries outside the managed install layout ignore update manifests.
 
 :::warning Automatic Update Delivery
 
-Automatic update delivery from the Dash admin console applies only to nodes running `0.2.3` or later. Nodes below `0.2.3` must be updated by rerunning the install command or manually replacing the binary.
+Automatic update delivery from the Dash admin console applies only to nodes running `0.2.3` or later. For older versions, rerun the current installer, which always performs a force install, or replace the binary manually.
 
 :::
 
@@ -74,6 +74,6 @@ Malformed JSON, invalid manifests, download failures, size mismatches, or checks
 2. node downloads the file and verifies size and SHA-256.
 3. After staging succeeds, `node push` exits cleanly.
 4. Windows runner replaces `%ProgramData%\Ithiltir-node\bin\ithiltir-node.exe` and restarts node.
-5. Linux/macOS switches `/var/lib/ithiltir-node/current` to the new release and systemd/launchd restarts node.
+5. Linux/macOS switches `/var/lib/ithiltir-node/current` to the new release and the existing Linux service manager or launchd restarts Node.
 
 If the active managed release already matches the manifest version, node does not reinstall it.

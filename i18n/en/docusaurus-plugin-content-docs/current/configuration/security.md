@@ -5,44 +5,41 @@ title: Security Config
 
 # Security Config
 
-Security settings cover admin authentication, browser sessions, node secrets, trusted proxy headers, and webhook signing.
+## Admin Credentials
 
-## Admin Password
-
-Set the password with:
+Set the admin password only through:
 
 ```bash
 export monitor_dash_pwd='<password>'
 ```
 
-The password is not stored in YAML config.
+It requires at least 8 visible ASCII characters and no whitespace.
 
-## Session Secrets
+Configure `auth.jwt_signing_key` with at least 32 random bytes and no surrounding whitespace. Rotating it invalidates active access tokens.
 
-Configure stable random values:
+## Notification Encryption Key
 
-```yaml
-security:
-  jwt_secret: "<random>"
-  cookie_hash_key: "<random>"
-  cookie_block_key: "<random>"
-```
+`dash migrate` creates `$DASH_HOME/configs/notify-config.key`, a raw 32-byte key used for AES-256-GCM channel-config encryption. It must be a regular owner-readable-only file.
 
-Changing these values invalidates browser sessions.
+Back it up separately from PostgreSQL. If ciphertext exists, never replace a missing key with a newly generated one; the stored channel credentials would be unrecoverable and Dash would refuse startup.
 
-## HTTPS Boundary
+## Browser Boundary
 
-Production deployments should expose Dash only through HTTPS and terminate TLS at Nginx, Caddy, or a load balancer before reverse-proxying to Dash.
+Production deployments should expose Dash through HTTPS at one root URL. Refresh cookies use `SameSite=Strict`. Responses include CSP, Permissions Policy, `Referrer-Policy: no-referrer`, `X-Content-Type-Options: nosniff`, and framing protection.
 
 ## Node Secrets
 
-Nodes authenticate with `X-Node-Secret`. Use a distinct secret for each node and rotate it from the admin console when needed.
+Nodes authenticate with `X-Node-Secret`. Use a distinct secret per node. After trimming, secrets must contain 8–128 Unicode characters.
 
-## File Permissions
+## Webhook Redirects
 
-Dash release services write sensitive config and unit files as root. Config files use restricted permissions. Linux node service uses the `ithiltir` user and writes only to `/var/lib/ithiltir-node`.
+Notification HTTP requests follow at most five redirects. Every hop keeps the original host; same-scheme redirects keep the effective port; HTTP may upgrade to HTTPS but never downgrade. POST follows only `307` and `308`.
+
+## File and Service Permissions
+
+Restrict `config.local.yaml` and `notify-config.key` to the Dash runtime owner. Linux systemd Node installs use the `ithiltir` user and limit writes to `/var/lib/ithiltir-node`; root-owned collector assets stay outside that tree.
 
 ## Unsupported
 
 - Dash URL subpath deployment.
-- Multiple Dash instances writing to the same database and Redis.
+- Multiple Dash instances writing the same state.

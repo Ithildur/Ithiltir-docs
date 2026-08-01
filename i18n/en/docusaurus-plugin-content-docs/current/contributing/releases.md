@@ -71,13 +71,18 @@ Ithiltir_dash_<os>_<arch>.zip
 
 Dash packages include:
 
+- `release.env`.
 - `bin/dash`.
+- `configs/config.example.yaml` only.
+- `dist/index.html` and `dist/theme-bootstrap.js`.
 - `install_dash_linux.sh`.
 - `update_dash_linux.sh`.
 - `deploy/<platform>/install.*`.
-- `deploy/<platform>/node_*` and the Windows runner.
+- Five Node binaries and two Windows runners.
 
-Install scripts in the release package prepare normal runtime dependencies. On `apt-get` systems they attempt to install PostgreSQL 16, TimescaleDB, Redis, updater requirements such as `git`/`tar`/download tools, and cron for Linux node LVM collection.
+Format-v1 `release.env` records Dash/Node versions, target OS/architecture, and SHA-256 for all seven Node/runner assets. Candidate `bin/dash` must report matching versions. Packages must never include `config.local.yaml`, local credentials, or the notification key.
+
+The release workflow must pass Go tests, frontend lint/typecheck/build, package construction, and format-v1 asset validation. Missing, empty, version-mismatched, or digest-mismatched assets block publication.
 
 ## Release Notes
 

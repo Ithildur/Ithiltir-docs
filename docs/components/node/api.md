@@ -33,6 +33,16 @@ slug: /Node/API
 - 没有值的可选字段会省略。
 - 运行时磁盘结构和静态磁盘结构含义不同，见 [磁盘结构](./disk.md)。
 
+Dash 接收边界：
+
+- 字节数、容量、计数器和 uptime 使用非负有符号 64 位整数；进程数和连接数使用有符号 32 位整数。
+- 静态上报间隔使用有符号 32 位整数，CPU 拓扑计数使用有符号 16 位整数。
+- JSON 整数超出接收类型时返回 `400 invalid_request`；负数、非法比例或速率返回 `422 invalid_metrics` 或 `422 invalid_static_payload`。
+- Node 版本最多 64 字符；hostname 和磁盘名称最多 255；磁盘 ref 最多 320；磁盘 kind、role 和 RAID health 最多 16；网卡名最多 64；文件系统类型及逻辑盘 health、level 最多 32。
+- 静态 OS、platform、arch 最多 32 字符；platform 和 kernel version 最多 255。路径、挂载点和硬件描述不截断。
+
+并发 Push 按 Dash 的服务端接收顺序决定当前投影。较晚完成的旧接收样本只写入历史，不覆盖当前指标、前台缓存或告警评估。Node 的 `timestamp` 不参与当前投影排序。
+
 ## `NodeReport`
 
 顶层对象：

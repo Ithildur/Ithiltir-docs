@@ -5,72 +5,56 @@ title: Traffic Billing
 
 # Traffic Billing
 
-Traffic accounting uses node network counters. Dash stores raw inbound and outbound counters and derives the accounting view from settings.
+Use `lite` for monthly totals. Use `billing` for 5-minute facts, daily output, P95, coverage, and snapshots.
 
-## Modes
+## Retention
 
-| Mode | Value | Behavior |
-| --- | --- | --- |
-| Lite | `lite` | Stores monthly inbound/outbound totals and estimated peak |
-| Billing | `billing` | Maintains 5-minute facts, daily summaries, P95, coverage, and monthly snapshots |
+```yaml
+database:
+  retention_days: 30
+  traffic_retention_days: 90
+```
 
-Use `billing` only when daily traffic, monthly accounting, or P95 is needed. `traffic_retention_days` controls both retained 5-minute facts and the raw metrics window available for manual rebuilds.
+The rebuildable window is the intersection of relevant raw and traffic retention.
 
-## Direction Mode
+## Per-Node Cycles
 
-| Mode | Accounting view |
-| --- | --- |
-| `out` | Outbound only |
-| `both` | Inbound + outbound |
-| `max` | Larger value from inbound and outbound for each metric |
+Every node stores an explicit cycle. New nodes default to:
 
-Responses keep raw `in_*` and `out_*` fields. The selected view is exposed through `selected_*` fields.
+```text
+traffic_cycle_mode = calendar_month
+traffic_billing_start_day = 1
+traffic_billing_timezone = Asia/Hong_Kong
+```
 
-## Billing Cycle
+`calendar_month`, `clamp_to_month_end`, and `whmcs_compatible` require their corresponding timezone, start-day, or anchor fields. Cycle fields are submitted atomically.
 
-Global fields:
+Legacy `traffic_cycle_mode=default` is only an input alias without other cycle fields and is stored as an explicit calendar month. Upgrade migration freezes old inherited cycles to their pre-upgrade effective values.
 
-| Field | Description |
-| --- | --- |
-| `cycle_mode` | Billing cycle mode |
-| `billing_start_day` | Day from 1 to 31 |
-| `billing_anchor_date` | WHMCS-compatible anchor date |
-| `billing_timezone` | IANA timezone |
+Global settings contain only guest access, usage mode, and default direction. Sending billing-cycle fields to global settings returns `400 billing_cycle_is_per_node`. Only `traffic_direction_mode=default` inherits globally.
 
-Cycle modes:
+## Materialization
 
-| Mode | Behavior |
-| --- | --- |
-| `calendar_month` | Calendar month; `billing_start_day` is fixed to `1` |
-| `clamp_to_month_end` | Starts on configured day; short months clamp to month end |
-| `whmcs_compatible` | WHMCS-compatible cycle; can use `billing_anchor_date` |
+Usage and Facts have independent PostgreSQL progress. Usage maintains monthly totals in both modes; Facts runs only in Billing. Both advance in hourly chunks on a 5-minute schedule.
 
-Node-level overrides use `traffic_cycle_mode`, `traffic_billing_start_day`, `traffic_billing_anchor_date`, `traffic_billing_timezone`, and `traffic_direction_mode`. `traffic_cycle_mode=default` inherits global cycle settings. `traffic_direction_mode=default` inherits the global direction mode.
+Switching Lite to Billing starts Facts at the latest 30 minutes. Older retained raw data requires per-node rebuild. Switching to Lite lets a running rebuild finish its current 6-hour chunk, then stops it.
 
-## P95
+A node cycle change invalidates only that node's affected monthly derived rows and schedules local repair. Other nodes continue realtime materialization.
 
-P95 can be enabled per node. `p95_status` can be:
+## Rebuild
 
-- `available`
-- `disabled`
-- `lite_mode`
-- `insufficient_samples`
-- `snapshot_without_p95`
+```text
+POST /api/admin/nodes/{id}/traffic/rebuild
+```
 
-P95 fields are non-null only when status is `available`. P95 requires at least 20 samples, so new nodes or newly enabled billing can return `insufficient_samples` for a short period.
+Rebuild is Billing-only, process-local, and singleton per Dash process. It rewrites 5-minute facts in 6-hour chunks and invalidates overlapping snapshots. Dash restart resets status to `idle`.
 
-## Coverage
+## Completeness and P95
 
-Clients should display `coverage_ratio` for sample coverage and accuracy hints. `partial` is kept only for compatibility and should not drive new UI logic.
+Clients use `data_complete`, `coverage_ratio`, `gap_count`, and `reset_count`. The deprecated `partial` field has been removed.
 
-## Queries
+P95 requires Billing, the per-node switch, and at least 20 valid samples. Numeric P95 is present only when `p95_status=available`.
 
-- `GET /api/statistics/traffic/summary`: current cycle summary.
-- `GET /api/statistics/traffic/daily`: daily data, requires `usage_mode=billing`.
-- `GET /api/statistics/traffic/monthly`: monthly snapshots.
+## Guest Access
 
-`daily` and `monthly` accept `period=current` or `period=previous`. `monthly` also accepts `months`, up to 24.
-
-## Manual Rebuild
-
-The admin console can rebuild one node's retained 5-minute traffic facts from raw NIC metrics. A rebuild invalidates overlapping monthly snapshots and runs serially with automatic traffic materialization. Data outside retention is not recovered automatically.
+Anonymous traffic requires both `guest_access_mode=by_node` and `node.is_guest_visible=true`.

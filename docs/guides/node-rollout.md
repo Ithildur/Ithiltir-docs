@@ -21,6 +21,8 @@ targets:
 
 `report install` 会调用同级 `/api/node/identity`，取得 `server_install_id` 后写入配置。写入使用原子 rename，权限保持 `0600`。
 
+节点 secret trim 后必须包含 8～128 个 Unicode 字符。每台节点使用独立值。
+
 ## 创建节点
 
 在 Dash 管理台创建节点前，确认以下信息：
@@ -44,7 +46,7 @@ targets:
 
 ```bash
 curl -fsSL https://dash.example.com/deploy/linux/install.sh -o install_node.sh
-sudo bash install_node.sh dash.example.com 443 '<node-secret>' 3 --net eth0
+sudo bash install_node.sh dash.example.com 443 '<node-secret>' 3 --net eth0 --require-https --service-manager=systemd
 ```
 
 安装后路径：
@@ -65,15 +67,15 @@ journalctl -u ithiltir-node.service -n 100 --no-pager
 /var/lib/ithiltir-node/current/ithiltir-node report list
 ```
 
-LVM thinpool 采集由脚本和 cron 支持：
+systemd 下 LVM thinpool 采集由 timer 支持：
 
 | 项 | 路径 |
 | --- | --- |
 | 采集脚本 | `/opt/node/collect_thinpool.sh` |
-| cron | `/etc/cron.d/ithiltir-node-thinpool` |
+| timer | `/etc/systemd/system/ithiltir-node-thinpool-cache.timer` |
 | 缓存 | `/run/ithiltir-node/thinpool.json` |
 
-脚本检测到 LVM/LVM-thin 后才启用这部分；在 `apt-get` 系统上会自动安装 cron，不需要预先手工安装。没有 LVM 的机器会跳过并清理旧采集项。
+脚本检测到 LVM/LVM-thin 后才启用这部分。没有 LVM 的机器会跳过并清理旧采集项。
 
 SMART 缓存由 root 侧 systemd timer 刷新：
 
@@ -85,6 +87,8 @@ SMART 缓存由 root 侧 systemd timer 刷新：
 | timer | `/etc/systemd/system/ithiltir-node-smart-cache.timer` |
 
 脚本会尝试安装 `smartmontools`。安装失败、没有 `smartctl` 或缓存过期时，节点继续上报基础指标，并通过 `disk.smart.status` 表示 SMART 状态。
+
+Alpine/OpenRC 使用 `--service-manager=openrc`。Node 由 `supervise-daemon` 管理；BusyBox cron 每 5 分钟刷新 SMART，检测到 LVM 时每分钟刷新 thinpool。OpenRC 不安装 1 秒连接数 helper，使用 Node 自带统计。
 
 ## macOS 节点
 
@@ -130,7 +134,9 @@ Windows 自更新只在 runner 托管模式下生效。直接运行 `node push` 
 
 Linux 和 macOS 使用 `/var/lib/ithiltir-node/releases/<version>` 与 `/var/lib/ithiltir-node/current` 安装布局时，也会处理 update manifest。安装布局外的直接二进制不处理自更新。
 
-Dash 管理台自动下发更新要求当前 Node 版本为 `0.2.3` 或更高。低于该版本时，重新执行安装命令。
+Dash 管理台自动下发更新要求当前 Node 版本为 `0.2.3` 或更高。低于该版本时，执行安装命令进行强制安装。
+
+Linux、macOS 和 Windows 安装器最多跟随 5 次下载重定向，只允许保持初始主机、同协议保持端口，或从 HTTP 升级到 HTTPS。跨主机和 HTTPS 降级会被拒绝。
 
 ## 网卡选择
 

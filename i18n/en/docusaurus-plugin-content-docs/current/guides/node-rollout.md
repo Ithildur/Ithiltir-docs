@@ -22,6 +22,8 @@ targets:
 
 `report install` calls sibling `/api/node/identity`, reads `server_install_id`, and writes config with atomic rename and `0600` permissions.
 
+Node secrets are trimmed before validation. They must contain 8–128 Unicode characters and must be distinct across nodes.
+
 ## Create Nodes
 
 Before creating nodes in Dash, prepare:
@@ -45,7 +47,7 @@ Batch rollout can use a table:
 
 ```bash
 curl -fsSL https://dash.example.com/deploy/linux/install.sh -o install_node.sh
-sudo bash install_node.sh dash.example.com 443 '<node-secret>' 3 --net eth0
+sudo bash install_node.sh dash.example.com 443 '<node-secret>' 3 --net eth0 --require-https --service-manager=systemd
 ```
 
 Installed paths:
@@ -66,15 +68,15 @@ journalctl -u ithiltir-node.service -n 100 --no-pager
 /var/lib/ithiltir-node/current/ithiltir-node report list
 ```
 
-LVM thinpool collection is handled by the script and cron:
+LVM thinpool collection is handled by a systemd timer:
 
 | Item | Path |
 | --- | --- |
 | Collector | `/opt/node/collect_thinpool.sh` |
-| cron | `/etc/cron.d/ithiltir-node-thinpool` |
+| Timer | `/etc/systemd/system/ithiltir-node-thinpool-cache.timer` |
 | Cache | `/run/ithiltir-node/thinpool.json` |
 
-The script enables this only when LVM/LVM-thin is detected. On `apt-get` systems it installs cron automatically. Hosts without LVM skip this path and remove old collector entries.
+The script enables this only when LVM/LVM-thin is detected. Hosts without LVM skip this path and remove old collector entries.
 
 SMART cache is refreshed by a root-side systemd timer:
 
@@ -86,6 +88,8 @@ SMART cache is refreshed by a root-side systemd timer:
 | Timer | `/etc/systemd/system/ithiltir-node-smart-cache.timer` |
 
 The script attempts to install `smartmontools`. If installation fails, `smartctl` is missing, or the cache is stale, the node keeps reporting base metrics and exposes SMART state through `disk.smart.status`.
+
+With `--service-manager=openrc`, OpenRC runs Node through `supervise-daemon`. BusyBox `crond` refreshes SMART cache every 5 minutes and LVM thinpool cache every minute. OpenRC does not install the 1-second connection-count helper used by systemd.
 
 ## macOS Nodes
 
@@ -131,7 +135,9 @@ Windows self-update works only when the node is managed by runner. Direct `node 
 
 Linux and macOS also process update manifests when using the `/var/lib/ithiltir-node/releases/<version>` and `/var/lib/ithiltir-node/current` install layout. Direct binaries outside that layout do not self-update.
 
-Automatic update delivery from the Dash admin console requires the current node version to be `0.2.3` or later. For older versions, rerun the install command.
+Automatic update delivery from the Dash admin console requires the current node version to be `0.2.3` or later. For older versions, rerun the current installer; every installer run is a force install.
+
+The Linux, macOS, and Windows installers follow at most five download redirects. Every hop must keep the original host; same-scheme redirects keep the effective port, and HTTP may upgrade to HTTPS. Cross-host redirects and HTTPS downgrade are rejected.
 
 ## Network Interface Selection
 

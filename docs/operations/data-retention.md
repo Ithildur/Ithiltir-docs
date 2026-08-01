@@ -4,7 +4,7 @@ slug: /Operations/DataRetention
 
 # 数据保留和存储
 
-Dash 使用 PostgreSQL + TimescaleDB 保存历史数据。Redis 主要保存运行时状态。
+Dash 使用 PostgreSQL + TimescaleDB 保存历史数据和关键运行状态。Redis 保存管理员会话和可丢弃的前台缓存。
 
 ## PostgreSQL 数据
 
@@ -17,7 +17,9 @@ Dash 使用 PostgreSQL + TimescaleDB 保存历史数据。Redis 主要保存运�
 - 流量事实和月度快照。
 - 分组和标签。
 - 告警规则、事件、通知 outbox。
+- 通知渠道密文和投递健康状态。
 - 系统设置和主题状态。
+- 流量 Usage/Facts 物化进度和节点账期修复进度。
 
 ## Redis 数据
 
@@ -26,10 +28,8 @@ Dash 使用 PostgreSQL + TimescaleDB 保存历史数据。Redis 主要保存运�
 - 管理会话。
 - 前台热点快照。
 - 游客可见性缓存。
-- 节点鉴权索引同步相关缓存。
-- 告警运行时状态。
 
-`--no-redis` 时，这些运行时状态改用进程内存。
+`--no-redis` 时，会话和前台缓存改用进程内存。告警 pending/cooldown、MTProto 登录握手、节点更新请求和手工流量重建任务在两种模式下都属于进程内状态。
 
 ## 指标保留
 
@@ -57,18 +57,19 @@ database:
 max(database.retention_days, 45)
 ```
 
-需要 P95 计费、手工流量重建或更长账期回溯时，提高这个值。`traffic_5m` 保持可写并通过滚动保留策略删除旧数据，月度快照保存历史 95 计费结果。
+需要 P95 计费、手工流量重建或更长账期回溯时，提高这个值。`traffic_5m` 保持可写并通过滚动保留策略删除旧数据，月度快照保存历史 95 计费结果。手工重建范围取普通指标保留期与流量事实保留期的交集。
 
 ## 流量后台任务
 
-流量后台任务使用同一组保留窗口。窗口内的数据会继续参与物化、快照和手工重建：
+流量后台服务维护两个独立持久化进度：
 
-- 每 5 分钟按近期原始采样 upsert 可推导出的 5 分钟事实。
-- 每次物化时更新近期月度用量。
+- Usage 在 Lite 和 Billing 模式维护月度累计、覆盖边界和逐行源进度。
+- Facts 只在 Billing 模式维护 5 分钟事实。
+- 两者按 1 小时分块独立提交数据和水位。
 - 每小时刷新月度快照。
-- 与手工 5 分钟事实重建串行执行。
+- 手工重建按 6 小时分块使用同一写入门。
 
-保留窗口越长，数据库占用越高。手工重建只能使用保留窗口内仍存在的原始网卡指标。
+Lite 切换到 Billing 时，Facts 水位从最近 30 分钟开始。Lite 期间更早的数据不会自动重放；仍在原始指标保留期内时，可以在 Billing 模式按节点重建。
 
 ## 数据完整性字段
 
@@ -82,6 +83,5 @@ max(database.retention_days, 45)
 - `cycle_complete`
 - `data_complete`
 - `status`
-- `partial`
 
-这些字段用于判断账期内数据是否足够完整。客户端应使用 `coverage_ratio` 展示样本覆盖率和准确性提示。`partial` 仅为兼容保留，新的展示逻辑不应依赖该字段。`partial=true` 不代表接口失败，只表示数据覆盖不足或账期未闭合。
+这些字段用于判断账期内数据是否足够完整。客户端应使用 `data_complete`、`coverage_ratio`、`gap_count` 和 `reset_count`。废弃字段 `partial` 已删除。

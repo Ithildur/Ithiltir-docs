@@ -5,101 +5,142 @@ title: Upgrade
 
 # Upgrade
 
-Upgrades are split into Dash upgrades and node upgrades.
+Dash database migrations are forward-only. Node updates use a separate lifecycle.
 
-## Dash Upgrade
+## Upgrading from 0.2.7
 
-Dash installed from the Linux release package uses:
+Before upgrading, verify:
+
+- `monitor_dash_pwd` has at least 8 visible ASCII characters and no whitespace.
+- `auth.jwt_signing_key` has at least 32 bytes and no surrounding whitespace.
+- `app.public_url` uses an IP literal or ASCII DNS host; use IDNA/punycode for internationalized domains.
+- YAML has no unknown fields or invalid explicit durations.
+- Database and Redis pool values satisfy current constraints.
+- The configured Redis server is `6.2.0+` and allows `PING` and `INFO server`.
+- PostgreSQL and TimescaleDB use the same PostgreSQL major version.
+
+Back up PostgreSQL, `configs/config.local.yaml`, `themes`, and `install_id`. After migration, also back up the generated `configs/notify-config.key` separately from PostgreSQL.
+
+Migration temporarily decompresses retained disk-metric chunks and rebuilds disposable continuous aggregates. Leave additional temporary database space available; eligible chunks are recompressed after migration.
+
+For the first upgrade from the legacy flat layout, use the installed compatibility script:
 
 ```bash
 sudo bash /opt/Ithiltir-dash/update_dash_linux.sh --check
 sudo bash /opt/Ithiltir-dash/update_dash_linux.sh -y --lang en
 ```
 
-The default target is the latest stable release. Use `--test` for prereleases:
+This transition creates the `releases/<version>` and `current` layout. Use the native command for later upgrades.
+
+## Dash Update Commands
 
 ```bash
-sudo bash /opt/Ithiltir-dash/update_dash_linux.sh --check --test
-sudo bash /opt/Ithiltir-dash/update_dash_linux.sh -y --test --lang en
-sudo bash /opt/Ithiltir-dash/update_dash_linux.sh reinstall --test --lang en
+/opt/Ithiltir-dash/bin/dash update --check
+sudo /opt/Ithiltir-dash/bin/dash update --yes --lang en
 ```
 
-The admin console System / Dash Update page uses the same release-package update boundary. It applies only to Linux/systemd release-package installs. If systemd, git, tar, curl/wget, or `/opt/Ithiltir-dash/update_dash_linux.sh` is missing, the updater is reported as unavailable.
+Prerelease and reinstall:
 
-The admin console supports `release` and `prerelease` channels. Automation modes are:
+```bash
+/opt/Ithiltir-dash/bin/dash update --check --test
+sudo /opt/Ithiltir-dash/bin/dash update --yes --test --lang en
+sudo /opt/Ithiltir-dash/bin/dash update reinstall --yes --test --lang en
+```
 
-- `manual`: check and update only from the page.
-- `notify`: check periodically and notify when an update is available.
-- `auto`: check periodically, update automatically, and notify status.
+`--test` selects only the latest prerelease; the default selects only the latest stable release. If the installed prerelease is newer than the latest stable release, explicitly use `--test`.
+
+`reinstall` reapplies the selected latest package when the version is unchanged. It does not install an older target over the current version.
+
+`update_dash_linux.sh` still accepts legacy arguments, but only forwards them to `dash update`.
+
+## Admin Console Updates
+
+System / Dash Update supports `release` and `prerelease` channels:
+
+- `manual`: check and update from the page.
+- `notify`: check every 6 hours and notify through enabled channels.
+- `auto`: check every 6 hours, update automatically, and notify when the job reaches a terminal state.
+
+The admin controller requires Linux/systemd and `systemd-run`. It persists an immutable plan, then starts the packaged `dash update execute` through a transient unit. Manual `dash update` also supports explicit `--service-manager=none`.
+
+## Transaction and Recovery
 
 The updater:
 
-1. Checks the current version and release channel.
-2. Downloads the new package from GitHub Releases.
-3. Stops `dash.service`.
-4. Backs up `/opt/Ithiltir-dash` to a temporary directory.
-5. Replaces installed files.
-6. Tightens sensitive file permissions.
-7. Runs database migrations.
-8. Starts `dash.service`.
+1. Resolves the target release and pins target version, current version, and install revision.
+2. Enforces one archive root containing only regular files and directories, at most 1 GiB compressed, 4 GiB expanded, and 20,000 entries, then validates the release manifest.
+3. Verifies the candidate-reported Dash/Node versions and SHA-256 for all seven bundled Node/runner assets.
+4. Takes a root-owned cross-process lock and rechecks the install revision.
+5. Stages beside the install directory on the same filesystem and writes persistent transaction and startup-block files.
+6. Atomically switches `current`, runs `dash migrate`, and starts Dash. A systemd service must remain `active/running` for five seconds without increasing `NRestarts`.
 
-`--check` checks the selected target channel. The default channel checks stable releases only; `--test` checks prereleases only. If the installed Dash is a prerelease newer than the latest stable release, the default update stops and tells you to use `--test`.
+Failures before migration restore the previous release and runtime state. After migration starts, the updater keeps the candidate and permits only forward recovery.
 
-Use `reinstall` to install the selected latest package again even when the Dash version is unchanged, for example after repacking a test release with newer bundled node assets.
-
-If migration fails, the script attempts to restore the install directory and restart the old service. Migration steps already committed to the database are not rolled back automatically, so back up the database before upgrading.
-
-## Manual Dash Upgrade
+If status reports `failure_code=recovery_required` or an unfinished transaction exists, run as root:
 
 ```bash
-systemctl stop dash.service
-cp -a /opt/Ithiltir-dash /opt/Ithiltir-dash.bak.$(date +%Y%m%d%H%M%S)
-tar -xzf Ithiltir_dash_linux_amd64.tar.gz
-cp -a Ithiltir-dash/. /opt/Ithiltir-dash/
-env DASH_HOME=/opt/Ithiltir-dash /opt/Ithiltir-dash/bin/dash migrate -config /opt/Ithiltir-dash/configs/config.local.yaml
-systemctl start dash.service
+sudo /opt/Ithiltir-dash/bin/dash update recover
 ```
 
-Back up the database before manual upgrades:
+Recovery either rolls back a pre-migration transaction or completes a post-migration transaction forward. Do not manually remove `$DASH_HOME/runtime/dash-update/transaction.env`, `update.block`, or the reported `recovery_path`.
+
+## Database Schema
+
+`goose_db_version` is the only schema-version source:
+
+- Normal startup requires an exact match with embedded migrations.
+- `dash migrate` advances an older schema.
+- `dash migrate` rejects a newer schema.
+- After schema advance, starting an old Dash binary or downgrading the install is unsupported.
+
+Overwriting `bin/dash` or copying a new archive into the live directory breaks release and recovery invariants. A non-systemd manual install uses:
 
 ```bash
-pg_dump -Fc -d <db_name> -f ithiltir-$(date +%Y%m%d%H%M%S).dump
+sudo /opt/Ithiltir-dash/bin/dash update --service-manager=none
 ```
+
+This updates files and the database but does not manage a long-running Dash process.
+
+## 0.3 Migration Results
+
+- Complete notification channel configs are AES-256-GCM encrypted; the legacy logical config column becomes `{}`.
+- Nodes that inherited a global billing cycle store their pre-upgrade effective cycle. New nodes use a calendar month starting on day 1.
+- Usage/Facts progress moves to PostgreSQL. Facts starts from the latest 30 minutes; older data is not replayed automatically.
+- Existing monthly usage `covered_from` values use the old full-cycle assumption; migration does not re-prove coverage from raw samples.
+- Notification `failed_permanent` rows become `blocked` and enter low-frequency probes.
+- Open alerts are restored from PostgreSQL; pending and cooldown state is not.
+- Frontend cache uses the `ithiltir:dash:front:v2:*` namespace. Legacy v1, unnamespaced v2, alert-runtime, and MTProto keys are ignored and not deleted automatically; admin sessions keep the compatible `auth:jwt:*` prefix.
+
+Invalid stored notification channels remain visible and can only be deleted and recreated. Invalid stored alert rules are marked invalid and close open events with `rule_invalid`.
 
 ## Node Upgrade
 
-Dash release packages include node assets. When the admin console triggers a node upgrade:
+Dash packages include Node assets. When an admin starts a Node upgrade:
 
-1. Dash selects the asset from the node's last reported platform.
-2. `POST /api/admin/nodes/{id}/upgrade` writes a volatile upgrade task.
-3. The node receives an update manifest in the next `POST /api/node/metrics` response.
-4. Supported managed install layouts download, verify, switch, and restart node.
+1. Dash selects the asset from the last reported platform.
+2. `POST /api/admin/nodes/{id}/upgrade` writes a volatile task.
+3. The next `POST /api/node/metrics` response includes an update manifest.
+4. A supported managed layout downloads, verifies, switches, and restarts Node.
 
-The manifest `url` may include a short-lived `upgrade_token` for protected `/deploy/*` asset access. Nodes must use the returned URL unchanged.
+The manifest URL may contain a short-lived `upgrade_token` for protected `/deploy/*` assets. Node must use it unchanged.
 
-Supported scope:
+Supported layouts:
 
 - Windows: runner-managed only.
-- Linux/macOS: requires the `/var/lib/ithiltir-node/releases/<version>` and `/var/lib/ithiltir-node/current` install layout.
+- Linux/macOS: `/var/lib/ithiltir-node/releases/<version>` plus `/var/lib/ithiltir-node/current`.
 
-:::warning Automatic Update Delivery
+Automatic delivery requires Node `0.2.3+`. Direct binaries outside a managed layout ignore update manifests.
 
-Automatic update delivery from the Dash admin console requires the current node version to be `0.2.3` or later. For older versions, the admin console shows a manual update notice and the install command must be rerun.
+## Linux/macOS Force Install
 
-:::
+When managed self-update cannot be used, rerun the installer. It stages and executes the candidate before stopping existing services or managed manual processes, then replaces the release, report config, service assets, and atomically switches `current`.
 
-Direct binaries outside the managed install layout ignore update manifests.
-
-## Linux/macOS Node Reinstall
-
-When managed self-update cannot be used, rerun the install command. The script downloads the new binary, writes a new release directory, and updates the `current` symlink.
+Installing the same version replaces its release and has no installer rollback. Version-upgrade recovery belongs to Node self-update.
 
 ## Version Channels
 
-Versions must be strict SemVer:
+Versions use strict SemVer without a `v` prefix:
 
 ```text
 MAJOR.MINOR.PATCH[-PRERELEASE][+BUILD]
 ```
-
-Do not use a `v` prefix. Stable releases cannot include a prerelease segment; prerelease builds can include segments such as `-rc.1` or `-alpha.1`.

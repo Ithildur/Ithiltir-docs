@@ -5,7 +5,7 @@ title: Install Overview
 
 # Install Overview
 
-Ithiltir has two deployment targets: the Dash control plane and Ithiltir-node agents. Dash must be available first because node install scripts and node binaries are distributed from Dash under `/deploy`.
+Ithiltir has two deployment targets: the Dash control plane and Ithiltir-node instances. Dash must be available first because Node install scripts and binaries are distributed from Dash under `/deploy`.
 
 ## Choose an Installation Path
 
@@ -18,7 +18,7 @@ Ithiltir has two deployment targets: the Dash control plane and Ithiltir-node ag
 
 ## Deployment Order
 
-1. Confirm the host is a supported systemd Linux distribution.
+1. Confirm the Linux architecture and runtime mode. Use systemd service mode or explicit `--service-manager=none`.
 2. Download and extract the Dash release package.
 3. Run `install_dash_linux.sh`.
 4. Follow the prompts for `app.public_url`, database, Redis, admin password, and trusted reverse proxies.
@@ -37,7 +37,7 @@ The recommended deployment shape is: domain + HTTPS + Nginx/Caddy reverse proxy.
 | --- | --- |
 | Dash | Single instance; multiple Dash writers against the same state are not supported |
 | PostgreSQL | Stores nodes, metrics, traffic, alerts, settings, and theme metadata |
-| Redis | Stores sessions, hot snapshots, and alert runtime state |
+| Redis | Stores admin sessions and disposable frontend caches |
 | Reverse proxy | Recommended for production; keep same-origin root paths through Nginx, Caddy, or a load balancer |
 | Nodes | Use push mode to call Dash `/api/node/*` endpoints |
 
@@ -71,7 +71,7 @@ https://dash.example.com/api/node/static
 - The reverse proxy must keep same-origin paths; cross-origin backend addresses require CORS, cookie, and CSRF policies to be configured together.
 - Node secrets are only for `/api/node/*`; never embed them in browser code.
 - Dash is a single-instance application; do not run multiple writers against the same database.
-- `--no-redis` is a fallback mode. Runtime state is lost after restart.
+- `--no-redis` moves sessions and frontend cache to process memory. Alert pending/cooldown and MTProto login state are process-local in both modes.
 
 ## Related
 

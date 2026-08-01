@@ -23,7 +23,7 @@ Ithiltir Dash 是单实例、自托管的服务器监控面板。一个 Dash 进
 Dash + PostgreSQL 16+ + TimescaleDB + Redis
 ```
 
-小型单实例可以用 `--no-redis`，但这是降级运行：会话、热点快照和告警运行时状态保存在进程内存中，重启后丢失。
+小型单实例可以用 `--no-redis`：管理员会话和前台缓存改用进程内存，重启后丢失。告警 pending/cooldown 和 MTProto 登录握手在两种模式下都属于进程内存；开放告警事件和通知 outbox 保存在 PostgreSQL。
 
 ## 入口
 

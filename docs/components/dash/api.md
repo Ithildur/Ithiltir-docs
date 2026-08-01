@@ -4,7 +4,7 @@ slug: /Dash/API
 
 # Dash HTTP API
 
-本文档汇总稳定 HTTP 契约。公开路径、方法和字段语义属于兼容边界：既有语义不在原路径上硬改，新行为通过新增端点或追加字段提供。
+本文档汇总 Dash HTTP 边界。完整端点表和错误语义见 [Dash HTTP API](../../reference/dash-api.md) 与 [错误语义](../../reference/errors.md)。
 
 ## 基础
 
@@ -24,9 +24,11 @@ slug: /Dash/API
 | refresh cookie + `X-CSRF-Token` | `POST /api/auth/refresh`、`POST /api/auth/logout` |
 | `Authorization: Bearer <access_token>` | 管理 API 和可选鉴权读取 |
 | `X-Node-Secret` | 节点上报、节点身份读取和 deploy 资产下载 |
-| `upgrade_token` query | 只给旧 Agent 自动升级使用的临时 deploy 资产下载授权 |
+| `upgrade_token` query | 只给旧 Node 自动升级使用的临时 deploy 资产下载授权 |
 
 Bearer 可选端点会把缺失、格式错误、过期、已撤销或其他无法通过校验的 Bearer token 当作匿名请求处理。需要管理视图的客户端必须自行区分响应是已鉴权视图还是游客过滤视图。
+
+JSON 请求超过路由 body 上限时返回 `413 body_too_large`。Refresh cookie 使用 `SameSite=Strict`。
 
 ## 命名空间
 
@@ -75,24 +77,24 @@ Bearer 可选端点会把缺失、格式错误、过期、已撤销或其他无�
 - `version.version` 是节点最后上报版本；缺失、非法或低于受支持节点版本下限时，`version.is_outdated` 为 true。
 - `version.supports_auto_update` 表示当前节点版本是否满足 Dash 管理台自动下发更新要求。最低版本为 `0.2.3`。
 - `PATCH /api/admin/nodes/{id}` 接受 `traffic_p95_enabled`、`tags`、节点流量覆盖字段、secret、分组和展示字段。未提交字段保持不变。
-- 节点账期覆盖字段是原子组。只要提交 `traffic_cycle_mode`、`traffic_billing_start_day`、`traffic_billing_anchor_date` 或 `traffic_billing_timezone` 中任意字段，就必须同时提交 `traffic_cycle_mode` 和该模式使用的全部字段，否则返回 `400 invalid_traffic_cycle_settings`。
-- `traffic_cycle_mode` 允许 `default`、`calendar_month`、`whmcs_compatible`、`clamp_to_month_end`。`default` 不使用账期字段；`calendar_month` 使用 `traffic_billing_timezone`；`clamp_to_month_end` 使用 `traffic_billing_start_day` 和 `traffic_billing_timezone`；`whmcs_compatible` 使用 `traffic_billing_anchor_date` 和 `traffic_billing_timezone`，`traffic_billing_start_day` 由锚点日期推导。
+- 节点账期字段是原子组。只要提交 `traffic_cycle_mode`、`traffic_billing_start_day`、`traffic_billing_anchor_date` 或 `traffic_billing_timezone` 中任意字段，就必须同时提交 `traffic_cycle_mode` 和该模式使用的全部字段，否则返回 `400 invalid_traffic_cycle_settings`。
+- 保存的 `traffic_cycle_mode` 允许 `calendar_month`、`whmcs_compatible`、`clamp_to_month_end`。旧输入 `default` 仅作为不带账期字段时的兼容别名，并保存为显式 `calendar_month`。
 - `traffic_direction_mode` 允许 `default`、`out`、`both`、`max`。`default` 继承全局统计方向；其他值覆盖该节点。
-- `PATCH /api/admin/nodes/{id}` 提交空 `secret` 时返回 `400 invalid_secret`；提交的 `secret` 已属于其他节点时返回 `409 duplicate_secret`。
+- 节点名为 1～64 个 Unicode 字符且不得含控制字符。`secret` trim 后必须为 8～128 个 Unicode 字符；已属于其他节点时返回 `409 duplicate_secret`。
 - `PATCH /api/admin/nodes/traffic-p95` 接受 `ids` 和 `enabled`。`enabled` 必填。`ids` 必须是非空正整数数组，不能重复，最多 10000 项。该命令先校验全部节点 ID，再在一个事务中更新全部选中节点。成功返回 `204`；任一节点不存在或已删除时返回 `404 not_found`，且不会更新任何节点。
 - `GET /api/admin/nodes/traffic/rebuild` 返回最近一次进程内重建任务状态；状态不会跨进程重启持久化。失败状态只暴露稳定的 `code` 和 `error`。
-- `POST /api/admin/nodes/{id}/traffic/rebuild` 按节点重建保留窗口内的 5 分钟流量事实。成功返回 `202`；节点不存在返回 `404 not_found`；已有任务运行时返回 `409 traffic_rebuild_running`；任务不可用时返回 `503 traffic_rebuild_unavailable`。
-- `tags` 接受字符串数组；值会 trim，空值和重复值会被删除，`[]` 表示清空标签。
+- `POST /api/admin/nodes/{id}/traffic/rebuild` 只在 Billing 模式按节点重建保留窗口内的 5 分钟流量事实。Lite 模式返回 `409 traffic_rebuild_requires_billing`；已有任务返回 `409 traffic_rebuild_running`；任务不可用返回 `503 traffic_rebuild_unavailable`。
+- `tags` 接受字符串数组，最多 32 项；每项 trim 后最多 64 个 Unicode 字符且不得含控制字符。空值和重复值会被删除，`[]` 表示清空标签。
 - 非法 `tags` 返回 `400 invalid_tags`。
-- `POST /api/admin/nodes/{id}/upgrade` 成功返回 `204`；节点无法接收自动下发更新时返回 `409 node_upgrade_unsupported`；打包版本、平台或资产不可用时返回 `409`；Dash 无法生成旧 Agent 临时下载授权时返回 `503 node_upgrade_grant_error`。
+- `POST /api/admin/nodes/{id}/upgrade` 成功返回 `204`；节点无法接收自动下发更新时返回 `409 node_upgrade_unsupported`；打包版本、平台或资产不可用时返回 `409`；Dash 无法生成旧 Node 临时下载授权时返回 `503 node_upgrade_grant_error`。
 
-## Agent 更新
+## Node 更新
 
 - `POST /api/node/metrics` 成功响应包含 `update`。
 - 无待升级任务时，`update` 为 `null`。
 - 有待升级任务时，`update` 包含 `id`、`version`、`url`、`sha256` 和 `size`。
-- `url` 可能包含短期有效的 `upgrade_token`，让旧 Agent 不发送 `X-Node-Secret` 也能下载本次升级的精确资产。客户端必须按原样使用返回的 URL。
-- 待升级任务是易失状态，Agent 上报完全相同的目标版本或 SemVer 优先级更高的版本后清除。同一 SemVer 优先级但 build metadata 不同的版本视为不同节点二进制，仍可下发。
+- `url` 可能包含短期有效的 `upgrade_token`，让旧 Node 不发送 `X-Node-Secret` 也能下载本次升级的精确资产。客户端必须按原样使用返回的 URL。
+- 待升级任务是易失状态，Node 上报完全相同的目标版本或 SemVer 优先级更高的版本后清除。
 
 ## 管理：系统设置和 Dash 更新
 
@@ -100,8 +102,9 @@ Bearer 可选端点会把缺失、格式错误、过期、已撤销或其他无�
 - `PATCH /api/admin/system/settings/` 接受局部更新。`PUT /api/admin/system/settings/` 是全量替换，必须提交全部系统设置字段。
 - `dash_update_channel` 允许 `release` 或 `prerelease`；`dash_update_mode` 允许 `manual`、`notify` 或 `auto`。
 - `GET /api/admin/system/dash-update/status` 返回 Dash 更新器可用性、当前任务状态和最近日志。
-- `GET /api/admin/system/dash-update/check?channel=release|prerelease` 检查指定通道的 Dash 更新。非法通道返回 `400 invalid_fields`；更新器不可用返回 `503 dash_update_unavailable`。
-- `POST /api/admin/system/dash-update/run` 接受 `action`、`channel` 和 `lang`。成功启动返回 `202`；已有任务运行时返回 `409` 和当前状态；非法请求返回 `400 invalid_fields`。
+- `GET /api/admin/system/dash-update/check?channel=release|prerelease` 返回目标版本和 `install_revision`。非法通道返回 `400 invalid_fields`；更新器不可用返回 `503 dash_update_unavailable`。
+- `POST /api/admin/system/dash-update/run` 接受 `action`、`channel`、`lang` 和检查阶段得到的不可变计划字段。执行器取得锁后再次校验当前版本与安装修订号；过期计划以 `failure_code=install_changed` 失败，不会改选目标。
+- 更新任务、事务和恢复路径持久化在 `$DASH_HOME/runtime/dash-update`。`failure_code=recovery_required` 时执行 `dash update recover`。
 - `GET /api/admin/system/dash-update/release-notes?lang=zh|en` 返回文档站 Release Notes HTML。非法语言返回 `400 invalid_fields`；拉取失败返回 `502 release_notes_fetch_failed`。
 
 ## 前台指标和历史指标
@@ -130,20 +133,21 @@ SMART 温度历史只来自后端确认的物理盘。虚拟盘和 RAID 设备�
 
 `GET /api/metrics/history` 也支持 PSI 平均值指标：`pressure.cpu.some_avg10|avg60|avg300`、`pressure.memory.some_avg10|avg60|avg300`、`pressure.memory.full_avg10|avg60|avg300`、`pressure.io.some_avg10|avg60|avg300`、`pressure.io.full_avg10|avg60|avg300`。
 
+通知渠道列表包含投递健康、重试和阻塞计数。无法按当前 schema 解码的存量渠道以 `config=null` 返回，只能删除。MTProto 登录状态故障返回 `503 login_state_error`；并发 revision 变化返回 `409 channel_changed`。
+
 ## 流量统计
 
-- `GET /api/statistics/traffic/settings` 返回 `guest_access_mode`、`usage_mode`、`cycle_mode`、`billing_start_day`、`billing_anchor_date`、`billing_timezone` 和 `direction_mode`。
-- `PATCH /api/statistics/traffic/settings` 接受局部更新，未知值返回 `400 invalid_fields`。
+- `GET /api/statistics/traffic/settings` 返回 `guest_access_mode`、`usage_mode`、`direction_mode` 和固定的兼容账期形状。
+- `PATCH /api/statistics/traffic/settings` 只接受 `guest_access_mode`、`usage_mode` 和 `direction_mode`。提交账期字段返回 `400 billing_cycle_is_per_node`。
 - 允许值：
   - `guest_access_mode`: `disabled`、`by_node`
   - `usage_mode`: `lite`、`billing`
-  - `cycle_mode`: `calendar_month`、`whmcs_compatible`、`clamp_to_month_end`
   - `direction_mode`: `out`、`both`、`max`
-- 流量查询使用节点有效流量配置：节点 `traffic_cycle_mode=default` 时继承全局账期模式、月度起始日、账期锚点和账期时区；否则使用节点自己的 `traffic_*` 账期字段。节点 `traffic_direction_mode=default` 时继承全局统计方向；否则使用节点方向覆盖。
+- 流量查询使用节点显式保存的账期。只有 `traffic_direction_mode=default` 继承全局统计方向。
 - `GET /daily` 要求 `usage_mode=billing`，否则返回 `409 traffic_daily_requires_billing`。`period` 可选，允许 `current`、`previous`，省略时为 `current`。
-- `GET /monthly` 支持 `months` 和 `period`。`months` 最大 24；`period=current` 从本账期开始，`period=previous` 从上账期开始，省略时为 `current`。响应字段 `includes_current` 在 `period=current` 时为 `true`，在 `period=previous` 时为 `false`。
+- `GET /monthly` 支持 `months` 和 `period`。`months` 必须在 `1..24`；`period=current` 从本账期开始，`period=previous` 从上账期开始。
 - 流量 summary、daily、monthly 响应保留原始 `in_*` 和 `out_*` 字段，并通过 `selected_bytes`、`selected_p95_bytes_per_sec`、`selected_peak_bytes_per_sec` 及其方向字段暴露当前计费视图。
-- 客户端应使用 `coverage_ratio` 展示样本覆盖率和准确性提示。`partial` 仅为兼容保留，新的展示逻辑不应依赖该字段。
+- 客户端使用 `data_complete`、`coverage_ratio`、`gap_count` 和 `reset_count` 判断完整性。废弃字段 `partial` 已删除。
 - 只有 `p95_status` 为 `available` 时，P95 字段才不是 `null`。
 
 ## 非 API HTTP 路径
@@ -159,8 +163,6 @@ SMART 温度历史只来自后端确认的物理盘。虚拟盘和 RAID 设备�
 | `/deploy/*` | 打包携带的节点发布资产；需要 `X-Node-Secret` 或临时 `upgrade_token` |
 | `/` | SPA |
 
-## 兼容性规则
+## 兼容性边界
 
-- 既有路径、方法和字段语义保持稳定。
-- 新行为通过新端点或追加字段提供。
-- 需要废弃时先保留旧入口，再新增替代入口。
+0.3.0 的显式破坏性变化包括删除流量 `partial`、把账期所有权移到单节点，以及拒绝缺少格式 v1 manifest 的新更新包。迁移和旧输入别名只覆盖文档声明的过渡路径。

@@ -34,6 +34,15 @@ Local `GET` routes also accept `HEAD`. Other methods return `405` with `Allow: G
 - Optional fields without values are omitted.
 - Runtime disk structure and static disk structure have different meanings. See [Disk Metrics](./disk.md).
 
+Dash receive boundaries:
+
+- Bytes, capacities, counters, and uptime use non-negative signed 64-bit integers; process and connection counts use signed 32-bit integers.
+- Static interval uses signed 32-bit range; CPU topology counts use signed 16-bit range.
+- Out-of-range integers return `400 invalid_request`; negative values or invalid ratios/rates return `422 invalid_metrics` or `422 invalid_static_payload`.
+- Node version is limited to 64 characters; hostname and disk names to 255; disk ref to 320; disk kind/role and RAID health to 16; interface names to 64; filesystem type and logical health/level to 32.
+
+Concurrent Push requests use Dash receive order for the current projection. An older receive that finishes later writes history only and cannot overwrite current metrics, frontend cache, or alert evaluation.
+
 ## `NodeReport`
 
 Top-level object:

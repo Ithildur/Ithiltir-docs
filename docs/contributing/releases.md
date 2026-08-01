@@ -70,13 +70,22 @@ Ithiltir_dash_<os>_<arch>.zip
 
 Dash 发布包包含：
 
+- `release.env`。
 - `bin/dash`。
+- `configs/config.example.yaml`。
+- `dist/index.html` 和 `dist/theme-bootstrap.js`。
 - `install_dash_linux.sh`。
 - `update_dash_linux.sh`。
 - `deploy/<platform>/install.*`。
-- `deploy/<platform>/node_*` 和 Windows runner。
+- 5 个 Node 二进制和 2 个 Windows runner。
 
-发布包里的安装脚本负责准备常规运行依赖。`apt-get` 系统会尝试自动安装 PostgreSQL 16、TimescaleDB、Redis、更新脚本所需的 `git`/`tar`/下载工具，以及 Linux 节点 LVM 采集需要的 cron。
+发布格式 v1 的 `release.env` 包含 Dash 版本、Node 版本、目标 OS/arch 和 7 个 Node/runner 资产的 SHA-256。候选 `bin/dash` 必须报告与 manifest 一致的 Dash 和 Node 版本。
+
+发布包只包含 `configs/config.example.yaml`，不得包含 `config.local.yaml`、本机凭据或通知配置密钥。
+
+发布包里的安装脚本负责首次安装。`apt-get` 系统会尝试准备 PostgreSQL 16、匹配主版本的 TimescaleDB 和 Redis。后续版本变化由 `dash update` 负责，`update_dash_linux.sh` 只是兼容包装。
+
+发布工作流必须通过 Go 测试、前端 lint/typecheck/build、发布包构建和格式 v1 资产校验。缺少必需文件、空文件、版本不一致或摘要不匹配时不得发布。
 
 ## 发布说明
 

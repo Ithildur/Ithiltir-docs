@@ -42,6 +42,7 @@ Get-Service ithiltir-node
 | --- | --- | --- |
 | Metrics history, nodes, alerts, settings | PostgreSQL | Yes |
 | Dash config | `/opt/Ithiltir-dash/configs/config.local.yaml` | Yes |
+| Notification config key | `/opt/Ithiltir-dash/configs/notify-config.key` | Yes; store separately from PostgreSQL |
 | Dash install identity | `/opt/Ithiltir-dash/install_id` | Recommended |
 | Custom themes | `/opt/Ithiltir-dash/themes` | Yes |
 | Redis runtime state | Redis | Optional; usually not primary recovery data |

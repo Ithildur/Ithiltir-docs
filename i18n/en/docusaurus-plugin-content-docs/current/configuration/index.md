@@ -35,8 +35,8 @@ Changing startup config requires a Dash restart. After changing `app.public_url`
 Runtime settings are changed through the admin console or API:
 
 - System brand and guest access scope.
-- Traffic accounting mode, billing cycle, and direction.
-- Node-level billing overrides, P95 switch, labels, and groups.
+- Traffic accounting mode, global direction, and guest access.
+- Explicit per-node billing cycles, direction overrides, P95, labels, and groups.
 - Alert rules, mounts, and notification channels.
 - Theme upload and activation.
 

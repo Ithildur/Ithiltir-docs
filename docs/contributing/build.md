@@ -9,13 +9,17 @@ slug: /Developer/Build
 ## Dash 前端
 
 ```bash
-bash scripts/build_frontend.sh -o build/frontend/dist
+bash scripts/build_frontend.sh --version 0.0.0-dev -o build/frontend/dist
 ```
+
+构建成功要求 `dist/index.html` 和 `dist/theme-bootstrap.js` 存在且非空。
+
+`--version` 会把 Dash 版本写入前端，使已打开的页面在后端版本变化后重新加载匹配资源。发布打包使用解析出的 Dash 版本；默认开发值为 `0.0.0-dev`。
 
 PowerShell：
 
 ```powershell
-powershell -File scripts/build_frontend.ps1 -OutDir build/frontend/dist
+powershell -File scripts/build_frontend.ps1 -Version 0.0.0-dev -OutDir build/frontend/dist
 ```
 
 前端单独开发：
@@ -52,6 +56,8 @@ bash scripts/package.sh \
 | `--tar-gz` | 输出 tar.gz |
 
 Dash 主控端发布包当前主要面向 Linux amd64 和 Linux arm64。macOS 与 Windows 的 deploy 资产只用于节点。
+
+每个发布包写入格式 v1 `release.env`，记录 Dash/Node 版本、目标 OS/arch 和全部 Node/runner 资产 SHA-256。包内只复制 `configs/config.example.yaml`；本地 `config.local.yaml` 不进入产物。
 
 PowerShell：
 
@@ -110,6 +116,9 @@ build/
 go test ./...
 cd web && bun run lint
 cd web && bun run typecheck
+cd web && bun run build
 ```
+
+发布检查还必须构建目标发布包，并验证 manifest、7 个内置 Node/runner 资产、前端入口和安装/更新脚本均存在且非空。
 
 文档构建不要求先运行测试。代码变更涉及公共契约、状态机、错误路径、并发、序列化或历史 bug 区域时，应补充对应测试。

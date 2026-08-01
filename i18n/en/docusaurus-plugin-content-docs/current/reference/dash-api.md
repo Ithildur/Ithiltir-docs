@@ -25,7 +25,7 @@ Error format:
 | refresh cookie + `X-CSRF-Token` | `POST /api/auth/refresh`, `POST /api/auth/logout` |
 | `Authorization: Bearer <access_token>` | Admin APIs and optionally authenticated reads |
 | `X-Node-Secret` | Node reporting, node identity reads, and deploy asset downloads |
-| `upgrade_token` query | Temporary deploy asset download grant issued only for legacy agent upgrades |
+| `upgrade_token` query | Temporary deploy asset download grant issued only for legacy Node upgrades |
 
 ## Public and Optional Auth
 
@@ -91,9 +91,9 @@ Or:
 }
 ```
 
-`url` may include a short-lived `upgrade_token` so legacy agents can download the exact update asset without sending `X-Node-Secret`. Clients must use the returned URL unchanged.
+`url` may include a short-lived `upgrade_token` so legacy Nodes can download the exact update asset without sending `X-Node-Secret`. Clients must use the returned URL unchanged.
 
-Pending upgrade tasks are volatile and clear when the agent reports the exact target version or a higher SemVer precedence. Different build metadata at the same SemVer precedence is treated as a distinct node binary and can still be delivered.
+Pending upgrade tasks are volatile and clear when Node reports the exact target version or a higher SemVer precedence. Different build metadata at the same SemVer precedence is treated as a distinct Node binary and can still be delivered.
 
 ## Admin: Groups
 
@@ -105,7 +105,7 @@ Pending upgrade tasks are volatile and clear when the agent reports the exact ta
 | `PATCH` | `/api/admin/groups/{id}` | `{ "name": "...", "remark": "..." }` | `204` |
 | `DELETE` | `/api/admin/groups/{id}` | None | `204` |
 
-`name` is trimmed and cannot be empty.
+Group `name` is trimmed, contains 1–64 Unicode characters, and cannot contain control characters. `remark` is trimmed, limited to 255 Unicode characters, and cannot contain control characters.
 
 ## Admin: Nodes
 
@@ -129,7 +129,7 @@ Node patch fields:
   "name": "node-a",
   "is_guest_visible": true,
   "traffic_p95_enabled": true,
-  "traffic_cycle_mode": "default",
+  "traffic_cycle_mode": "calendar_month",
   "traffic_billing_start_day": 1,
   "traffic_billing_anchor_date": "",
   "traffic_billing_timezone": "Asia/Shanghai",
@@ -141,11 +141,13 @@ Node patch fields:
 }
 ```
 
-`tags` must be a string array. Empty and duplicate values are removed.
+Node names are trimmed, contain 1–64 Unicode characters, and cannot contain control characters. `tags` allows at most 32 items; each trimmed item is limited to 64 Unicode characters and cannot contain control characters. Empty and duplicate values are removed.
 
-An empty `secret` returns `400 invalid_secret`; a `secret` that already belongs to another node returns `409 duplicate_secret`.
+When reading stored tags, Dash logs a warning and drops invalid or excess items. Unparseable stored JSON becomes an empty tag list without dropping the node's other metrics from the frontend projection.
 
-Node billing cycle override fields are atomic. If any of `traffic_cycle_mode`, `traffic_billing_start_day`, `traffic_billing_anchor_date`, or `traffic_billing_timezone` is submitted, the request must also include `traffic_cycle_mode` and every field used by that mode, otherwise it returns `400 invalid_traffic_cycle_settings`. `traffic_cycle_mode` allows `default`, `calendar_month`, `whmcs_compatible`, and `clamp_to_month_end`.
+After trimming, `secret` must contain 8–128 Unicode characters. Invalid values return `400 invalid_secret`; a value owned by another node returns `409 duplicate_secret`.
+
+Node billing cycle fields are atomic. If any cycle field is submitted, the request must include `traffic_cycle_mode` and every field required by that mode. Stored modes are `calendar_month`, `whmcs_compatible`, and `clamp_to_month_end`. Legacy `default` is accepted only without other cycle fields and is stored as an explicit calendar month.
 
 `traffic_direction_mode` allows `default`, `out`, `both`, and `max`. `default` inherits the global direction mode; other values override that node.
 
@@ -153,7 +155,7 @@ Node billing cycle override fields are atomic. If any of `traffic_cycle_mode`, `
 
 `GET /api/admin/nodes/traffic/rebuild` returns the latest process-local rebuild task state. Before any task exists it returns `status=idle`; running responses include `server_id`, `running=true`, and `started_at`; finished responses may return `completed` or `failed` until replaced by the next task. This state is not durable across process restarts. Failed states expose stable `code` and `error` values, not internal error strings.
 
-`POST /api/admin/nodes/{id}/traffic/rebuild` starts a per-node traffic rebuild. It rewrites that node's 5-minute facts from retained `nic_metrics` within `database.traffic_retention_days`. Success returns `202` with the status body. Missing or deleted nodes return `404 not_found`; any running rebuild returns `409 traffic_rebuild_running`; unavailable rebuild tasks return `503 traffic_rebuild_unavailable`. The task invalidates overlapping monthly snapshots in the retained window when it starts and does not synchronously rewrite monthly snapshots.
+`POST /api/admin/nodes/{id}/traffic/rebuild` is Billing-only. It rewrites 5-minute facts in 6-hour chunks and invalidates overlapping snapshots. Lite mode returns `409 traffic_rebuild_requires_billing`; a running task returns `409 traffic_rebuild_running`; unavailable execution returns `503 traffic_rebuild_unavailable`. Switching to Lite lets the current chunk finish, then stops the job.
 
 `GET /api/admin/nodes/` field `version.supports_auto_update` shows whether the current node version meets the Dash admin console automatic update delivery requirement. The minimum version is `0.2.3`.
 
@@ -167,13 +169,15 @@ Node billing cycle override fields are atomic. If any of `traffic_cycle_mode`, `
 
 Fields are documented in [Traffic Accounting and Billing Cycles](../configuration/traffic.md).
 
+Only `guest_access_mode`, `usage_mode`, and `direction_mode` are writable. Sending a global billing-cycle field returns `400 billing_cycle_is_per_node`.
+
 ## Traffic Queries
 
 - `GET /api/statistics/traffic/daily` requires `usage_mode=billing`; otherwise it returns `409 traffic_daily_requires_billing`. `period` allows `current` or `previous`; omitted means `current`.
-- `GET /api/statistics/traffic/monthly` supports `months` and `period`. `months` is at most 24. `period=current` starts at the current billing cycle; `period=previous` starts at the previous cycle. Omitted means `current`. `includes_current` is `true` for `period=current` and `false` for `period=previous`.
-- Traffic queries use each node's effective traffic configuration. Nodes with `traffic_cycle_mode=default` inherit the global cycle; nodes with `traffic_direction_mode=default` inherit the global direction mode.
+- `GET /api/statistics/traffic/monthly` supports `months` in `1..24` and `period=current|previous`.
+- Traffic queries use each node's explicit billing cycle. Only `traffic_direction_mode=default` inherits the global direction.
 - Traffic summary, daily, and monthly responses keep raw `in_*` and `out_*` fields. The active accounting view is exposed through `selected_bytes`, `selected_p95_bytes_per_sec`, `selected_peak_bytes_per_sec`, and selected direction fields.
-- Clients should use `coverage_ratio` for sample coverage and accuracy hints. `partial` is retained only for compatibility.
+- Clients use `data_complete`, `coverage_ratio`, `gap_count`, and `reset_count`. The deprecated `partial` field has been removed.
 
 ## History Metrics
 
@@ -225,6 +229,8 @@ Disk temperature history is written only for backend-confirmed physical disks. V
 
 Alert record responses include `items`, `next_cursor`, and `has_more`. Each item includes node, rule, metric, status, first trigger time, last trigger time, close time, current value, effective threshold, and close reason.
 
+Channel reads include delivery health, retry/probe times, and pending/blocked counts. Invalid stored channels remain visible with `config=null` and can only be deleted. MTProto login-state failures return `503 login_state_error`; concurrent revision changes return `409 channel_changed`.
+
 ## Admin: System
 
 | Method | Path | Description |
@@ -243,6 +249,10 @@ Alert record responses include `items`, `next_cursor`, and `has_more`. Each item
 
 System settings include `history_guest_access_mode`, `dash_update_channel`, `dash_update_mode`, `logo_url`, `page_title`, and `topbar_text`. `PATCH` accepts partial updates. `PUT` is a full replacement.
 
+New `logo_url` values accept same-origin absolute paths, supported base64 image data URLs, or external HTTPS URLs. Stored external HTTP logos remain readable; a `PATCH` for other fields does not revalidate an omitted logo.
+
 `dash_update_channel` allows `release` or `prerelease`. `dash_update_mode` allows `manual`, `notify`, or `auto`.
 
-`GET /api/admin/system/dash-update/check` query `channel` allows `release` or `prerelease`. `POST /api/admin/system/dash-update/run` accepts `action`, `channel`, and `lang`. A started task returns `202`; an already running task returns `409` with the current status; unavailable updater state returns `503 dash_update_unavailable`.
+`GET /api/admin/system/dash-update/check` returns the target version and opaque `install_revision`. `POST /run` accepts `action=update|reinstall`, `channel`, `lang`, and the immutable plan fields from the check response. A stale plan finishes with `failure_code=install_changed` and never selects another target.
+
+Update jobs and transactions persist under `$DASH_HOME/runtime/dash-update`. `failure_code=recovery_required` requires root to run `dash update recover`.

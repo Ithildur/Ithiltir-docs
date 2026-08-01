@@ -16,7 +16,8 @@ export monitor_dash_pwd='<admin-password>'
 
 要求：
 
-- 可见 ASCII 字符。
+- 至少 8 个可见 ASCII 字符。
+- 不含空白字符。
 - 不写入 Git。
 - 不写入公开文档。
 - 不放进前端代码。
@@ -24,7 +25,7 @@ export monitor_dash_pwd='<admin-password>'
 
 ## JWT 签名密钥
 
-`auth.jwt_signing_key` 必须是高熵随机值：
+`auth.jwt_signing_key` 必须是至少 32 字节的高熵随机值，且不得有首尾空白：
 
 ```yaml
 auth:
@@ -66,6 +67,8 @@ app:
 
 每个节点使用独立 secret。多个节点不应复用同一个 secret。
 
+secret trim 后必须包含 8～128 个 Unicode 字符。
+
 节点请求只对 `/api/node/*` 使用：
 
 ```http
@@ -90,7 +93,7 @@ X-Node-Secret: <node-secret>
 - 限制防火墙。
 - 不把 Redis 当作唯一恢复数据源。
 
-`--no-redis` 是降级运行模式，不属于安全加固配置。启用后，会话和热点运行时状态会在进程重启后丢失。
+Redis 账号必须允许 `PING` 和 `INFO server`。`--no-redis` 不是安全加固配置；启用后，管理员会话和前台缓存改用进程内存并在重启后丢失。
 
 ## PostgreSQL
 
@@ -112,6 +115,15 @@ Dash 配置包含数据库密码和签名密钥：
 sudo chown root:root /opt/Ithiltir-dash/configs/config.local.yaml
 sudo chmod 600 /opt/Ithiltir-dash/configs/config.local.yaml
 ```
+
+通知配置密钥必须是普通文件且只允许所有者读取：
+
+```bash
+sudo chown root:root /opt/Ithiltir-dash/configs/notify-config.key
+sudo chmod 600 /opt/Ithiltir-dash/configs/notify-config.key
+```
+
+密钥与 PostgreSQL 备份分开保存，不得提交到仓库。数据库已有通知密文时，不得用新生成的密钥覆盖丢失文件。
 
 节点 `report.yaml` 包含 secret：
 
@@ -164,6 +176,8 @@ X-Webhook-Signature: sha256=<hmac>
 - `X-Alert-Dedupe-Key`
 - `X-Alert-Event-ID`
 - `X-Alert-Transition`
+
+Dash 最多跟随 5 次 Webhook 重定向。每跳保持初始主机；同协议保持端口；只允许 HTTP 升级到 HTTPS。POST 只跟随 `307` 和 `308`。
 
 ## 公开服务核对
 

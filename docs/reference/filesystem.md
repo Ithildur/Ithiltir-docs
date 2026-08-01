@@ -4,86 +4,100 @@ slug: /Reference/Filesystem
 
 # 文件系统布局
 
-## Dash 发布包
+## Dash
+
+受管安装使用不可变 release 和单一 `current` 软链接：
 
 ```text
 /opt/Ithiltir-dash/
-  bin/dash
+  .release-layout-v1
+  releases/
+    <version>/
+      release.env
+      bin/dash
+      configs/config.example.yaml
+      dist/
+      deploy/
+      install_dash_linux.sh
+      update_dash_linux.sh
+  current -> releases/<version>
+  bin/dash -> ../current/bin/dash
+  dist -> current/dist
+  deploy -> current/deploy
   configs/
     config.example.yaml
     config.local.yaml
-  dist/
-  deploy/
+    notify-config.key
+  runtime/
+    dash-update/
+  logs/
   themes/
   install_id
-  install_dash_linux.sh
-  update_dash_linux.sh
+  run_dash.sh
 ```
 
-## Dash systemd
+`configs`、`runtime`、`logs`、`themes` 和 `install_id` 是可变数据，不得写入 release。`notify-config.key` 是 32 字节二进制密钥，权限必须限制为所有者读取。
+
+systemd 服务：
 
 ```text
 /etc/systemd/system/dash.service
 ```
 
-关键设置：
+`WorkingDirectory` 和 `DASH_HOME` 指向稳定安装根目录 `/opt/Ithiltir-dash`，`ExecStart` 使用兼容入口 `/opt/Ithiltir-dash/bin/dash`。
 
-```text
-WorkingDirectory=/opt/Ithiltir-dash
-Environment="DASH_HOME=/opt/Ithiltir-dash"
-Environment="monitor_dash_pwd=..."
-ExecStart=/opt/Ithiltir-dash/bin/dash
-```
+更新状态位于 `$DASH_HOME/runtime/dash-update`。其中的 job、锁、事务和 `update.block` 由更新器管理，不得手工删除；使用 `dash update recover` 处理未完成事务。
 
-## Linux 节点
+## Linux Node
 
 ```text
 /var/lib/ithiltir-node/
   report.yaml
-  releases/
-    <version>/
-      ithiltir-node
+  releases/<version>/ithiltir-node
   current -> releases/<version>
 ```
 
-服务：
+systemd：
 
 ```text
 /etc/systemd/system/ithiltir-node.service
+/etc/systemd/system/ithiltir-node-smart-cache.service
+/etc/systemd/system/ithiltir-node-smart-cache.timer
+/etc/systemd/system/ithiltir-node-connections-cache.service
+/etc/systemd/system/ithiltir-node-connections-cache.timer
+/etc/systemd/system/ithiltir-node-thinpool-cache.service
+/etc/systemd/system/ithiltir-node-thinpool-cache.timer
 ```
 
-LVM thinpool：
+OpenRC：
 
 ```text
-/run/ithiltir-node/thinpool.json
-/opt/node/collect_thinpool.sh
-/etc/cron.d/ithiltir-node-thinpool
+/etc/init.d/ithiltir-node
+/opt/node/run_node_openrc.sh
+/etc/crontabs/root
 ```
 
-SMART 缓存：
+采集缓存：
 
 ```text
 /run/ithiltir-node/smart.json
-/usr/local/libexec/ithiltir-node/smart-cache
-/etc/systemd/system/ithiltir-node-smart-cache.service
-/etc/systemd/system/ithiltir-node-smart-cache.timer
+/run/ithiltir-node/connections.json
+/run/ithiltir-node/thinpool.json
 ```
 
-## macOS 节点
+## macOS Node
 
 ```text
 /var/lib/ithiltir-node/
   report.yaml
-  releases/
-    <version>/
-      ithiltir-node
+  releases/<version>/ithiltir-node
   current -> releases/<version>
 /Library/LaunchDaemons/com.ithiltir.node.plist
 /var/log/ithiltir-node.log
 /var/log/ithiltir-node.err
 ```
 
-## Windows 节点
+## Windows Node
 
 ```text
 %ProgramFiles%\Ithiltir-node\ithiltir-runner.exe
@@ -92,24 +106,15 @@ SMART 缓存：
 %ProgramData%\Ithiltir-node\staging\
 ```
 
-服务名：
+Windows 服务名为 `ithiltir-node`。
 
-```text
-ithiltir-node
-```
-
-## Node local page override
+## Node 本地页面覆盖
 
 ```text
 localpage/
   page.html
-  assets/
-    page.css
-    page.js
+  assets/page.css
+  assets/page.js
 ```
 
-环境变量：
-
-```text
-ITHILTIR_NODE_LOCAL_PAGE_DIR=/path/to/localpage
-```
+使用 `ITHILTIR_NODE_LOCAL_PAGE_DIR` 指定覆盖目录。

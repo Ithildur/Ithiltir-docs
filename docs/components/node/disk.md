@@ -149,11 +149,12 @@ SMART 数据来自 root 侧缓存文件。它是运行时状态，不属于静�
 - `power_on_hours`
 - `lifetime_used_percent`
 - `critical_warning`
+- `media_errors`
 - `failing_attrs[]`
 
 `devices[]` 为空时返回 `[]`。不可用的 SMART 值省略。
 
-`critical_warning` 是 NVMe 原始 critical warning bitset。`failing_attrs[]` 只包含当前失败的 ATA SMART 属性：
+`critical_warning` 是 NVMe 原始 critical warning bitset。`media_errors` 是 NVMe SMART media errors 累计值；告警文案使用 SMART UI 条目号 `0E`。`failing_attrs[]` 只包含当前失败的 ATA SMART 属性：
 
 - `id`
 - `name`

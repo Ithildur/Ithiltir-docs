@@ -23,6 +23,8 @@ install_node.ps1 <dash_ip> [dash_port] <secret> [interval_seconds] [extra args..
 
 如果省略端口，脚本按 Dash 渲染出的 scheme 推断：HTTPS 用 `443`，HTTP 用 `80`。
 
+脚本最多跟随 5 次 Node/runner 资产下载重定向。目标必须保持初始主机；同协议跳转保持有效端口；只允许 HTTP 升级到 HTTPS。通过检查后才向下一跳发送 `X-Node-Secret`。
+
 ## 安装结果
 
 | 路径 | 内容 |

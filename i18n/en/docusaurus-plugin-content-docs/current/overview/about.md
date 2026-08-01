@@ -25,7 +25,7 @@ Ithiltir is a self-hosted server monitoring system built from a single-instance 
 ## Deployment Model
 
 - Dash runs as a single instance and stores persistent state in PostgreSQL + TimescaleDB.
-- Redis stores sessions, hot snapshots, and alert runtime state.
+- Redis stores admin sessions and disposable frontend caches. Open alerts and notification outbox rows persist in PostgreSQL; pending/cooldown and MTProto login state are process-local.
 - Nodes usually use push mode to report to Dash; Dash does not need to connect back to nodes.
 - Production deployments should use an HTTPS domain and Nginx/Caddy reverse proxy. Long-term IP+HTTP exposure is not recommended.
 
@@ -34,7 +34,7 @@ Ithiltir does not currently provide multi-Dash coordination. Do not run multiple
 ## Requirements
 
 - PostgreSQL 16+ and TimescaleDB.
-- Redis. Small single-instance deployments can start with `--no-redis`, but sessions, hot snapshots, and alert runtime state will live in process memory and disappear after restart.
+- Redis 6.2.0+; 8.2.3+ recommended. With `--no-redis`, sessions and frontend caches use process memory and disappear after restart.
 - Go 1.26+ for source builds or packaging.
 - Bun 1.3.11 for frontend builds.
 

@@ -5,118 +5,70 @@ title: Install Linux Node
 
 # Install Linux Node
 
-The Linux node install script is served by Dash:
+Dash serves the installer at:
 
 ```text
 https://dash.example.com/deploy/linux/install.sh
 ```
 
-The script downloads Dash's bundled `node_linux_<arch>`, configures push reporting, and registers a systemd service. The node host does not need to download GitHub Release binaries separately.
+It supports amd64 and arm64 and downloads the bundled protected Node asset using `X-Node-Secret`.
 
-The script requires root/sudo, systemd, and `curl` or `wget`. When LVM/LVM-thin is detected, it installs and enables cron for thinpool collection; Debian/Ubuntu systems that use `apt-get` do not need cron installed manually first.
+## Runtime Modes
 
-The script attempts to install `smartmontools` and writes `ithiltir-node-smart-cache.service` and `ithiltir-node-smart-cache.timer`. If SMART setup fails or `smartctl` is unavailable, base node monitoring continues to run.
+| Mode | Scope | Result |
+| --- | --- | --- |
+| `systemd` | Running systemd | Node service and collector timers |
+| `openrc` | Alpine/OpenRC | `supervise-daemon`; other OpenRC distributions are best-effort |
+| `none` | Manual | Files and a launch command only |
+| `auto` | Detection | Fails if no supported manager exists |
 
-When `cc`, `gcc`, or `clang` is available, the script compiles a root-side connections cache helper and writes `ithiltir-node-connections-cache.service` and `ithiltir-node-connections-cache.timer`. Without a compiler, the node uses its built-in connection counting, which may miss connections inside container network namespaces.
+Alpine requires `bash`, `ca-certificates`, `curl`, and `coreutils`. All modes require `pgrep`.
 
-## Install Command
+## Command
 
 ```bash
 curl -fsSL https://dash.example.com/deploy/linux/install.sh -o install_node.sh
-sudo bash install_node.sh dash.example.com 443 '<node-secret>'
+sudo bash install_node.sh dash.example.com 443 '<node-secret>' \
+  --require-https --service-manager=systemd
 ```
-
-Full form:
 
 ```text
-sudo bash install_node.sh <dash_ip> [dash_port] <secret> [interval_seconds] [--net iface1,iface2] [--require-https]
+sudo bash install_node.sh <dash_ip> [dash_port] <secret> [interval_seconds] \
+  [--net iface1,iface2] [--require-https] \
+  [--service-manager=auto|systemd|openrc|none]
 ```
 
-If only `<dash_ip> <secret>` are provided, the port is inferred from the rendered `DOWNLOAD_SCHEME`: HTTPS uses `443`, HTTP uses `80`.
+The installer follows at most five asset redirects. They must keep the original host; same-scheme redirects keep the effective port; HTTP may upgrade to HTTPS, never downgrade. `X-Node-Secret` is sent only after the next hop passes validation.
 
-## Installed Files
+## Force-Install Semantics
 
-| Path | Content |
-| --- | --- |
-| `/var/lib/ithiltir-node/releases/<version>/ithiltir-node` | Current node binary |
-| `/var/lib/ithiltir-node/current` | Symlink to the current release |
-| `/var/lib/ithiltir-node/report.yaml` | Report target config |
-| `/etc/systemd/system/ithiltir-node.service` | systemd service |
-| `/run/ithiltir-node/thinpool.json` | LVM thinpool cache |
-| `/run/ithiltir-node/smart.json` | SMART cache |
-| `/run/ithiltir-node/connections.json` | TCP/UDP connections cache |
-| `/opt/node/collect_thinpool.sh` | LVM thinpool collector |
-| `/etc/cron.d/ithiltir-node-thinpool` | thinpool collection cron |
-| `/usr/local/libexec/ithiltir-node/smart-cache` | SMART cache helper |
-| `/etc/systemd/system/ithiltir-node-smart-cache.service` | SMART cache refresh service |
-| `/etc/systemd/system/ithiltir-node-smart-cache.timer` | SMART cache refresh timer |
-| `/usr/local/libexec/ithiltir-node/connections-cache` | TCP/UDP connections cache helper |
-| `/etc/systemd/system/ithiltir-node-connections-cache.service` | TCP/UDP connections cache refresh service |
-| `/etc/systemd/system/ithiltir-node-connections-cache.timer` | TCP/UDP connections cache refresh timer |
+Every run stages the candidate under `releases`, executes `--version`, stops existing managed services or matching manual processes, replaces the release/config/service/collectors, and atomically switches `current`. Reinstalling the same version replaces it. Node self-update owns version-upgrade rollback.
 
-The service runs as the `ithiltir` system user and uses `/var/lib/ithiltir-node` as its working directory.
-
-The `current` symlink and `releases/<version>` directories are also the Linux managed self-update boundary. Direct binaries outside that install layout do not process update manifests returned by Dash.
-
-## systemd Boundary
-
-The Linux service enables:
-
-- `NoNewPrivileges=true`
-- `PrivateTmp=true`
-- `ProtectSystem=strict`
-- `ProtectHome=true`
-- `ReadWritePaths=/var/lib/ithiltir-node`
-
-The node process should only write to its data directory.
-
-The SMART cache is refreshed by a root-side oneshot service. The node process only reads `/run/ithiltir-node/smart.json`; it does not execute `smartctl` as root.
-
-The connections cache is refreshed by a root-side oneshot service. The node process only reads `/run/ithiltir-node/connections.json`; it does not traverse other network namespaces as root.
-
-## LVM Thinpool
-
-When LVM / LVM-thin is detected, the install script enables thinpool cache collection:
-
-```bash
-cat /run/ithiltir-node/thinpool.json
+```text
+/var/lib/ithiltir-node/
+  report.yaml
+  releases/<version>/ithiltir-node
+  current -> releases/<version>
 ```
 
-If the system has no LVM, old cron entries and collector scripts are removed.
+The runtime user owns the data and release tree so the unprivileged updater can create and switch releases. Root-owned service and collector assets stay outside it.
 
-## SMART Cache
+## Collectors
 
-The SMART cache refreshes every 5 minutes by default:
+systemd schedules SMART every 5 minutes and, when available, a root network-namespace connections helper every 1 second. LVM detection enables a thinpool timer. Building the connections helper requires `cc`, `gcc`, or `clang`.
 
-```bash
-systemctl status ithiltir-node-smart-cache.timer
-cat /run/ithiltir-node/smart.json
-```
+Alpine/OpenRC uses BusyBox cron for SMART every 5 minutes and LVM every minute. It does not run the 1-second connections helper and uses Node's built-in count, which may omit container namespaces.
 
-The cache directory uses `0750 root:<node-group>`. The cache file uses `0640 root:<node-group>`. The default node group is `ithiltir`.
+Collector failures do not stop core CPU, memory, capacity, and network reporting.
 
-When `smartctl` is missing, permission is unavailable, or the cache is stale, the node reports structured `disk.smart.status`. CPU, memory, disk capacity, and network metrics continue to report.
-
-## TCP/UDP Connections Cache
-
-The connections cache refreshes every 10 seconds by default:
-
-```bash
-systemctl status ithiltir-node-connections-cache.timer
-cat /run/ithiltir-node/connections.json
-```
-
-The cache is used for full TCP/UDP connection counts across the host and container network namespaces. If the cache is missing or stale, or the helper cannot be compiled, the node falls back to its built-in connection counting and base monitoring continues.
-
-## Common Commands
+## Service
 
 ```bash
 systemctl status ithiltir-node.service
 journalctl -u ithiltir-node.service -f
-systemctl restart ithiltir-node.service
 ```
 
-Show report targets:
+OpenRC uses `rc-service ithiltir-node status`. Inspect report config with:
 
 ```bash
 /var/lib/ithiltir-node/current/ithiltir-node report list
