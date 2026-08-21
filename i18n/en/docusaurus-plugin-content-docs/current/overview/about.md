@@ -35,7 +35,7 @@ Ithiltir does not currently provide multi-Dash coordination. Do not run multiple
 
 - PostgreSQL 16+ and TimescaleDB.
 - Redis 6.2.0+; 8.2.3+ recommended. With `--no-redis`, sessions and frontend caches use process memory and disappear after restart.
-- Go 1.26.5+ for source builds or packaging.
+- Go 1.26.6+ for source builds or packaging.
 - Bun 1.3.11 for frontend builds.
 
 ## Start Here

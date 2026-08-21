@@ -14,7 +14,7 @@ Production uses a Linux release package. The installer is first-install-only; la
 - Redis 6.2.0+; 8.2.3+ recommended, or `--no-redis` for local trials.
 - Running systemd for service mode, or explicit `--service-manager=none`.
 
-Source builds also require Go 1.26.5+ and Bun 1.3.11.
+Source builds also require Go 1.26.6+ and Bun 1.3.11.
 
 ## Install
 

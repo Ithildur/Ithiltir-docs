@@ -9,6 +9,33 @@ Release Notes record version changes that affect deployment, upgrades, configura
 
 ## Dash
 
+### 0.3.1
+
+Release date: 2026-08-21
+
+GitHub Release: [Ithiltir 0.3.1](https://github.com/Ithildur/Ithiltir/releases/tag/0.3.1)
+
+#### Notifications and Interface
+
+- Telegram, email, and webhook channels can independently use the system language, Chinese, or English. System language resolves to backend `app.language` when a notification is enqueued; stored channels without the field continue to follow the system language.
+- Alerts, channel test messages, and Dash update notifications are rendered for each target channel. Changing the language affects only newly enqueued notifications; existing outbox jobs keep their original text and language.
+- Notification channel status switches and action controls are now aligned consistently.
+- After a Dash update reloads the document, the admin console returns to the system update tab and shows a localized success message when the update job completes.
+
+#### Installation and Maintenance
+
+- Fresh Linux installs pin missing database dependencies to PostgreSQL 16.15 and TimescaleDB 2.29.1. Existing compatible PostgreSQL 16+ and matching TimescaleDB installations are not replaced; installation stops when repositories cannot supply the pinned versions.
+- Database migrations now run through EiluneKit and fail on drift in application-owned schemas. Migration 12 restores the required `updated_at` triggers instead of silently accepting an incomplete schema.
+- Fresh databases schedule the first TimescaleDB background-policy run for its initial interval, preventing policy jobs from racing later migrations.
+- Frontend and Go dependencies were updated, the source-build baseline moved to Go 1.26.6, and identified standard-library and frontend dependency vulnerabilities were fixed.
+
+#### Compatibility
+
+- This release has no known breaking configuration changes. Omitting notification-channel `config.language` remains compatible; new and stored channels both treat it as `system`.
+- Managed installations run database migrations through `dash update`. Before replacing a binary manually, back up PostgreSQL and the notification configuration key, then run `dash migrate` before startup.
+
+Read [Upgrade](./installation/upgrade.md) before upgrading from `0.3.0`.
+
 ### 0.3.0
 
 Release date: 2026-08-01

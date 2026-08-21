@@ -8,6 +8,33 @@ Release Notes 记录影响部署、升级、配置、API 和运行行为的版�
 
 ## Dash
 
+### 0.3.1
+
+发布日期：2026-08-21
+
+GitHub Release：[Ithiltir 0.3.1](https://github.com/Ithildur/Ithiltir/releases/tag/0.3.1)
+
+#### 通知和界面
+
+- Telegram、Email 和 Webhook 渠道可以分别选择跟随系统、中文或英文。跟随系统会在通知入队时使用后端 `app.language`；存量渠道缺少语言字段时继续按跟随系统处理。
+- 告警、渠道测试消息和 Dash 更新通知都会按目标渠道语言生成。修改语言只影响之后入队的通知，已有 outbox 任务保留原文本和语言。
+- 通知渠道列表修正了状态开关和操作控件的对齐。
+- Dash 更新触发页面刷新后会恢复到系统更新页签，并在更新任务完成后显示对应语言的成功提示。
+
+#### 安装和维护
+
+- Linux 首次安装在缺少数据库依赖时锁定 PostgreSQL 16.15 和 TimescaleDB 2.29.1。已有兼容的 PostgreSQL 16+ 和匹配 TimescaleDB 不会被替换；仓库无法提供锁定版本时安装会停止。
+- 数据库迁移统一由 EiluneKit 执行，并对应用拥有的 schema 漂移直接失败。版本 12 迁移补齐 `updated_at` trigger，避免静默接受不完整 schema。
+- 新建数据库会把 TimescaleDB 后台策略的首次执行安排到首个调度周期，避免策略任务与后续迁移并发。
+- 更新前端和 Go 依赖，将源码构建基线提升到 Go 1.26.6，并修复已识别的标准库及前端依赖漏洞。
+
+#### 兼容性
+
+- 本版本没有已知破坏性配置变更。通知渠道的 `config.language` 省略时保持兼容；新建渠道和存量渠道均按 `system` 处理。
+- 受管安装使用 `dash update` 时会自动执行数据库迁移。手工替换二进制前应备份 PostgreSQL 和通知配置密钥，并在启动前执行 `dash migrate`。
+
+从 `0.3.0` 升级前应先阅读 [升级](./installation/upgrade.md)。
+
 ### 0.3.0
 
 发布日期：2026-08-01

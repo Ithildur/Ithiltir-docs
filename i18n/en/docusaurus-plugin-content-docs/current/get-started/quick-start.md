@@ -96,7 +96,7 @@ journalctl -u ithiltir-node -f
 
 Use the source path only for development and config validation. Prepare these yourself:
 
-- Go 1.26.5+.
+- Go 1.26.6+.
 - Bun 1.3.11.
 - PostgreSQL 16+ and TimescaleDB.
 - Redis, or `--no-redis` for local trials.

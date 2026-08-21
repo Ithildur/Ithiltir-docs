@@ -95,7 +95,7 @@ journalctl -u ithiltir-node -f
 
 源码路径适合开发和配置验证，需要准备：
 
-- Go 1.26.5+。
+- Go 1.26.6+。
 - Bun 1.3.11。
 - PostgreSQL 16+、TimescaleDB。
 - Redis，或本地试用时使用 `--no-redis`。

@@ -38,6 +38,20 @@ Dash 使用该 32 字节密钥和 AES-256-GCM 加密每个渠道的完整 JSON �
 
 存量配置无法按当前 schema 解码时，列表和详情仍返回该渠道，但 `config` 为 `null`。管理台允许删除该渠道，不允许编辑、启用、选择或测试。恢复方式是删除后重新创建。
 
+## 通知语言
+
+所有渠道类型都接受 `config.language`：
+
+| 值 | 行为 |
+| --- | --- |
+| `system` | 通知入队时使用后端 `app.language` |
+| `zh` | 使用中文 |
+| `en` | 使用英文 |
+
+新建渠道或存量渠道缺少该字段时按 `system` 处理。同类型渠道全量替换时，省略该字段会保留已有显式语言，以兼容旧客户端；改变渠道类型且省略该字段时恢复为 `system`。
+
+告警、渠道测试消息和 Dash 更新通知都使用渠道语言。标题和正文在写入 outbox 前完成渲染，因此修改语言只影响之后入队的通知；已有任务保留原文本和语言。
+
 ## Telegram Bot
 
 ```json
@@ -46,6 +60,7 @@ Dash 使用该 32 字节密钥和 AES-256-GCM 加密每个渠道的完整 JSON �
   "type": "telegram",
   "enabled": true,
   "config": {
+    "language": "system",
     "mode": "bot",
     "bot_token": "123:abc",
     "chat_id": "-100123456"
@@ -65,6 +80,7 @@ Telegram Bot 返回 `429` 时，Dash 会同时读取 HTTP `Retry-After` 和 Bot 
   "type": "telegram",
   "enabled": true,
   "config": {
+    "language": "system",
     "mode": "mtproto",
     "api_id": 123456,
     "api_hash": "hash",
@@ -93,6 +109,7 @@ MTProto 登录握手只保存在当前 Dash 进程中，重启后失效。登录
   "type": "email",
   "enabled": true,
   "config": {
+    "language": "system",
     "smtp_host": "smtp.example.com",
     "smtp_port": 465,
     "username": "user",
@@ -121,6 +138,7 @@ MTProto 登录握手只保存在当前 Dash 进程中，重启后失效。登录
   "type": "webhook",
   "enabled": true,
   "config": {
+    "language": "system",
     "url": "https://example.com/alert",
     "secret": "shared-secret"
   }

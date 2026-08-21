@@ -54,4 +54,4 @@ The Linux installer needs root/sudo, `pgrep`, and `curl` or `wget`. Alpine/OpenR
 
 ## Build Environment
 
-Source builds and custom packaging require Go 1.26.5+, Bun 1.3.11, Git, tar or zip, and GoReleaser for Node builds. The docs site requires Node.js 24 (`>=24 <25`).
+Source builds and custom packaging require Go 1.26.6+, Bun 1.3.11, Git, tar or zip, and GoReleaser for Node builds. The docs site requires Node.js 24 (`>=24 <25`).

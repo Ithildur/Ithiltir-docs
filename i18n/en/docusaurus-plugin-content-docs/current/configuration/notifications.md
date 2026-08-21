@@ -32,6 +32,20 @@ Migration does not physically erase historical plaintext from MVCC dead tuples, 
 
 If a stored channel cannot be decoded by the current schema, list and detail endpoints still return it with `config=null`. It can only be deleted and recreated; it cannot be edited, enabled, selected, or tested.
 
+## Notification Language
+
+Every channel type accepts `config.language`:
+
+| Value | Behavior |
+| --- | --- |
+| `system` | Uses backend `app.language` when the notification is enqueued |
+| `zh` | Uses Chinese |
+| `en` | Uses English |
+
+A new or stored channel without this field behaves as `system`. Omitting it during a same-type replacement preserves an existing explicit language for older clients; omitting it while changing the channel type resets it to `system`.
+
+Alerts, channel test messages, and Dash update notifications use the channel language. Titles and bodies are rendered before entering the outbox, so changing the language affects only newly enqueued notifications. Existing jobs retain their original text and language.
+
 ## Telegram Bot
 
 `mode` defaults to `bot`. `chat_id` may be a string or integer. `bot_token` and `chat_id` are each limited to 256 bytes.

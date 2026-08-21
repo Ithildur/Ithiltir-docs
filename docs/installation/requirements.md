@@ -77,7 +77,7 @@ Linux Node 脚本需要 root/sudo、`pgrep`、`curl` 或 `wget`。Alpine/OpenRC 
 
 只有 Dash 源码构建或自定义打包需要：
 
-- Go 1.26.5+
+- Go 1.26.6+
 - Bun 1.3.11
 - Git
 - tar 或 zip

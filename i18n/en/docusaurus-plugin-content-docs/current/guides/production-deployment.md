@@ -27,7 +27,7 @@ The release installer detects and prepares Dash-side runtime dependencies. Debia
 
 Source runs or custom packaging additionally need:
 
-- Go 1.26.5+.
+- Go 1.26.6+.
 - Bun 1.3.11.
 
 ## Dash Install
