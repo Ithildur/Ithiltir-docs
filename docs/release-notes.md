@@ -25,7 +25,6 @@ GitHub Release：[Ithiltir 0.3.1](https://github.com/Ithildur/Ithiltir/releases/
 
 - Linux 首次安装在缺少数据库依赖时锁定 PostgreSQL 16.15 和 TimescaleDB 2.29.1。已有兼容的 PostgreSQL 16+ 和匹配 TimescaleDB 不会被替换；仓库无法提供锁定版本时安装会停止。
 - 数据库迁移统一由 EiluneKit 执行，并对应用拥有的 schema 漂移直接失败。版本 12 迁移补齐 `updated_at` trigger，避免静默接受不完整 schema。
-- 新建数据库会把 TimescaleDB 后台策略的首次执行安排到首个调度周期，避免策略任务与后续迁移并发。
 - 更新前端和 Go 依赖，将源码构建基线提升到 Go 1.26.6，并修复已识别的标准库及前端依赖漏洞。
 
 #### 兼容性

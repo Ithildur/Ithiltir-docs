@@ -26,7 +26,6 @@ GitHub Release: [Ithiltir 0.3.1](https://github.com/Ithildur/Ithiltir/releases/t
 
 - Fresh Linux installs pin missing database dependencies to PostgreSQL 16.15 and TimescaleDB 2.29.1. Existing compatible PostgreSQL 16+ and matching TimescaleDB installations are not replaced; installation stops when repositories cannot supply the pinned versions.
 - Database migrations now run through EiluneKit and fail on drift in application-owned schemas. Migration 12 restores the required `updated_at` triggers instead of silently accepting an incomplete schema.
-- Fresh databases schedule the first TimescaleDB background-policy run for its initial interval, preventing policy jobs from racing later migrations.
 - Frontend and Go dependencies were updated, the source-build baseline moved to Go 1.26.6, and identified standard-library and frontend dependency vulnerabilities were fixed.
 
 #### Compatibility
