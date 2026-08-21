@@ -122,6 +122,20 @@ GitHub Release: [Ithiltir 0.2.6](https://github.com/Ithildur/Ithiltir/releases/t
 
 ## Node
 
+### 0.2.4
+
+Released: 2026-08-21
+
+GitHub Release: [Ithiltir-node 0.2.4](https://github.com/Ithildur/Ithiltir-node/releases/tag/0.2.4)
+
+#### Changes
+
+- Disk SMART reports add the optional `media_errors` field for the NVMe SMART media and data integrity error counter.
+
+#### Compatibility
+
+- Node omits `media_errors` when `smartctl` does not provide the value. The field is a backward-compatible JSON extension, so existing receivers can continue to ignore unknown fields.
+
 ### 0.2.3
 
 Released: 2026-06-17

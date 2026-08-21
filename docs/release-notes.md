@@ -121,6 +121,20 @@ GitHub Release：[Ithiltir 0.2.6](https://github.com/Ithildur/Ithiltir/releases/
 
 ## Node
 
+### 0.2.4
+
+发布日期：2026-08-21
+
+GitHub Release：[Ithiltir-node 0.2.4](https://github.com/Ithildur/Ithiltir-node/releases/tag/0.2.4)
+
+#### 变更
+
+- 磁盘 SMART 上报新增可选 `media_errors` 字段，用于携带 NVMe SMART 的媒体和数据完整性错误累计值。
+
+#### 兼容性
+
+- `smartctl` 未提供该值时，Node 会省略 `media_errors`。该字段是向后兼容的 JSON 扩展，现有接收端可以继续忽略未知字段。
+
 ### 0.2.3
 
 发布日期：2026-06-17
