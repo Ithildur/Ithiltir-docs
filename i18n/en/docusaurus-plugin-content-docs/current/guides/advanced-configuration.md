@@ -82,7 +82,7 @@ database:
   traffic_retention_days: 90
 ```
 
-When omitted, `traffic_retention_days` uses `max(retention_days, 45)`. Do not make traffic retention too short if P95 review is required.
+When omitted or set to `0`, `traffic_retention_days` uses `max(retention_days, 45)`. When P95 review is required, the retention period must cover the full review window.
 
 ## 4. Enable Guest Access
 

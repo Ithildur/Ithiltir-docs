@@ -23,6 +23,18 @@ Back up PostgreSQL, `configs/config.local.yaml`, `themes`, and `install_id`. Aft
 
 Migration temporarily decompresses retained disk-metric chunks and rebuilds disposable continuous aggregates. Leave additional temporary database space available; eligible chunks are recompressed after migration.
 
+The updater performs the upgrade in this order:
+
+1. Stop Dash.
+2. Run database migrations serially.
+3. Start the new version.
+
+The time-series migration backfills the latest 16 days of 15-minute aggregates, followed by the latest 31 days of one-hour aggregates. The required time depends on the existing data volume.
+
+Existing raw chunks are not repartitioned. The one-hour chunk interval applies only to data written after migration. The new raw retention policy is enabled only after backfill succeeds.
+
+The migration pauses the relevant TimescaleDB background jobs and waits for active jobs to finish. Operators do not need to pause TimescaleDB. Do not run another database migration command concurrently.
+
 For the first upgrade from the legacy flat layout, use the installed compatibility script:
 
 ```bash

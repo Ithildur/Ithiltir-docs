@@ -55,16 +55,19 @@ Ithiltir Dash 是单实例应用。根入口只启动一个 HTTP 进程，该进
 - 管理台更新控制器要求 Linux/systemd；手工 `dash update` 也支持显式 `--service-manager=none`。任务和事务写入 `$DASH_HOME/runtime/dash-update`，不写入 PostgreSQL。
 - 节点鉴权、待下发 Node 更新请求、告警 pending/cooldown、MTProto 登录握手和流量重建任务使用进程内内存，不走 Redis。
 - 开放告警事件会从 PostgreSQL 恢复；pending 和 cooldown 在重启后重置。
-- 流量 Usage/Facts 物化进度保存在 PostgreSQL；手工重建任务状态不持久化。
+- 流量用量累计和五分钟流量明细的处理进度保存在 PostgreSQL；手工重建任务状态不持久化。
 - SMART、thermal 和完整 RAID 详情属于运行时状态。SMART 缓存新鲜度、helper 可用性、设备健康结果、完整 thermal 传感器 payload 以及完整 RAID 阵列/成员 payload 保存在当前快照或热点缓存，不写入 PostgreSQL 历史指标行。确认是物理盘的 SMART 温度会归约写入 `disk_physical_metrics.temp_c`，用于按设备查询历史；虚拟盘和 RAID 设备会被忽略。同一套后端判定会生成 `disk.temperature_devices`，供前端进入硬盘温度历史。thermal 会归约写入 `cpu_temp_c` 作为主机历史；完整 thermal 详情拆成独立前台字段缓存，读取前台节点视图时再组合进 JSON。
 - TCP/UDP 连接数是持久化数值指标。systemd 下完整主机/netns 连接数来自 root 侧每秒缓存；OpenRC、缓存缺失或 helper 无法编译时，Node 使用自带统计，可能缺失容器连接数据。
 - Linux PSI pressure 指标是固定数值时序数据。PSI 的 `avg10`、`avg60`、`avg300` 和 `total` 会作为可空列保存到 `server_metrics` 和 `server_current_metrics`；缺失列表示不可用，不表示 0 压力。Dashboard 持久化会忽略采集原因/状态字符串。PSI 当前不接入告警评估。
 - 告警评估读取进程内最新上报快照或 PostgreSQL 当前投影，不读取前台 Redis 缓存。内置离线、RAID、SMART 健康失败和 NVMe 关键告警规则来自快照新鲜度和上报磁盘状态。
 - 告警服务启动后 1 分钟内不会新开告警事件。
 - 告警通知写入 PostgreSQL outbox，并由单进程 worker 投递，不使用运行时租约。首次加载通知目标失败且没有 last-good 快照时，状态转换延后重试；已有 last-good 快照时继续按该快照提交事件和 outbox。远端发送失败不回滚告警事件。
-- 数据库历史保留默认 `45 days`；普通监控用 `database.retention_days`，流量 5 分钟事实表用 `database.traffic_retention_days`。流量保留窗口同时约束自动清理和手工重建范围：`traffic_5m` 保持可写并通过滚动保留删除，历史 95 计费值保存在月度快照中。
-- Usage 和 Facts 使用独立的 PostgreSQL 进度。Usage 在 Lite 与 Billing 中维护月度累计；Facts 只在 Billing 中维护 5 分钟事实。从 Lite 切换到 Billing 时，Facts 从最近 30 分钟开始，更早数据只能在原始指标仍保留时按节点重建。
-- 历史 5 分钟事实由单个进程内任务按节点、每 6 小时分块重建。任务只在 Billing 模式运行；切换到 Lite 后完成当前分块并停止。重建状态不跨 Dash 重启。
+- 服务器、磁盘 I/O、磁盘容量和物理盘温度的原始采样使用 1 小时时间分块，并在 1 天后无损压缩。`database.metrics_raw_retention_days` 控制原始采样的保留期，默认值为 8 天。15 分钟聚合保留 16 天，1 小时聚合保留 32 天。
+- 历史曲线根据查询范围使用原始采样或聚合数据，并包含最新的实时采样。`server_online_30m` 仅统计已经结束的 30 分钟时段。
+- 网卡原始指标和服务检查继续由 `database.retention_days` 控制，默认保留 45 天。五分钟流量明细由 `database.traffic_retention_days` 控制。`traffic_5m` 保持可写，并通过滚动策略删除旧数据；历史 P95 计费值保存在月度快照中。
+- 用量累计和五分钟流量明细的处理进度分别保存在 PostgreSQL 中。用量累计在 `lite` 和 `billing` 模式下维护月度统计；五分钟流量明细仅在 `billing` 模式下生成。
+- 从 `lite` 切换到 `billing` 时，系统从切换前 30 分钟开始生成五分钟流量明细。更早的数据只能在网卡原始指标仍处于保留期内时按节点重建。
+- 历史五分钟流量明细由单个进程内任务按节点重建，每次处理 6 小时。任务仅在 `billing` 模式下运行；切换到 `lite` 后，任务完成当前时间段并停止。重建状态不会跨 Dash 重启保留。
 - 账期由每个节点显式持有。全局设置只提供统计方向默认值；节点 `traffic_direction_mode=default` 时继承该方向。账期变更会局部失效并修复该节点的月度派生数据，不阻塞其他节点。
 - 流量方向模式只改变选中的计费视图；原始入站和出站计数仍分开保存。
 - 历史指标默认不对游客公开。`history_guest_access_mode=by_node` 时，只对游客可见节点开放。

@@ -40,27 +40,31 @@ Only `traffic_direction_mode=default` inherits the global direction. `out`, `bot
 | Mode | Stored data |
 | --- | --- |
 | `lite` | Monthly per-interface inbound/outbound totals and estimated peaks |
-| `billing` | The same monthly usage plus 5-minute facts, daily output, P95, coverage, and snapshots |
+| `billing` | The same monthly usage plus five-minute traffic records, daily output, P95, coverage, and snapshots |
 
-Usage and Facts have independent PostgreSQL progress. Both advance in hourly chunks on a 5-minute schedule; Facts runs only in Billing mode.
+Monthly usage aggregation and five-minute traffic generation keep independent progress in PostgreSQL. Both run every five minutes and process one-hour ranges. Five-minute records are generated only in `billing` mode.
 
-Switching Lite to Billing starts Facts from the latest 30 minutes and does not automatically replay older Lite history. Older raw samples still inside retention can be recovered with a per-node rebuild. Switching Billing to Lite lets the current rebuild chunk finish, then stops further chunks.
+After a switch from `lite` to `billing`, Dash generates five-minute records starting 30 minutes before the switch. Earlier data is not generated automatically. Retained raw NIC samples can be processed through a per-node rebuild.
+
+After a switch from `billing` to `lite`, a running rebuild completes its current six-hour range and then stops.
 
 ## Billing-Cycle Changes
 
-A per-node cycle change immediately invalidates affected monthly derived rows and schedules a local repair from the earlier of the old and new current-cycle starts. Only that node pauses realtime Usage while repair catches up; other nodes continue.
+A per-node cycle change immediately invalidates the affected monthly data and schedules repair from the earlier of the old and new current-cycle starts. Only that node pauses real-time monthly aggregation during repair. Other nodes continue without interruption.
 
-Coverage is limited by retained raw data. Clients use `data_complete`, `coverage_ratio`, `gap_count`, and `reset_count`. The deprecated `partial` field has been removed.
+Coverage is limited by retained raw NIC data. Clients use `data_complete`, `coverage_ratio`, `gap_count`, and `reset_count`. The deprecated `partial` field has been removed.
 
 ## Manual Rebuild
 
-Per-node rebuild is Billing-only. It is a process-local singleton, rewrites 5-minute facts in 6-hour chunks, and invalidates overlapping snapshots. Dash restart resets its state to `idle`.
+Per-node rebuild is available only in `billing` mode. One rebuild can run in each Dash process. It rewrites five-minute traffic records in six-hour ranges and invalidates overlapping snapshots. A Dash restart resets the rebuild state to `idle`.
 
-Lite mode returns `409 traffic_rebuild_requires_billing`; a concurrent task returns `409 traffic_rebuild_running`.
+The rebuild range is the intersection of raw NIC retention in `database.retention_days` and `database.traffic_retention_days`.
+
+`lite` mode returns `409 traffic_rebuild_requires_billing`; a concurrent task returns `409 traffic_rebuild_running`.
 
 ## Queries
 
-- Daily traffic requires Billing and otherwise returns `409 traffic_daily_requires_billing`.
+- Daily traffic requires `billing` mode and otherwise returns `409 traffic_daily_requires_billing`.
 - Monthly `months` must be in `1..24`.
 - Responses keep raw `in_*` and `out_*` fields and expose selected-view fields.
 - P95 fields are non-null only when `p95_status=available`.

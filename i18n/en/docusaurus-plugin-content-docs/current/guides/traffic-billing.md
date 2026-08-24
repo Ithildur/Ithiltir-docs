@@ -5,7 +5,7 @@ title: Traffic Billing
 
 # Traffic Billing
 
-Use `lite` for monthly totals. Use `billing` for 5-minute facts, daily output, P95, coverage, and snapshots.
+Use `lite` for monthly totals. Use `billing` for five-minute traffic records, daily output, P95, coverage, and snapshots.
 
 ## Retention
 
@@ -15,7 +15,7 @@ database:
   traffic_retention_days: 90
 ```
 
-The rebuildable window is the intersection of relevant raw and traffic retention.
+The rebuildable window is the intersection of raw NIC retention and five-minute traffic retention.
 
 ## Per-Node Cycles
 
@@ -33,13 +33,15 @@ Legacy `traffic_cycle_mode=default` is only an input alias without other cycle f
 
 Global settings contain only guest access, usage mode, and default direction. Sending billing-cycle fields to global settings returns `400 billing_cycle_is_per_node`. Only `traffic_direction_mode=default` inherits globally.
 
-## Materialization
+## Background Aggregation
 
-Usage and Facts have independent PostgreSQL progress. Usage maintains monthly totals in both modes; Facts runs only in Billing. Both advance in hourly chunks on a 5-minute schedule.
+Monthly usage aggregation and five-minute traffic generation keep independent progress in PostgreSQL. Monthly totals are maintained in both modes. Five-minute records are generated only in `billing` mode. Both tasks run every five minutes and process one-hour ranges.
 
-Switching Lite to Billing starts Facts at the latest 30 minutes. Older retained raw data requires per-node rebuild. Switching to Lite lets a running rebuild finish its current 6-hour chunk, then stops it.
+After a switch from `lite` to `billing`, Dash generates five-minute records starting 30 minutes before the switch. Earlier retained raw NIC data requires a per-node rebuild.
 
-A node cycle change invalidates only that node's affected monthly derived rows and schedules local repair. Other nodes continue realtime materialization.
+After a switch to `lite`, a running rebuild completes its current six-hour range and then stops.
+
+A node cycle change invalidates only the affected monthly data for that node and schedules local repair. Other nodes continue real-time aggregation.
 
 ## Rebuild
 
@@ -47,13 +49,13 @@ A node cycle change invalidates only that node's affected monthly derived rows a
 POST /api/admin/nodes/{id}/traffic/rebuild
 ```
 
-Rebuild is Billing-only, process-local, and singleton per Dash process. It rewrites 5-minute facts in 6-hour chunks and invalidates overlapping snapshots. Dash restart resets status to `idle`.
+Rebuild is available only in `billing` mode. One rebuild can run in each Dash process. It rewrites five-minute traffic records in six-hour ranges and invalidates overlapping snapshots. A Dash restart resets its status to `idle`.
 
 ## Completeness and P95
 
 Clients use `data_complete`, `coverage_ratio`, `gap_count`, and `reset_count`. The deprecated `partial` field has been removed.
 
-P95 requires Billing, the per-node switch, and at least 20 valid samples. Numeric P95 is present only when `p95_status=available`.
+P95 requires `billing` mode, the per-node switch, and at least 20 valid samples. Numeric P95 is present only when `p95_status=available`.
 
 ## Guest Access
 

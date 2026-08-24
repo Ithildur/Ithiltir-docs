@@ -62,13 +62,19 @@ Alert evaluation reads the latest process-local report snapshot or the current P
 
 Alert notifications enter the PostgreSQL outbox and are delivered by one process-local worker without runtime leases. If the first target load fails without a last-good snapshot, the transition is delayed; with a last-good snapshot, the event and outbox commit against that snapshot. Remote delivery failure does not roll back the alert event.
 
-## Traffic State
+## State and Retention
 
-Durable history retention defaults to `45 days`. Regular monitoring uses `database.retention_days`; 5-minute traffic facts use `database.traffic_retention_days`. Traffic retention is both a cleanup boundary and a rebuild boundary: `traffic_5m` stays writable and old rows are removed by rolling retention, while historical 95th percentile billing values live in monthly snapshots.
+Server, disk I/O, disk usage, and physical-disk temperature samples use one-hour chunks and are compressed losslessly after one day. `database.metrics_raw_retention_days` controls their raw retention period and defaults to eight days. Fifteen-minute aggregates retain 16 days, and one-hour aggregates retain 32 days.
 
-Usage and Facts use independent PostgreSQL progress. Usage keeps monthly totals in Lite and Billing; Facts keeps 5-minute facts only in Billing. Switching Lite to Billing starts Facts at the latest 30 minutes; older retained raw data requires per-node rebuild.
+History ranges select raw samples or aggregates explicitly and include the latest samples. `server_online_30m` includes completed 30-minute periods only.
 
-Historical 5-minute facts use one process-local, Billing-only rebuild task. It rewrites each node in 6-hour chunks and invalidates overlapping snapshots. Switching to Lite finishes the current chunk and stops. Rebuild state resets on Dash restart.
+Raw NIC metrics and service checks remain controlled by `database.retention_days` (default 45 days), while five-minute traffic records use `database.traffic_retention_days`. Traffic retention is both a cleanup and rebuild boundary: `traffic_5m` stays writable and uses rolling retention, while historical 95th-percentile billing values remain in monthly snapshots.
+
+Monthly usage aggregation and five-minute traffic generation keep independent progress in PostgreSQL. Monthly totals are maintained in `lite` and `billing` modes. Five-minute records are generated only in `billing` mode.
+
+After a switch from `lite` to `billing`, Dash generates five-minute records starting 30 minutes before the switch. Earlier retained raw NIC data requires a per-node rebuild.
+
+Historical five-minute records use one process-local rebuild task that is available only in `billing` mode. It rewrites one node at a time in six-hour ranges and invalidates overlapping snapshots. Switching to `lite` completes the current range and then stops the task. Rebuild state resets on Dash restart.
 
 Every node stores an explicit billing cycle. Global settings provide only the default direction; `traffic_direction_mode=default` inherits it. A node cycle change invalidates and locally repairs only that node's derived monthly rows.
 

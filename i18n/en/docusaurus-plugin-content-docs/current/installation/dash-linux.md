@@ -58,10 +58,13 @@ Config, runtime, logs, themes, and `install_id` stay outside immutable releases.
 ## Required Boundaries
 
 - `app.public_url` is an HTTP(S) root URL; production should use an HTTPS domain.
+- `app.node_offline_threshold` defaults to `17s` on a fresh installation and must be positive. Version updates do not rewrite an explicitly configured value.
 - `monitor_dash_pwd` has at least 8 visible ASCII characters and no whitespace.
 - `auth.jwt_signing_key` has at least 32 bytes and no surrounding whitespace.
 - PostgreSQL is 16+ and TimescaleDB matches its major version.
 - Redis is 6.2.0+ and the ACL user permits `PING` and `INFO server`.
+
+Fresh installations write `database.metrics_raw_retention_days: 8`. The installer retention choice sets only `database.retention_days`, which controls raw NIC metrics and service checks.
 
 Migration creates `configs/notify-config.key`; back it up separately from PostgreSQL.
 

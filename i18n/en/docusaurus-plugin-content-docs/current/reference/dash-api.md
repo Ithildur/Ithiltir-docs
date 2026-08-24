@@ -191,9 +191,9 @@ Only `guest_access_mode`, `usage_mode`, and `direction_mode` are writable. Sendi
 | Metric | Source | Device parameter |
 | --- | --- | --- |
 | `cpu.temp_c` | Maximum CPU thermal sensor temperature | Not required |
-| `disk.temp_c` | SMART physical disk temperature history | Required `device` |
+| `disk.temp_c` | SMART physical disk temperature history | Optional; omitting it aggregates physical-disk rows |
 
-For `disk.temp_c`, `device` can match physical disk `name`, `ref`, or `path`. Temperature history does not use a rollup prefix.
+For `disk.temp_c`, `device` can match physical disk `name`, `ref`, or `path`.
 
 Disk temperature history is written only for backend-confirmed physical disks. Virtual disks and RAID devices are not persisted as `disk.temp_c`.
 
@@ -204,6 +204,17 @@ Disk temperature history is written only for backend-confirmed physical disks. V
 - `pressure.memory.full_avg10`, `pressure.memory.full_avg60`, `pressure.memory.full_avg300`
 - `pressure.io.some_avg10`, `pressure.io.some_avg60`, `pressure.io.some_avg300`
 - `pressure.io.full_avg10`, `pressure.io.full_avg60`, `pressure.io.full_avg300`
+
+History ranges select a fixed data source while HTTP parameters, response fields, point counts, and ordering remain unchanged:
+
+| `range` | Source | Point interval |
+| --- | --- | --- |
+| `30m`, `1h`, `12h`, `24h` | Raw samples | 3 seconds, 6 seconds, 60 seconds, 120 seconds |
+| `1w` | 15-minute aggregate | 15 minutes |
+| `15d` | Weighted re-aggregation of 15-minute data | 30 minutes |
+| `30d` | One-hour aggregate | One hour |
+
+Temperature and exposed PSI averages use the same aggregate model as other regular metrics. Aggregate queries include the latest raw samples. Exact sample points remain available during the configured raw retention period, which defaults to eight days. Fifteen-minute and one-hour aggregate results remain available for 16 and 32 days, respectively.
 
 ## Admin: Alerts
 

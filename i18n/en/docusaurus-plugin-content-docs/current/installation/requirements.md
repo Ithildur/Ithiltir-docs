@@ -37,7 +37,8 @@ Redis stores admin sessions and disposable frontend caches. With `--no-redis`, t
 
 ## Retention
 
-- Normal metrics default to `45 days`.
+- Regular metric raw samples default to 8 days; 15-minute aggregates retain 16 days, and one-hour aggregates retain 32 days.
+- Raw NIC metrics and service checks default to 45 days.
 - Traffic 5-minute facts default to `max(database.retention_days, 45)`.
 
 For 95th-percentile billing review, set `database.traffic_retention_days` to `90` or higher.

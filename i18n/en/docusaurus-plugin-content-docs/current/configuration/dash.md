@@ -58,11 +58,15 @@ export monitor_dash_pwd='<admin-password>'
 | `language` | `zh` | Chinese or English aliases normalize to `zh` or `en` |
 | `log_level` | `info` | `debug`, `info`, `warn`, or `error` |
 | `log_format` | `text` | `text` or `json` |
-| `node_offline_threshold` | `14s` | Positive Go duration |
+| `node_offline_threshold` | `17s` | Positive duration, such as `17s` or `2m` |
 
 `public_url` may omit its scheme. Bare IP addresses default to HTTP; bare DNS names default to HTTPS. Hosts must be IP literals or ASCII DNS names, ports must be in `1..65535`, and internationalized domains must use IDNA/punycode.
 
-Production should use an HTTPS domain behind Nginx or Caddy. Explicit invalid timezone or non-positive duration values stop config loading and do not fall back to defaults.
+Production deployments should use an HTTPS domain behind Nginx or Caddy.
+
+When `app.node_offline_threshold` is omitted, Dash uses `17s`. The Linux installer writes this value on a fresh installation. Version updates do not rewrite an existing value.
+
+An invalid timezone or non-positive duration stops configuration loading. Dash does not replace an invalid explicit value with its default.
 
 ## `http`
 
@@ -79,10 +83,11 @@ It controls authentication source handling and failed-login rate limiting. For a
 | `max_open_conns` | Maximum open connections |
 | `max_idle_conns` | Maximum idle connections |
 | `conn_max_lifetime` | Go duration; empty or `0` disables age-based retirement |
-| `retention_days` | Normal metric retention; omitted or `0` uses `45` |
-| `traffic_retention_days` | 5-minute traffic fact retention; defaults to `max(retention_days, 45)` |
+| `metrics_raw_retention_days` | Raw sample retention for server, disk I/O, disk usage, and physical-disk temperature metrics; omitted or `0` uses `8`, minimum `2` |
+| `retention_days` | Raw NIC metric and service-check retention; omitted or `0` uses `45` |
+| `traffic_retention_days` | Five-minute traffic record retention; omitted or `0` uses `max(retention_days, 45)` |
 
-Pool values must be non-negative. A positive `max_open_conns` must be at least `max_idle_conns`. Negative or invalid connection lifetimes and negative retention values fail validation.
+Pool values must be non-negative. A positive `max_open_conns` must be at least `max_idle_conns`. Negative or invalid connection lifetimes and negative retention values fail validation; an explicit `metrics_raw_retention_days` must be at least `2`.
 
 ## `redis`
 

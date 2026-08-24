@@ -81,7 +81,7 @@ database:
   traffic_retention_days: 90
 ```
 
-`traffic_retention_days` 省略时使用 `max(retention_days, 45)`。需要 P95 复核时，保留窗口应覆盖完整复核周期。
+`traffic_retention_days` 省略或设置为 `0` 时使用 `max(retention_days, 45)`。需要 P95 复核时，保留窗口应覆盖完整复核周期。
 
 ## 4. 打开游客访问
 

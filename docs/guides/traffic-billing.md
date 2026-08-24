@@ -4,14 +4,14 @@ slug: /Guides/TrafficBilling
 
 # 流量计费配置
 
-`lite` 保存月度累计；`billing` 额外保存 5 分钟事实并提供日统计、P95、覆盖率和月度快照。
+`lite` 保存月度累计；`billing` 额外保存五分钟流量明细，并提供日统计、P95、覆盖率和月度快照。
 
 ## 模式与保留期
 
 | 模式 | 持久化数据 | 适用范围 |
 | --- | --- | --- |
 | `lite` | 每网卡月度入站/出站总量、估算峰值 | 月度总量展示 |
-| `billing` | 月度累计、5 分钟事实、日统计、P95 和快照 | 计费与复核 |
+| `billing` | 月度累计、五分钟流量明细、日统计、P95 和快照 | 计费与复核 |
 
 计费环境应使用：
 
@@ -19,7 +19,7 @@ slug: /Guides/TrafficBilling
 usage_mode = billing
 ```
 
-原始指标和 5 分钟事实的可重建范围受保留期限制：
+网卡原始指标和五分钟流量明细的可重建范围受保留期限制：
 
 ```yaml
 database:
@@ -81,24 +81,24 @@ traffic_billing_timezone = Asia/Hong_Kong
 
 全局 `direction_mode` 允许 `out`、`both` 和 `max`。节点 `traffic_direction_mode=default` 继承该值；节点也可以显式覆盖。账期没有全局继承。
 
-## 物化与模式切换
+## 后台汇总与模式切换
 
-Usage 和 Facts 使用独立的 PostgreSQL 进度：
+用量累计和五分钟流量明细的处理进度分别保存在 PostgreSQL 中：
 
-- Usage 在 `lite` 和 `billing` 中都维护月度累计。
-- Facts 只在 `billing` 中维护 5 分钟事实。
+- 用量累计在 `lite` 和 `billing` 模式下维护月度累计。
+- 五分钟流量明细仅在 `billing` 模式下生成。
 - 两者按小时分块追赶，后台调度周期为 5 分钟。
 - 月度快照每小时生成，最多查询 24 个月。
 
-从 Lite 切换到 Billing 时，Facts 从最近 30 分钟开始恢复，不会自动追赶 Lite 期间更早的数据。更早数据仍在原始指标保留期内时，可按节点执行重建。
+从 `lite` 切换到 `billing` 时，系统从切换前 30 分钟开始生成五分钟流量明细。更早的数据不会自动补算；仍在网卡原始指标保留期内的数据可按节点重建。
 
-从 Billing 切换到 Lite 不等待正在运行的重建。当前 6 小时分块完成后，任务停止并返回 `traffic_rebuild_requires_billing`。
+从 `billing` 切换到 `lite` 时，不等待正在运行的重建。当前 6 小时分块完成后，任务停止并返回 `traffic_rebuild_requires_billing`。
 
 ## 节点账期变更
 
-修改节点账期后，Dash 会使该节点受影响的月度累计和快照失效，并从新旧当前账期较早的起点局部修复。修复期间只暂停该节点的实时 Usage 更新，其他节点继续物化。
+修改节点账期后，Dash 会使该节点受影响的月度累计和快照失效，并从新旧当前账期中较早的起点开始修复。修复期间只暂停该节点的实时用量累计，其他节点继续生成派生数据。
 
-原始数据不足时不会补造样本。客户端应根据以下字段显示完整性：
+网卡原始指标不足时不会补造样本。客户端应根据以下字段显示完整性：
 
 - `data_complete`
 - `coverage_ratio`
@@ -115,12 +115,12 @@ Usage 和 Facts 使用独立的 PostgreSQL 进度：
 POST /api/admin/nodes/{id}/traffic/rebuild
 ```
 
-每个 Dash 进程同时只运行一个重建任务。任务按 6 小时分块重写该节点的 5 分钟事实，并使重叠月度快照失效。任务状态只在进程内保存；Dash 重启后状态恢复为 `idle`。
+每个 Dash 进程同时只运行一个重建任务。任务按 6 小时时间段重写该节点的五分钟流量明细，并使重叠的月度快照失效。任务状态只在进程内保存；Dash 重启后状态恢复为 `idle`。
 
 | 结果 | 含义 |
 | --- | --- |
 | `202` | 已启动 |
-| `409 traffic_rebuild_requires_billing` | 当前不是 Billing 模式 |
+| `409 traffic_rebuild_requires_billing` | 当前不是 `billing` 模式 |
 | `409 traffic_rebuild_running` | 已有重建任务 |
 | `503 traffic_rebuild_unavailable` | 重建执行器不可用 |
 
@@ -132,7 +132,7 @@ P95 只在 `billing` 模式并对节点启用时计算。至少需要 20 个有�
 | --- | --- |
 | `available` | P95 可用 |
 | `disabled` | 节点或系统未启用 P95 |
-| `lite_mode` | 当前是 Lite 模式 |
+| `lite_mode` | 当前是 `lite` 模式 |
 | `insufficient_samples` | 有效样本不足 |
 | `snapshot_without_p95` | 旧快照没有 P95 数据 |
 

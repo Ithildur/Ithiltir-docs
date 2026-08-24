@@ -43,6 +43,7 @@ A present environment variable overrides YAML even when its value is empty.
 | `DB_MAX_OPEN_CONNS` | `database.max_open_conns` |
 | `DB_MAX_IDLE_CONNS` | `database.max_idle_conns` |
 | `DB_CONN_MAX_LIFETIME` | `database.conn_max_lifetime` |
+| `DB_METRICS_RAW_RETENTION_DAYS` | `database.metrics_raw_retention_days` |
 | `DB_RETENTION_DAYS` | `database.retention_days` |
 | `DB_TRAFFIC_RETENTION_DAYS` | `database.traffic_retention_days` |
 

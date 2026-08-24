@@ -2,34 +2,44 @@
 slug: /ReleaseNotes
 ---
 
-# Release Notes
+# 版本说明
 
-Release Notes 记录影响部署、升级、配置、API 和运行行为的版本变化。
+本页记录影响部署、升级、配置、API 和运行行为的版本变化。
 
 ## Dash
 
 ### 0.3.1
 
-发布日期：2026-08-21
+发布日期：2026-08-24
 
-GitHub Release：[Ithiltir 0.3.1](https://github.com/Ithildur/Ithiltir/releases/tag/0.3.1)
+GitHub 发布页：[Ithiltir 0.3.1](https://github.com/Ithildur/Ithiltir/releases/tag/0.3.1)
 
 #### 通知和界面
 
-- Telegram、Email 和 Webhook 渠道可以分别选择跟随系统、中文或英文。跟随系统会在通知入队时使用后端 `app.language`；存量渠道缺少语言字段时继续按跟随系统处理。
-- 告警、渠道测试消息和 Dash 更新通知都会按目标渠道语言生成。修改语言只影响之后入队的通知，已有 outbox 任务保留原文本和语言。
+- Telegram、电子邮件和 Webhook 渠道可以分别选择跟随系统、中文或英文。选择跟随系统时使用后端 `app.language`；已有渠道缺少语言字段时也按跟随系统处理。
+- 告警、渠道测试消息和 Dash 更新通知会按目标渠道语言生成。修改语言只影响之后创建的待发送通知；已有待发送任务保留原有内容和语言。
 - 通知渠道列表修正了状态开关和操作控件的对齐。
 - Dash 更新触发页面刷新后会恢复到系统更新页签，并在更新任务完成后显示对应语言的成功提示。
 
 #### 安装和维护
 
 - Linux 首次安装在缺少数据库依赖时锁定 PostgreSQL 16.15 和 TimescaleDB 2.29.1。已有兼容的 PostgreSQL 16+ 和匹配 TimescaleDB 不会被替换；仓库无法提供锁定版本时安装会停止。
-- 数据库迁移统一由 EiluneKit 执行，并对应用拥有的 schema 漂移直接失败。版本 12 迁移补齐 `updated_at` trigger，避免静默接受不完整 schema。
+- 新装和省略 `app.node_offline_threshold` 的配置默认使用 `17s`；版本更新不会改写已有的显式值。
+- 数据库迁移统一由 EiluneKit 执行。应用管理的数据库结构与预期不一致时，迁移会失败。`0012` 迁移会补齐 `updated_at` 触发器。
 - 更新前端和 Go 依赖，将源码构建基线提升到 Go 1.26.6，并修复已识别的标准库及前端依赖漏洞。
+
+#### 历史指标与存储
+
+- 常规指标使用 1 小时时间分块，并在 1 天后无损压缩。新增的 `database.metrics_raw_retention_days` 默认保留最近 8 天的原始采样；15 分钟聚合保留 16 天，1 小时聚合保留 32 天。
+- 历史查询根据查询范围使用原始采样、15 分钟聚合或 1 小时聚合。CPU 温度、物理盘温度和公开的压力停顿信息（PSI）指标采用相同的聚合模型。15 天平均值按样本数加权，查询包含最新的实时采样。
+- 流量统计继续使用原有数据模型和保留策略，包括网卡原始指标、五分钟流量明细、`lite`/`billing` 模式、P95、月度快照和重建接口。
+- `0013` 迁移会在 Dash 停止期间串行重建并回填连续聚合。新的原始采样保留策略仅在回填成功后启用。
 
 #### 兼容性
 
-- 本版本没有已知破坏性配置变更。通知渠道的 `config.language` 省略时保持兼容；新建渠道和存量渠道均按 `system` 处理。
+- 配置格式保持向后兼容。通知渠道省略 `config.language` 时使用 `system`。
+- `database.retention_days` 从本版本起只控制网卡原始指标和服务检查。
+- `database.metrics_raw_retention_days` 省略时使用默认值 8 天。需要延长常规指标原始采样保留期时，必须显式设置该字段。
 - 受管安装使用 `dash update` 时会自动执行数据库迁移。手工替换二进制前应备份 PostgreSQL 和通知配置密钥，并在启动前执行 `dash migrate`。
 
 从 `0.3.0` 升级前应先阅读 [升级](./installation/upgrade.md)。
@@ -38,7 +48,7 @@ GitHub Release：[Ithiltir 0.3.1](https://github.com/Ithildur/Ithiltir/releases/
 
 发布日期：2026-08-01
 
-GitHub Release：[Ithiltir 0.3.0](https://github.com/Ithildur/Ithiltir/releases/tag/0.3.0)
+GitHub 发布页：[Ithiltir 0.3.0](https://github.com/Ithildur/Ithiltir/releases/tag/0.3.0)
 
 #### 升级和运行状态
 
@@ -70,8 +80,8 @@ GitHub Release：[Ithiltir 0.3.0](https://github.com/Ithildur/Ithiltir/releases/
 
 - 账期改为每个节点显式持有。升级会把原来继承全局账期的节点固化为迁移前的有效账期；新节点默认使用从 1 号开始的自然月。
 - 全局流量设置不再接受账期字段。旧输入 `traffic_cycle_mode=default` 仅作为兼容别名，写入时规范化为显式自然月。
-- 流量物化拆分为独立的 Usage 和 Facts 进度。Lite 切换为 Billing 时从最近 30 分钟开始恢复 Facts；更早且仍在原始指标保留期内的数据需要按节点手工重建。
-- 节点流量重建只在 Billing 模式可用。运行中切换到 Lite 时，当前分块完成后停止。
+- 流量用量累计和五分钟流量明细使用独立的处理进度。从 `lite` 切换为 `billing` 时，系统从切换前 30 分钟开始生成五分钟流量明细；更早且仍在网卡原始指标保留期内的数据需要按节点手工重建。
+- 节点流量重建仅在 `billing` 模式下可用。运行期间切换到 `lite` 时，任务完成当前分块后停止。
 - 流量响应删除废弃字段 `partial`。`GET /api/statistics/traffic/monthly` 的 `months` 只接受 `1..24`。
 - 节点名、secret、标签、分组名和备注增加明确长度及控制字符限制。节点上报的整数范围、比率、速率和写入定长列的文本会在数据库写入前校验，非法 payload 返回稳定的 `400` 或 `422`。
 
@@ -91,7 +101,7 @@ GitHub Release：[Ithiltir 0.3.0](https://github.com/Ithildur/Ithiltir/releases/
 
 发布日期：2026-07-01
 
-GitHub Release：[Ithiltir 0.2.7](https://github.com/Ithildur/Ithiltir/releases/tag/0.2.7)
+GitHub 发布页：[Ithiltir 0.2.7](https://github.com/Ithildur/Ithiltir/releases/tag/0.2.7)
 
 #### 变更
 
@@ -121,7 +131,7 @@ GitHub Release：[Ithiltir 0.2.7](https://github.com/Ithildur/Ithiltir/releases/
 
 发布日期：2026-06-17
 
-GitHub Release：[Ithiltir 0.2.6](https://github.com/Ithildur/Ithiltir/releases/tag/0.2.6)
+GitHub 发布页：[Ithiltir 0.2.6](https://github.com/Ithildur/Ithiltir/releases/tag/0.2.6)
 
 #### 变更
 
@@ -151,7 +161,7 @@ GitHub Release：[Ithiltir 0.2.6](https://github.com/Ithildur/Ithiltir/releases/
 
 发布日期：2026-08-21
 
-GitHub Release：[Ithiltir-node 0.2.4](https://github.com/Ithildur/Ithiltir-node/releases/tag/0.2.4)
+GitHub 发布页：[Ithiltir-node 0.2.4](https://github.com/Ithildur/Ithiltir-node/releases/tag/0.2.4)
 
 #### 变更
 
@@ -165,7 +175,7 @@ GitHub Release：[Ithiltir-node 0.2.4](https://github.com/Ithildur/Ithiltir-node
 
 发布日期：2026-06-17
 
-GitHub Release：[Ithiltir-node 0.2.3](https://github.com/Ithildur/Ithiltir-node/releases/tag/0.2.3)
+GitHub 发布页：[Ithiltir-node 0.2.3](https://github.com/Ithildur/Ithiltir-node/releases/tag/0.2.3)
 
 #### 变更
 

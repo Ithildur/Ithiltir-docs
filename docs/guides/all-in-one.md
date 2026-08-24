@@ -162,7 +162,7 @@ database:
   traffic_retention_days: 90
 ```
 
-流量 `billing` 模式会写入更多 5 分钟事实和汇总数据。磁盘空间不足时，先调整保留天数；TimescaleDB chunk 由保留策略维护。
+流量 `billing` 模式会写入更多五分钟流量明细和汇总数据。磁盘空间不足时，应先调整保留天数。TimescaleDB 时间分块由保留策略维护。
 
 ## 最小备份
 

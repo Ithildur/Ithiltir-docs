@@ -77,13 +77,17 @@ systemd 模式还会写入 `/etc/systemd/system/dash.service`。配置和敏感�
 | --- | --- |
 | `app.listen` | Dash 监听地址，例如 `:8080` |
 | `app.public_url` | 根路径 HTTP(S) URL；生产环境应使用 HTTPS 域名 |
-| `app.node_offline_threshold` | 必须大于 0 |
+| `app.node_offline_threshold` | 首次安装默认 `17s`；必须大于 0 |
 | `database.*` | PostgreSQL 16+ 和匹配主版本的 TimescaleDB |
 | `redis.*` | Redis 6.2.0+；账号必须允许 `PING` 和 `INFO server` |
 | `monitor_dash_pwd` | 至少 8 个可见 ASCII 字符，不得包含空白 |
 | `auth.jwt_signing_key` | 至少 32 字节，不得有首尾空白 |
 
 安装器在执行 `dash migrate` 后启动服务。迁移会生成 `$DASH_HOME/configs/notify-config.key`；该文件必须与 PostgreSQL 备份分开保存。
+
+版本更新不会改写已有的 `app.node_offline_threshold` 显式配置值。
+
+首次安装会写入 `database.metrics_raw_retention_days: 8`。安装流程中的保留时长选项只设置 `database.retention_days`，用于控制网卡原始指标和服务检查的保留期。
 
 ## 服务管理
 

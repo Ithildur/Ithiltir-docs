@@ -58,18 +58,20 @@ export monitor_dash_pwd='<admin-password>'
 | `dash_ip` | 无 | 安装脚本中保留的地址字段 |
 | `listen` | 必填 | HTTP 监听地址 |
 | `grpc_port` | 当前不作为公开入口 | 保留字段 |
-| `public_url` | 必填 | HTTP(S) 公开根 URL；不能带路径前缀、用户信息、query 或 fragment |
-| `timezone` | 空值用 `time.Local`；非空值必须是有效 IANA 时区名 | 告警消息和账期 fallback 时区 |
+| `public_url` | 必填 | HTTP(S) 公开根地址；不能带路径前缀、用户信息、查询参数或片段 |
+| `timezone` | 空值用 `time.Local`；非空值必须是有效 IANA 时区名 | 告警消息和账期的默认时区 |
 | `language` | 默认 `zh` | `zh`、`cn`、`chinese`、`zh-cn`、`zh_hans` 归一为 `zh`；`en`、`english` 归一为 `en` |
 | `log_level` | `info` | `debug`、`info`、`warn`、`error` |
 | `log_format` | `text` | `text` 或 `json` |
-| `node_offline_threshold` | `14s` | Go duration，例如 `14s`、`2m` |
+| `node_offline_threshold` | `17s` | 必须为正数时长，例如 `17s`、`2m` |
 
-`public_url` 可以省略 scheme。IP 地址默认补 `http`，域名默认补 `https`。主机只接受 IP 字面量或 ASCII DNS 名称，端口范围为 `1..65535`。国际化域名必须使用 IDNA/punycode 形式。
+`public_url` 可以省略协议。IP 地址默认使用 `http`，域名默认使用 `https`。主机只接受 IP 字面量或 ASCII DNS 名称，端口范围为 `1..65535`。国际化域名必须使用 IDNA/punycode 形式。
 
 生产环境显式配置 HTTPS 域名，例如 `https://dash.example.com`，并通过 Nginx/Caddy 反向代理到 Dash 后端。IP+HTTP 用于临时验证。
 
-`app.timezone` 在启动时校验。无效值会导致配置加载失败，错误信息包含原始配置值。`app.node_offline_threshold` 省略时使用 `14s`；显式值必须是大于 0 的 Go duration，非法值不会回退到默认值。
+`app.timezone` 在启动时校验。无效值会导致配置加载失败，错误信息包含原始配置值。
+
+`app.node_offline_threshold` 省略时使用 `17s`。Linux 首次安装时会显式写入该值，版本更新不会改写已有配置。显式值必须为大于 `0` 的有效时长；非法值不会回退到默认值。
 
 ## `http`
 
@@ -108,13 +110,14 @@ http:
 | `sslmode` | PostgreSQL SSL 模式 |
 | `max_open_conns` | 最大打开连接数 |
 | `max_idle_conns` | 最大空闲连接数 |
-| `conn_max_lifetime` | Go duration，空值表示不设置 |
-| `retention_days` | 普通指标保留天数；省略或 `0` 使用 `45` |
-| `traffic_retention_days` | 流量 5 分钟事实表保留天数；省略时为 `max(retention_days, 45)` |
+| `conn_max_lifetime` | 连接最长存续时间；空值表示不设置 |
+| `metrics_raw_retention_days` | 服务器、磁盘 I/O、磁盘容量和物理盘温度原始采样的保留天数；省略或 `0` 使用 `8`，最小值为 `2` |
+| `retention_days` | 网卡原始指标和服务检查的保留天数；省略或 `0` 使用 `45` |
+| `traffic_retention_days` | 五分钟流量明细的保留天数；省略或 `0` 时为 `max(retention_days, 45)` |
 
-连接池数值必须非负。`max_open_conns` 为正数时，`max_idle_conns` 不得大于它；`max_open_conns=0` 保留数据库驱动的不显式限制语义。`conn_max_lifetime=0` 表示不按连接年龄淘汰，负数或非法 duration 会导致配置加载失败。
+连接池数值必须非负。`max_open_conns` 为正数时，`max_idle_conns` 不得大于它；`max_open_conns=0` 表示不显式限制连接数。`conn_max_lifetime=0` 表示不按连接存续时间淘汰；负数或非法时长会导致配置加载失败。
 
-负数保留天数会导致配置校验失败。流量重建范围取普通指标保留期和 `traffic_retention_days` 的交集。
+负数保留天数会导致配置校验失败；显式设置的 `metrics_raw_retention_days` 必须至少为 `2`。流量重建范围取网卡原始指标保留期和 `traffic_retention_days` 的交集。
 
 ## `redis`
 
@@ -123,7 +126,7 @@ http:
 | `addr` | Redis 地址 |
 | `username` | Redis ACL 用户名 |
 | `password` | Redis 密码 |
-| `db` | Redis DB |
+| `db` | Redis 数据库编号 |
 | `pool_size` | 连接池大小 |
 | `min_idle_conns` | 最小空闲连接数 |
 | `dial_timeout` | 默认 `5s`；必须大于 0 |
@@ -132,9 +135,9 @@ http:
 
 `pool_size` 和 `min_idle_conns` 必须非负。`pool_size=0` 使用 go-redis 默认值，此时 `min_idle_conns` 必须为 `0`；正 `pool_size` 不得小于 `min_idle_conns`。
 
-默认模式要求 `addr` 非空。Dash 启动时对实际端点执行 `PING` 和 `INFO server`，要求 Redis `6.2.0+`；低于推荐版本 `8.2.3` 时记录 warning。连接、权限、版本读取或最低版本检查失败都会停止启动。
+默认模式要求 `addr` 非空。Dash 启动时对实际端点执行 `PING` 和 `INFO server`，要求 Redis `6.2.0+`；低于推荐版本 `8.2.3` 时记录警告。连接、权限、版本读取或最低版本检查失败都会停止启动。
 
-`--no-redis` 不读取或校验 Redis 专属环境变量、duration 和连接池配置，也不连接 Redis。迁移命令只加载数据库所需配置，同样跳过 Redis。
+`--no-redis` 不读取或校验 Redis 专属环境变量、时长和连接池配置，也不连接 Redis。迁移命令只加载数据库所需配置，同样跳过 Redis。
 
 ## `auth`
 

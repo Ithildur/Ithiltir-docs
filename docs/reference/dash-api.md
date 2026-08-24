@@ -151,7 +151,7 @@ Bearer 可选端点会把无效 Bearer 当作匿名请求。
 
 节点账期字段是原子组。只要提交 `traffic_cycle_mode`、`traffic_billing_start_day`、`traffic_billing_anchor_date` 或 `traffic_billing_timezone` 中任意字段，就必须同时提交 `traffic_cycle_mode` 和该模式需要的全部字段，否则返回 `400 invalid_traffic_cycle_settings`。保存值只允许 `calendar_month`、`whmcs_compatible` 和 `clamp_to_month_end`。兼容输入 `default` 仅可在不带其他账期字段时提交，并会保存为显式 `calendar_month`。
 
-账期变更立即生效。Dash 会使该节点受影响的月度派生数据失效，并在后台局部修复仍位于原始指标保留期内的数据。
+账期变更立即生效。Dash 会使该节点受影响的月度派生数据失效，并在后台修复仍位于网卡原始指标保留期内的数据。
 
 `traffic_direction_mode` 允许 `default`、`out`、`both` 和 `max`。`default` 继承全局统计方向，其他值覆盖该节点。
 
@@ -192,9 +192,9 @@ Bearer 可选端点会把无效 Bearer 当作匿名请求。
 | 指标 | 来源 | 设备参数 |
 | --- | --- | --- |
 | `cpu.temp_c` | CPU 温度传感器最高温度 | 不需要 |
-| `disk.temp_c` | SMART 物理磁盘温度历史 | 必须传 `device` |
+| `disk.temp_c` | SMART 物理磁盘温度历史 | 可选；省略时聚合物理盘记录 |
 
-`disk.temp_c` 的 `device` 可以匹配物理磁盘 `name`、`ref` 或 `path`。温度历史不使用 rollup 前缀。
+`disk.temp_c` 的 `device` 可以匹配物理磁盘 `name`、`ref` 或 `path`。
 
 SMART 温度历史只来自后端确认的物理盘。虚拟盘和 RAID 设备不会写入 `disk.temp_c` 历史。
 
@@ -205,6 +205,17 @@ SMART 温度历史只来自后端确认的物理盘。虚拟盘和 RAID 设备�
 - `pressure.memory.full_avg10`、`pressure.memory.full_avg60`、`pressure.memory.full_avg300`
 - `pressure.io.some_avg10`、`pressure.io.some_avg60`、`pressure.io.some_avg300`
 - `pressure.io.full_avg10`、`pressure.io.full_avg60`、`pressure.io.full_avg300`
+
+历史查询根据 `range` 使用固定数据源。HTTP 参数、响应字段、数据点数量和排序保持不变：
+
+| `range` | 数据源 | 数据点间隔 |
+| --- | --- | --- |
+| `30m`、`1h`、`12h`、`24h` | 原始采样 | 3 秒、6 秒、60 秒、120 秒 |
+| `1w` | 15 分钟聚合 | 15 分钟 |
+| `15d` | 15 分钟聚合加权重组 | 30 分钟 |
+| `30d` | 1 小时聚合 | 1 小时 |
+
+温度和公开的压力停顿信息（PSI）平均值与其他常规指标使用相同的聚合模型。聚合查询包含最新的实时采样。原始采样默认保留 8 天；15 分钟和 1 小时聚合分别保留 16 天和 32 天。
 
 ## 管理：告警
 

@@ -12,7 +12,7 @@ slug: /Install/Requirements
 | 数据库 | PostgreSQL 16+ |
 | 时序扩展 | 为相同 PostgreSQL 主版本构建的 TimescaleDB |
 | 缓存 | Redis 6.2.0+；推荐 8.2.3+ |
-| 内存 | 推荐最小 2 GB RAM；4 GB 以下建议启用 SWAP |
+| 内存 | 推荐至少 2 GiB；不足 4 GiB 时建议启用交换空间 |
 | 磁盘 | 推荐 SSD/NVMe，最小 40 GB 起步 |
 | 时间同步 | 必须启用 NTP/chrony/systemd-timesyncd |
 
@@ -56,10 +56,11 @@ Redis 默认保存：
 
 默认保留：
 
-- 普通指标：`45 days`。
-- 流量 5 分钟事实表：`max(database.retention_days, 45)`。
+- 常规指标原始采样：8 天；15 分钟聚合：16 天；1 小时聚合：32 天。
+- 网卡原始指标和服务检查：45 天。
+- 五分钟流量明细：`max(database.retention_days, 45)`。
 
-需要 95 计费历史时，`database.traffic_retention_days` 建议设置为 `90` 或更高。
+需要保留 P95 计费历史时，`database.traffic_retention_days` 建议设置为 `90` 或更高。
 
 ## Ithiltir-node
 

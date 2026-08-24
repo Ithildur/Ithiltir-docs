@@ -11,26 +11,36 @@ Release Notes record version changes that affect deployment, upgrades, configura
 
 ### 0.3.1
 
-Release date: 2026-08-21
+Release date: 2026-08-24
 
 GitHub Release: [Ithiltir 0.3.1](https://github.com/Ithildur/Ithiltir/releases/tag/0.3.1)
 
 #### Notifications and Interface
 
 - Telegram, email, and webhook channels can independently use the system language, Chinese, or English. System language resolves to backend `app.language` when a notification is enqueued; stored channels without the field continue to follow the system language.
-- Alerts, channel test messages, and Dash update notifications are rendered for each target channel. Changing the language affects only newly enqueued notifications; existing outbox jobs keep their original text and language.
+- Alerts, channel test messages, and Dash update notifications are rendered for each target channel. Changing the language affects only newly queued notifications; existing tasks keep their original text and language.
 - Notification channel status switches and action controls are now aligned consistently.
 - After a Dash update reloads the document, the admin console returns to the system update tab and shows a localized success message when the update job completes.
 
 #### Installation and Maintenance
 
 - Fresh Linux installs pin missing database dependencies to PostgreSQL 16.15 and TimescaleDB 2.29.1. Existing compatible PostgreSQL 16+ and matching TimescaleDB installations are not replaced; installation stops when repositories cannot supply the pinned versions.
-- Database migrations now run through EiluneKit and fail on drift in application-owned schemas. Migration 12 restores the required `updated_at` triggers instead of silently accepting an incomplete schema.
+- Fresh installations and configurations that omit `app.node_offline_threshold` now use `17s`; version updates do not rewrite an existing explicit value.
+- Database migrations now run through EiluneKit. A mismatch in an application-managed schema causes migration to fail. Migration `0012` restores the required `updated_at` triggers.
 - Frontend and Go dependencies were updated, the source-build baseline moved to Go 1.26.6, and identified standard-library and frontend dependency vulnerabilities were fixed.
+
+#### Metrics History and Storage
+
+- Regular metrics now use one-hour chunks and lossless compression after one day. The new `database.metrics_raw_retention_days` setting defaults to eight days of raw samples. Fifteen-minute aggregates retain 16 days, and one-hour aggregates retain 32 days.
+- History ranges explicitly select raw samples, 15-minute aggregates, or one-hour aggregates. CPU temperature, physical-disk temperature, and exposed PSI metrics use the same aggregate model. Fifteen-day averages are weighted by sample count, and queries include the latest samples.
+- Traffic accounting keeps its existing data model and retention responsibilities, including raw NIC metrics, five-minute traffic records, `lite`/`billing` modes, P95, monthly snapshots, and rebuild APIs.
+- Migration `0013` rebuilds and backfills continuous aggregates serially while Dash is stopped. The new raw retention policy is enabled only after backfill succeeds.
 
 #### Compatibility
 
-- This release has no known breaking configuration changes. Omitting notification-channel `config.language` remains compatible; new and stored channels both treat it as `system`.
+- Configuration syntax remains backward-compatible. An omitted notification-channel `config.language` uses `system`.
+- `database.retention_days` now controls only raw NIC metrics and service checks.
+- An omitted `database.metrics_raw_retention_days` uses the eight-day default. Set this field explicitly to retain regular metric samples for longer than eight days.
 - Managed installations run database migrations through `dash update`. Before replacing a binary manually, back up PostgreSQL and the notification configuration key, then run `dash migrate` before startup.
 
 Read [Upgrade](./installation/upgrade.md) before upgrading from `0.3.0`.
@@ -71,8 +81,8 @@ GitHub Release: [Ithiltir 0.3.0](https://github.com/Ithildur/Ithiltir/releases/t
 
 - Every node now owns an explicit billing cycle. Upgrade migration freezes inherited cycles to their pre-upgrade effective values; new nodes use a calendar month starting on day 1.
 - Global traffic settings no longer accept billing-cycle fields. Legacy `traffic_cycle_mode=default` is only an input alias and is stored as an explicit calendar month.
-- Usage and Facts have independent materialization progress. Switching Lite to Billing starts Facts from the latest 30 minutes; older retained raw data requires a per-node rebuild.
-- Traffic rebuild is available only in Billing mode. Switching to Lite lets the current chunk finish, then stops the job.
+- Monthly usage aggregation and five-minute traffic generation keep independent progress. After a switch from `lite` to `billing`, five-minute records start 30 minutes before the switch. Earlier retained raw NIC data requires a per-node rebuild.
+- Traffic rebuild is available only in `billing` mode. Switching to `lite` completes the current range and then stops the task.
 - Traffic responses remove the deprecated `partial` field. `GET /api/statistics/traffic/monthly` accepts `months` only in `1..24`.
 - Node names, secrets, tags, group names, and remarks have explicit length and control-character limits. Node payload integer ranges, ratios, rates, and fixed-column text are validated before database writes, returning stable `400` or `422` errors.
 

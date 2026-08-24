@@ -105,7 +105,7 @@ Redis 账号必须允许 `PING` 和 `INFO server`。`--no-redis` 不是安全加
 - 需要跨网络时使用 PostgreSQL SSL。
 - 定期备份并做恢复演练。
 
-TimescaleDB chunk 由 Dash 迁移和保留策略维护。
+TimescaleDB 时间分块由 Dash 迁移和保留策略维护。
 
 ## 文件权限
 
