@@ -5,7 +5,7 @@ title: Reference Overview
 
 # Reference Overview
 
-Reference pages document stable contracts: commands, paths, fields, error semantics, data structures, and filesystem layout. Task steps live in [Guides](../guides/index.md); configuration explanations live in [Config Overview](../configuration/index.md).
+Reference pages document stable contracts: commands, paths, fields, error semantics, data structures, and filesystem layout. Deployment and operational steps live under [Install](../installation/index.md) and [Operations](../operations/index.md); configuration explanations live in [Config Overview](../configuration/index.md); secondary-development steps live in [Development Guides](../guides/index.md).
 
 ## CLI
 

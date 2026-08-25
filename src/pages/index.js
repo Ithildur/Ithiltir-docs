@@ -21,12 +21,12 @@ const sections = [
     to: 'docs/Install',
   },
   {
-    title: '高级配置',
-    titleEn: 'Advanced Config',
+    title: '配置',
+    titleEn: 'Config',
     meta: 'Config',
     text: 'Access / Traffic / Alert',
     textEn: 'Access / Traffic / Alert',
-    to: 'docs/Guides/AdvancedConfiguration',
+    to: 'docs/Config',
   },
   {
     title: '参考手册',

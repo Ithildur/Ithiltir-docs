@@ -1,5 +1,5 @@
 ---
-slug: /Guides/ProductionDeployment
+slug: /Install/ProductionDeployment
 ---
 
 # 生产部署检查清单
@@ -227,4 +227,4 @@ journalctl -u ithiltir-node.service -f
 2. 阅读版本说明，确认 Dash 打包携带的 Ithiltir-node 版本。
 3. 先执行迁移，再启动新 Dash。
 
-升级命令见 [升级](../installation/upgrade.md)。
+升级命令见 [升级](./upgrade.md)。

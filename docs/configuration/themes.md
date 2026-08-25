@@ -128,11 +128,9 @@ themes/
 
 上传路由的读取和响应窗口最长 5 分钟。
 
-## 打包和上传
+## 上传和应用
 
-```bash
-dash pack-theme -src ./my-theme -out my-theme.zip
-```
+主题目录、CSS 编写和打包步骤见 [主题开发](../guides/theme-authoring.md)。
 
 上传接口：
 

@@ -1,5 +1,5 @@
 ---
-slug: /Guides/AllInOne
+slug: /Install/AllInOne
 ---
 
 # 单机 all-in-one 部署
@@ -63,7 +63,7 @@ sudo bash install_dash_linux.sh --lang zh --service-manager=systemd
 - `dash.service`。
 - PostgreSQL 16+、TimescaleDB 和 Redis。
 
-不同发行版的包管理器和仓库处理见 [安装 Dash](../installation/dash-linux.md)。
+不同发行版的包管理器和仓库处理见 [安装 Dash](./dash-linux.md)。
 
 ## 配置公开地址
 

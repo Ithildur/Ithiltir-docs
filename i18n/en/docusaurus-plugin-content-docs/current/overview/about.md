@@ -42,5 +42,5 @@ Ithiltir does not currently provide multi-Dash coordination. Do not run multiple
 
 - New users: [Quick Start](../get-started/quick-start.md).
 - Before deployment: [Install Overview](../installation/index.md), [Architecture](./architecture.md), and [Reverse Proxy](../installation/reverse-proxy.md).
-- Production: [Production Deployment Checklist](../guides/production-deployment.md).
-- Node rollout: [Node Rollout](../guides/node-rollout.md), [Install Linux Node](../installation/node-linux.md), and [Push Mode](../components/node/push.md).
+- Production: [Production Deployment Checklist](../installation/production-deployment.md).
+- Node rollout: [Node Rollout](../installation/node-rollout.md), [Install Linux Node](../installation/node-linux.md), and [Push Mode](../components/node/push.md).

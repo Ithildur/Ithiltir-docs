@@ -21,6 +21,9 @@ monitor_dash_pwd
 - 至少 8 个可见 ASCII 字符。
 - 不得包含空白字符。
 - 不与节点 secret 或数据库密码复用。
+- 不写入 Git、公开文档或前端代码。
+
+轮换管理员密码后重启 Dash。
 
 ## JWT 签名密钥
 
@@ -64,6 +67,8 @@ X-Node-Secret: <secret>
 
 节点 secret 不应出现在本地页面、浏览器代码、公开配置或日志中。
 
+每个节点使用独立 secret。secret 在 trim 后必须包含 8～128 个 Unicode 字符。轮换时先在 Dash 更新节点 secret，再更新节点本机 `report.yaml` 并重启节点服务。
+
 ## HTTPS
 
 生产环境应按 HTTPS 域名暴露：
@@ -91,9 +96,7 @@ http:
 
 仅信任实际反向代理来源。
 
-## systemd 权限
-
-Dash 发布包服务以 root 写入敏感配置和 unit，配置文件 `0600`。Linux 节点服务使用独立 `ithiltir` 用户，并限制可写路径到 `/var/lib/ithiltir-node`。
+不使用 `0.0.0.0/0` 或 `::/0`；过宽的信任范围会影响客户端 IP、审计和限流结果。
 
 ## Webhook 签名
 
@@ -124,3 +127,5 @@ Refresh cookie 使用 `SameSite=Strict`。`POST /api/auth/refresh` 和 `/api/aut
 - Dash 子路径部署。
 - 未同时配置 CORS、cookie 和 CSRF 策略的浏览器跨域直连 API。
 - 多个 Dash 实例同时写同一套数据库和 Redis。
+
+部署后的端口、文件权限、数据库和 Redis 核对见 [安全加固](../operations/security-hardening.md)。

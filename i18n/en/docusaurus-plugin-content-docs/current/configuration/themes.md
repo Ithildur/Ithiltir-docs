@@ -44,6 +44,8 @@ At-rules, nested rules, normal CSS properties, `!important`, and resource-loadin
 
 ## Installation and Fallback
 
+See [Theme Development](../guides/theme-authoring.md) for directory setup, CSS authoring, and packaging steps.
+
 Upload validation completes before an atomic install. Applying a theme updates its configured ID. If that package later becomes missing or invalid, the configured ID remains and the UI exposes a repairable `missing` or `broken` entry while runtime CSS falls back to the built-in default.
 
 `POST /api/admin/system/themes/upload` accepts a `file` part up to 20 MiB; the complete multipart body is limited to 21 MiB, with a five-minute read/write window. Root path `/theme-bootstrap.js` uses `Cache-Control: no-store`.

@@ -11,9 +11,9 @@ Ithiltir 的部署对象有两个：Dash 主控端和 Ithiltir-node 节点端。
 | 路径 | 适用场景 | 入口 |
 | --- | --- | --- |
 | 快速验证 | 单机、小规模、自用 | [快速开始](../get-started/quick-start.md) |
-| 单机生产 | Dash、PostgreSQL、TimescaleDB、Redis 同机 | [单机 all-in-one 部署](../guides/all-in-one.md) |
-| 标准生产 | Dash + 反向代理 + 独立数据库运维 | [生产部署检查清单](../guides/production-deployment.md) |
-| 源码验证 | 开发、排错、验证配置 | [源码和手工运行](./manual.md) |
+| 单机生产 | Dash、PostgreSQL、TimescaleDB、Redis 同机 | [单机 all-in-one 部署](./all-in-one.md) |
+| 标准生产 | Dash + 反向代理 + 独立数据库运维 | [生产部署检查清单](./production-deployment.md) |
+| 源码验证 | 开发、排错、验证配置 | [源码开发环境](../guides/source-development.md) |
 
 ## 部署顺序
 
@@ -76,8 +76,9 @@ https://dash.example.com/api/node/static
 
 - [运行要求](./requirements.md)
 - [安装 Dash](./dash-linux.md)
+- [节点批量接入](./node-rollout.md)
 - [安装 Linux 节点](./node-linux.md)
 - [反向代理](./reverse-proxy.md)
 - [升级](./upgrade.md)
-- [生产部署检查清单](../guides/production-deployment.md)
-- [单机 all-in-one 部署](../guides/all-in-one.md)
+- [生产部署检查清单](./production-deployment.md)
+- [单机 all-in-one 部署](./all-in-one.md)

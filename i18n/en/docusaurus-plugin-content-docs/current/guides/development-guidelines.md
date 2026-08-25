@@ -21,7 +21,7 @@ The following are public contracts:
 
 - Dash HTTP API paths, methods, request fields, response fields, and error codes.
 - Ithiltir-node report protocol, CLI flags, install script behavior, and local mode behavior.
-- `config.toml`, environment variables, theme packages, disk schema, metrics schema, and filesystem layout.
+- Dash YAML configuration, environment variables, theme packages, disk schema, metrics schema, and filesystem layout.
 - Database migrations, retention policy, aggregation results, traffic billing semantics, and timezone semantics.
 - Release asset names, archive formats, bundled file paths, and automatically installed dependencies.
 
@@ -53,9 +53,11 @@ Do not add tests that only pin implementation details, compiler-guaranteed behav
 ## Documentation Requirements
 
 - Update both Chinese and English documentation for user-visible behavior changes.
-- Document APIs, error codes, configuration keys, and data structures in reference pages or component pages.
-- Document operational impact in operations or configuration pages.
-- Document releases, builds, toolchains, and contribution rules under `Development and Releases`.
+- Document APIs, error codes, and data structures in reference or component pages.
+- Document configuration keys, defaults, and validation rules in configuration pages.
+- Document deployment steps under Install and operational impact under Operations.
+- Document secondary-development steps, builds, and toolchains in Development Guides.
+- Document contribution rules and release procedures under Contributing and Releases.
 - Documentation should describe stable entry points, limits, and results, not temporary development process.
 
 ## Release Requirements

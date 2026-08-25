@@ -1,5 +1,5 @@
 ---
-slug: /Guides/AllInOne
+slug: /Install/AllInOne
 title: All-in-One Deployment
 ---
 
@@ -62,7 +62,7 @@ The installer prepares:
 - `dash.service`
 - PostgreSQL 16+, TimescaleDB, and Redis
 
-Distribution package-manager behavior is documented in [Install Dash](../installation/dash-linux.md).
+Distribution package-manager behavior is documented in [Install Dash](./dash-linux.md).
 
 ## Public URL
 

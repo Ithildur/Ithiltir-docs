@@ -4,7 +4,7 @@ slug: /Node/API
 
 # 节点 HTTP API
 
-本文档定义 Ithiltir-node 与 Dash 之间的线协议，以及 Local 模式提供的本地接口。
+本文档定义 Ithiltir-node 与 Dash 之间的线协议，以及本地模式提供的本地接口。
 
 ## HTTP 接口
 

@@ -1,9 +1,9 @@
 ---
-slug: /Install/Manual
-title: Manual Install
+slug: /Guides/SourceDevelopment
+title: Source Development
 ---
 
-# Manual Install
+# Source Development
 
 Source runs are intended for development, configuration validation, and troubleshooting. Use release packages for production deployments.
 
@@ -81,6 +81,8 @@ Node build:
 ```bash
 ./scripts/build.sh --version 1.2.3
 ```
+
+See [Build](./build.md) for complete build entry points.
 
 ## Manual Service Boundary
 

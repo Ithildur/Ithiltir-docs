@@ -114,7 +114,7 @@ Event Viewer -> Windows Logs -> Application/System
 
 ## 本地页面检查
 
-Local 模式：
+本地模式：
 
 ```bash
 ./node local 127.0.0.1 9100 --debug

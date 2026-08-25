@@ -1,68 +1,98 @@
 ---
 slug: /Guides/ThemeAuthoring
-title: Theme Authoring
+title: Theme Development
 ---
 
-# Theme Authoring
+# Theme Development
 
-Theme format v1 customizes supported skin choices and CSS custom properties. It is frozen and deprecated but remains usable.
+Theme packages change supported layout skins and CSS custom properties. They do not execute scripts or change application behavior. Format v1 is frozen and deprecated, but existing themes can still be packaged, uploaded, and applied.
 
-## Files
+See [Theme Config](../configuration/themes.md) and [Theme Package](../reference/theme-package.md) for complete field, selector, and package-size limits.
+
+## Create the Directory
+
+A minimal theme contains two files:
 
 ```text
-theme.json
-tokens.css
-recipes.css
-preview.png
-README.md
+my-theme/
+  theme.json
+  tokens.css
 ```
 
-All files are at archive root. `preview.png` and `README.md` are optional.
+Add `recipes.css`, `preview.png`, and `README.md` when required. Package files remain at the ZIP root.
 
-## Manifest
+## Write the Manifest
+
+Example `theme.json`:
 
 ```json
 {
-  "id": "dark-modern",
-  "name": "Dark Modern",
+  "id": "ops-dark",
+  "name": "Ops Dark",
   "version": "1.0.0",
-  "author": "Example",
-  "description": "Dark operations theme",
+  "description": "Dark operator theme",
   "skin": {
-    "admin": { "shell": "sidebar", "frame": "layered" },
-    "dashboard": { "summary": "cards", "density": "comfortable" }
+    "admin": {
+      "shell": "sidebar",
+      "frame": "layered"
+    },
+    "dashboard": {
+      "summary": "cards",
+      "density": "comfortable"
+    }
   }
 }
 ```
 
-All four skin values are required:
+All four skin fields are explicit. Dash does not supply defaults for missing fields.
 
-| Field | Values |
-| --- | --- |
-| `skin.admin.shell` | `sidebar`, `topbar` |
-| `skin.admin.frame` | `layered`, `flat` |
-| `skin.dashboard.summary` | `cards`, `strip` |
-| `skin.dashboard.density` | `comfortable`, `compact` |
+## Write CSS
 
-## CSS
-
-Use `tokens.css` and `recipes.css` only for custom-property declarations:
+Use `tokens.css` only for CSS custom properties:
 
 ```css
-:root {
-  --ithiltir-color-bg: #0b0d12;
-  --ithiltir-color-text: #f8fafc;
+:root[data-theme="ops-dark"] {
+  --color-bg: #0f172a;
+  --color-surface: #111827;
+  --color-text: #e5e7eb;
+  --color-accent: #22c55e;
+}
+
+:root.dark[data-theme="ops-dark"] {
+  --color-bg: #020617;
+  --color-surface: #0f172a;
 }
 ```
 
-Do not use at-rules, nested rules, normal properties, `!important`, or resource-loading functions. The combined declaration limit is 1024; each CSS file is limited to 1 MiB.
+`recipes.css` uses the same selector range for recipe tokens:
 
-## Package and Apply
-
-```bash
-dash pack-theme -src <theme-dir> -out <theme.zip>
+```css
+:root[data-theme="ops-dark"] {
+  --recipe-panel-radius: 8px;
+  --recipe-table-density: compact;
+}
 ```
 
-Upload and installation are validated before an atomic replacement. A missing or broken active package keeps its configured ID visible for repair while runtime falls back to the built-in skin.
+Do not add component selectors, normal CSS properties, at-rules, or external resource references.
 
-See [Theme Package](../reference/theme-package.md) for exact limits.
+## Prepare the Preview
+
+`preview.png` is displayed in the admin console. Do not include node names, IP addresses, keys, or customer data in the image.
+
+## Package
+
+```bash
+dash pack-theme -src ./my-theme -out ops-dark.zip
+```
+
+Without `-out`, the command writes `<theme-id>.zip`. It adds `.zip` when the supplied output name has another extension. The command validates the manifest, CSS, preview, and file list before writing the archive.
+
+## Upload and Verify
+
+1. Upload the package in the admin console.
+2. Confirm validation succeeds.
+3. Preview the theme.
+4. Apply the theme.
+5. Check navigation, tables, charts, and dark mode in the admin console and dashboard.
+
+When validation fails, use the returned result to check the theme ID, required files, manifest fields, CSS syntax, and package size. If an active package becomes missing or damaged, Dash keeps the theme ID and falls back to the built-in default skin.

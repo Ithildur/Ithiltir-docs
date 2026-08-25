@@ -19,9 +19,9 @@
     "message": "Config",
     "description": "Navbar item for configuration docs"
   },
-  "item.label.\u6307\u5357": {
-    "message": "Guides",
-    "description": "Navbar item for guides"
+  "item.label.\u5f00\u53d1\u6307\u5357": {
+    "message": "Development",
+    "description": "Navbar item for development guides"
   },
   "item.label.\u53c2\u8003": {
     "message": "Reference",

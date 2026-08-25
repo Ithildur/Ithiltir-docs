@@ -1,5 +1,5 @@
 ---
-slug: /Guides/NodeRollout
+slug: /Install/NodeRollout
 ---
 
 # 节点批量接入
@@ -151,7 +151,7 @@ Linux、macOS 和 Windows 安装器最多跟随 5 次下载重定向，只允许
 - 逗号分隔。
 - 空值会被忽略。
 - 指定不存在的网卡时节点会记录警告。
-- Push 和 Local 模式都支持 `--net`。
+- Push 和本地模式都支持 `--net`。
 
 ## HTTPS 严格模式
 

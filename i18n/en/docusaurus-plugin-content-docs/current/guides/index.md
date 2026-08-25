@@ -1,39 +1,35 @@
 ---
 slug: /Guides
-title: Guides Overview
+title: Development Guides
 ---
 
-# Guides Overview
+# Development Guides
 
-Guides are task-oriented. Stable command, API, field, and error contracts live in [Reference Overview](../reference/index.md). Configuration definitions live in [Config Overview](../configuration/index.md).
+This section covers secondary development of Ithiltir Dash, Ithiltir-node, theme packages, and the documentation site. See [Install](../installation/index.md) for deployment, [Config Overview](../configuration/index.md) for runtime settings, and [Operations](../operations/index.md) for routine administration.
 
-## Common Tasks
+## Development Targets
 
-| Task | Doc |
+| Target | Repository | Entry points |
+| --- | --- | --- |
+| Ithiltir Dash | [Ithiltir](https://github.com/Ithildur/Ithiltir) | [Architecture](../overview/architecture.md), [Source Development](./source-development.md), [Dash component](../components/dash/index.md) |
+| Ithiltir-node | [Ithiltir-node](https://github.com/Ithildur/Ithiltir-node) | [Source Development](./source-development.md), [Node component](../components/node/index.md), [report protocol](../reference/node-protocol.md) |
+| Theme packages | [Ithiltir](https://github.com/Ithildur/Ithiltir) | [Theme Development](./theme-authoring.md), [Theme Config](../configuration/themes.md) |
+| Documentation | [Ithiltir-docs](https://github.com/Ithildur/Ithiltir-docs) | [Development Guidelines](./development-guidelines.md), [Build](./build.md) |
+
+## Development Entry Points
+
+- [Development Guidelines](./development-guidelines.md): public contracts, compatibility, tests, and documentation requirements.
+- [Source Development](./source-development.md): local run commands for Dash, the frontend development server, and Ithiltir-node.
+- [Build](./build.md): stable build commands for the Dash frontend, Dash release packages, and Ithiltir-node.
+- [Theme Development](./theme-authoring.md): create, package, upload, and verify a custom theme package.
+
+## Contract Locations
+
+| Change area | Documentation |
 | --- | --- |
-| Deploy for production | [Production Deployment Checklist](./production-deployment.md) |
-| Deploy a single-host instance | [All-in-One Deployment](./all-in-one.md) |
-| Roll out nodes | [Node Rollout](./node-rollout.md) |
-| Harden security | [Security Hardening](./security-hardening.md) |
-| Enable advanced features | [Advanced Configuration Path](./advanced-configuration.md) |
-| Configure traffic billing | [Traffic Billing](./traffic-billing.md) |
-| Build a theme package | [Theme Authoring](./theme-authoring.md) |
+| Dash HTTP routes, fields, and status codes | [Dash HTTP API](../reference/dash-api.md), [Error Semantics](../reference/errors.md) |
+| Node commands and reporting behavior | [Node CLI](../reference/node-cli.md), [Report Protocol](../reference/node-protocol.md) |
+| Dash startup and runtime settings | [Config Overview](../configuration/index.md) |
+| Metrics, disk, and theme package structures | [Metrics Schema](../reference/metrics-schema.md), [Disk Schema](../reference/disk-schema.md), [Theme Package](../reference/theme-package.md) |
 
-## Recommended Order
-
-First deployment:
-
-1. [Install Overview](../installation/index.md)
-2. [Requirements](../installation/requirements.md)
-3. [All-in-One Deployment](./all-in-one.md) or [Production Deployment Checklist](./production-deployment.md)
-4. [Reverse Proxy](../installation/reverse-proxy.md)
-5. [Node Rollout](./node-rollout.md)
-
-Existing instance, advanced features:
-
-1. [Advanced Configuration Path](./advanced-configuration.md)
-2. [Access Control](../configuration/access.md)
-3. [Traffic Accounting](../configuration/traffic.md)
-4. [Alert Rules](../configuration/alerts.md)
-5. [Notifications](../configuration/notifications.md)
-6. [Themes](../configuration/themes.md)
+Update both Chinese and English documentation when a change affects user-visible behavior or a public contract.

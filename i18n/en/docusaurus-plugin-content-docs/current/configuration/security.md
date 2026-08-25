@@ -15,6 +15,8 @@ export monitor_dash_pwd='<password>'
 
 It requires at least 8 visible ASCII characters and no whitespace.
 
+Do not reuse it as a node secret or database password, and do not store it in Git, public documentation, or frontend code. Restart Dash after rotating the password.
+
 Configure `auth.jwt_signing_key` with at least 32 random bytes and no surrounding whitespace. Rotating it invalidates active access tokens.
 
 ## Notification Encryption Key
@@ -31,15 +33,15 @@ Production deployments should expose Dash through HTTPS at one root URL. Refresh
 
 Nodes authenticate with `X-Node-Secret`. Use a distinct secret per node. After trimming, secrets must contain 8–128 Unicode characters.
 
+To rotate a secret, update the node in Dash, update the node's local `report.yaml`, and restart the node service.
+
 ## Webhook Redirects
 
 Notification HTTP requests follow at most five redirects. Every hop keeps the original host; same-scheme redirects keep the effective port; HTTP may upgrade to HTTPS but never downgrade. POST follows only `307` and `308`.
-
-## File and Service Permissions
-
-Restrict `config.local.yaml` and `notify-config.key` to the Dash runtime owner. Linux systemd Node installs use the `ithiltir` user and limit writes to `/var/lib/ithiltir-node`; root-owned collector assets stay outside that tree.
 
 ## Unsupported
 
 - Dash URL subpath deployment.
 - Multiple Dash instances writing the same state.
+
+See [Security Hardening](../operations/security-hardening.md) for post-deployment checks covering public ports, file permissions, PostgreSQL, and Redis.

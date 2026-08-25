@@ -37,7 +37,7 @@ Authorization: Bearer <access_token>
 | 设置 | 作用 |
 | --- | --- |
 | `history_guest_access_mode` | 历史指标匿名访问 |
-| `traffic_guest_access_mode` | 流量统计匿名访问 |
+| 流量设置 `guest_access_mode` | 流量统计匿名访问 |
 
 允许值：
 
@@ -45,6 +45,8 @@ Authorization: Bearer <access_token>
 - `by_node`
 
 `by_node` 仍然受节点的 `is_guest_visible` 限制。也就是说，开全局开关以后，还要在节点上标记允许游客可见。
+
+`GET /api/statistics/access` 将流量设置映射为响应字段 `traffic_guest_access_mode`。
 
 ## Bearer 可选端点
 
@@ -90,4 +92,4 @@ X-Node-Secret: <node-secret>
 | 前台节点列表和指标 | 只显示游客可见节点 | 节点 `is_guest_visible=true` |
 | 在线率 `/api/metrics/online` | 只显示游客可见节点 | 节点 `is_guest_visible=true` |
 | 历史指标 `/api/metrics/history` | 禁止 | `history_guest_access_mode=by_node` + 节点可见 |
-| 流量统计 `/api/statistics/traffic/*` | 禁止 | `traffic_guest_access_mode=by_node` + 节点可见 |
+| 流量统计 `/api/statistics/traffic/*` | 禁止 | 流量设置 `guest_access_mode=by_node` + 节点可见 |

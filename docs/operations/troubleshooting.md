@@ -110,7 +110,7 @@ curl -i https://dash.example.com/api/node/identity -H 'X-Node-Secret: <secret>' 
 
 ## `/metrics` 返回 503
 
-Local 模式首次采样前正常可能返回 `503`。等待一轮采样。
+本地模式首次采样前正常可能返回 `503`。等待一轮采样。
 
 ```bash
 ./node local 127.0.0.1 9100 --debug

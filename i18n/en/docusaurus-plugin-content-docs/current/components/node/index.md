@@ -53,7 +53,7 @@ Ithiltir-node is the node metrics collector. It has two modes:
 
 ## Related
 
-- [Node Rollout](../../guides/node-rollout.md)
+- [Node Rollout](../../installation/node-rollout.md)
 - [Install Linux Node](../../installation/node-linux.md)
 - [Install macOS Node](../../installation/node-macos.md)
 - [Install Windows Node](../../installation/node-windows.md)

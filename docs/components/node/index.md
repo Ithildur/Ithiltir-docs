@@ -9,7 +9,7 @@ Ithiltir-node 是节点指标采集器，只有两种模式：
 - `local`：提供本地节点页面和本地接口。
 - `push`：向 Dash 上报，同时保留本地缓存结果。
 
-## Local 模式
+## 本地模式
 
 ```bash
 ./node
@@ -52,11 +52,11 @@ Ithiltir-node 是节点指标采集器，只有两种模式：
 
 ## 相关文档
 
-- [节点批量接入](../../guides/node-rollout.md)
+- [节点批量接入](../../installation/node-rollout.md)
 - [安装 Linux 节点](../../installation/node-linux.md)
 - [安装 macOS 节点](../../installation/node-macos.md)
 - [安装 Windows 节点](../../installation/node-windows.md)
-- [Local 模式](./local.md)
+- [本地模式](./local.md)
 - [Push 模式](./push.md)
 - [节点上报协议](../../reference/node-protocol.md)
 - [运行时指标结构](../../reference/metrics-schema.md)

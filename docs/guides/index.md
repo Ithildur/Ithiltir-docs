@@ -2,37 +2,33 @@
 slug: /Guides
 ---
 
-# 指南总览
+# 开发指南
 
-指南用于完成具体任务。字段、API、命令和错误语义的稳定契约放在 [参考总览](../reference/index.md)；配置项定义放在 [配置总览](../configuration/index.md)。
+本分区适用于 Ithiltir Dash、Ithiltir-node、主题包和文档站的二次开发。部署步骤见 [安装部署](../installation/index.md)，运行参数见 [配置总览](../configuration/index.md)，日常管理见 [运维总览](../operations/index.md)。
 
-## 常用任务
+## 开发对象
 
-| 任务 | 文档 |
+| 对象 | 代码库 | 入口 |
+| --- | --- | --- |
+| Ithiltir Dash | [Ithiltir](https://github.com/Ithildur/Ithiltir) | [系统架构](../overview/architecture.md)、[源码开发环境](./source-development.md)、[Dash 组件](../components/dash/index.md) |
+| Ithiltir-node | [Ithiltir-node](https://github.com/Ithildur/Ithiltir-node) | [源码开发环境](./source-development.md)、[Node 组件](../components/node/index.md)、[节点上报协议](../reference/node-protocol.md) |
+| 主题包 | [Ithiltir](https://github.com/Ithildur/Ithiltir) | [主题开发](./theme-authoring.md)、[主题配置](../configuration/themes.md) |
+| 文档站 | [Ithiltir-docs](https://github.com/Ithildur/Ithiltir-docs) | [开发准则](./development-guidelines.md)、[构建](./build.md) |
+
+## 开发入口
+
+- [开发准则](./development-guidelines.md)：公共契约、兼容性、测试和文档要求。
+- [源码开发环境](./source-development.md)：Dash、前端开发服务器和 Ithiltir-node 的本地运行命令。
+- [构建](./build.md)：Dash 前端、Dash 发布包和 Ithiltir-node 的稳定构建命令。
+- [主题开发](./theme-authoring.md)：建立、打包、上传和验证自定义主题包。
+
+## 契约位置
+
+| 变更范围 | 文档 |
 | --- | --- |
-| 部署生产环境 | [生产部署检查清单](./production-deployment.md) |
-| 部署单机实例 | [单机 all-in-one 部署](./all-in-one.md) |
-| 批量接入节点 | [节点批量接入](./node-rollout.md) |
-| 收紧安全边界 | [安全加固](./security-hardening.md) |
-| 打开高级能力 | [高级配置路线](./advanced-configuration.md) |
-| 配置流量计费 | [流量计费配置](./traffic-billing.md) |
-| 制作主题包 | [主题定制](./theme-authoring.md) |
+| Dash HTTP 路由、字段和状态码 | [Dash HTTP API](../reference/dash-api.md)、[错误语义](../reference/errors.md) |
+| Node 命令和上报行为 | [Node CLI](../reference/node-cli.md)、[节点上报协议](../reference/node-protocol.md) |
+| Dash 启动参数和运行时设置 | [配置总览](../configuration/index.md) |
+| 指标、磁盘和主题包结构 | [运行时指标结构](../reference/metrics-schema.md)、[磁盘结构](../reference/disk-schema.md)、[主题包格式](../reference/theme-package.md) |
 
-## 推荐阅读顺序
-
-首次部署：
-
-1. [安装部署总览](../installation/index.md)
-2. [运行要求](../installation/requirements.md)
-3. [单机 all-in-one 部署](./all-in-one.md) 或 [生产部署检查清单](./production-deployment.md)
-4. [反向代理](../installation/reverse-proxy.md)
-5. [节点批量接入](./node-rollout.md)
-
-已有实例要调高级能力：
-
-1. [高级配置路线](./advanced-configuration.md)
-2. [访问控制](../configuration/access.md)
-3. [流量统计和账期](../configuration/traffic.md)
-4. [告警规则](../configuration/alerts.md)
-5. [通知渠道](../configuration/notifications.md)
-6. [主题](../configuration/themes.md)
+修改用户可见行为或公共契约时，同步更新中文和英文文档。

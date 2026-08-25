@@ -155,4 +155,4 @@ http://127.0.0.1:9100/
 - [Dash Config](../configuration/dash.md)
 - [Node Overview](../components/node/index.md)
 - [Reverse Proxy](../installation/reverse-proxy.md)
-- [Production Deployment Checklist](../guides/production-deployment.md)
+- [Production Deployment Checklist](../installation/production-deployment.md)

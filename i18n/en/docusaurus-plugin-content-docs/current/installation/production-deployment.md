@@ -1,5 +1,5 @@
 ---
-slug: /Guides/ProductionDeployment
+slug: /Install/ProductionDeployment
 title: Production Deployment Checklist
 ---
 
@@ -228,4 +228,4 @@ Before upgrading:
 2. Read release notes and confirm the Ithiltir-node version bundled with Dash.
 3. Run migrations before starting the new Dash.
 
-See [Upgrade](../installation/upgrade.md).
+See [Upgrade](./upgrade.md).

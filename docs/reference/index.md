@@ -4,7 +4,7 @@ slug: /Reference
 
 # 参考总览
 
-参考文档记录稳定契约：命令、路径、字段、错误语义、数据结构和文件布局。任务型步骤放在 [指南](../guides/index.md)，配置说明放在 [配置总览](../configuration/index.md)。
+参考文档记录稳定契约：命令、路径、字段、错误语义、数据结构和文件布局。部署和运维步骤分别见 [安装部署](../installation/index.md) 和 [运维](../operations/index.md)；配置说明见 [配置总览](../configuration/index.md)；二次开发见 [开发指南](../guides/index.md)。
 
 ## CLI
 

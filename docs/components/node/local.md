@@ -2,9 +2,9 @@
 slug: /Node/Local
 ---
 
-# Local 模式
+# 本地模式
 
-Local 模式提供内置单节点页面和本地 HTTP 接口。
+本地模式提供内置单节点页面和本地 HTTP 接口。
 
 ## 启动
 

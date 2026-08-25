@@ -1,5 +1,5 @@
 ---
-slug: /Guides/NodeRollout
+slug: /Install/NodeRollout
 title: Node Rollout
 ---
 

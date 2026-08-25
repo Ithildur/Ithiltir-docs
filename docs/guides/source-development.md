@@ -1,8 +1,8 @@
 ---
-slug: /Install/Manual
+slug: /Guides/SourceDevelopment
 ---
 
-# 源码和手工运行
+# 源码开发环境
 
 源码运行用于开发、配置验证和问题排查。生产部署使用发布包。
 
@@ -48,7 +48,7 @@ Vite 开发服务器只代理 `/api` 和 `/theme`。前端代码仍使用同源�
 
 ## 节点手工运行
 
-Local 模式：
+本地模式：
 
 ```bash
 ./node local 0.0.0.0 9100
@@ -93,4 +93,4 @@ bash scripts/package.sh \
 ./scripts/build.sh --version 1.2.3
 ```
 
-更多构建信息见 [构建](../contributing/build.md)。
+更多构建信息见 [构建](./build.md)。

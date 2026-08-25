@@ -86,7 +86,7 @@ const config = {
           {type: 'docSidebar', sidebarId: 'docs', label: '文档', position: 'left'},
           {type: 'doc', docId: 'installation/index', label: '部署', position: 'left'},
           {type: 'doc', docId: 'configuration/index', label: '配置', position: 'left'},
-          {type: 'doc', docId: 'guides/index', label: '指南', position: 'left'},
+          {type: 'doc', docId: 'guides/index', label: '开发指南', position: 'left'},
           {type: 'doc', docId: 'reference/index', label: '参考', position: 'left'},
           {
             href: 'https://demo.ithiltir.dev/',

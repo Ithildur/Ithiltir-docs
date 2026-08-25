@@ -12,10 +12,11 @@ Ithiltir 文档按目标组织：先完成安装，再理解系统边界，最�
 | 目标 | 入口 |
 | --- | --- |
 | 先跑起来 | [快速开始](get-started/quick-start.md) |
-| 部署生产环境 | [安装部署总览](installation/index.md)、[生产部署检查清单](guides/production-deployment.md) |
-| 接入节点 | [节点批量接入](guides/node-rollout.md)、[安装 Linux 节点](installation/node-linux.md) |
-| 调整配置 | [配置总览](configuration/index.md)、[高级配置路线](guides/advanced-configuration.md) |
+| 部署生产环境 | [安装部署总览](installation/index.md)、[生产部署检查清单](installation/production-deployment.md) |
+| 接入节点 | [节点批量接入](installation/node-rollout.md)、[安装 Linux 节点](installation/node-linux.md) |
+| 调整配置 | [配置总览](configuration/index.md) |
 | 排查问题 | [日志和状态检查](operations/logging.md)、[排错](operations/troubleshooting.md) |
+| 二次开发 | [开发指南](guides/index.md) |
 | 查询契约 | [参考总览](reference/index.md) |
 | 查看发布变化 | [Release Notes](release-notes.md) |
 
@@ -36,23 +37,15 @@ Ithiltir 文档按目标组织：先完成安装，再理解系统边界，最�
 
 - [安装部署总览](installation/index.md)
 - [运行要求](installation/requirements.md)
+- [生产部署检查清单](installation/production-deployment.md)
+- [单机 all-in-one 部署](installation/all-in-one.md)
 - [安装 Dash](installation/dash-linux.md)
+- [节点批量接入](installation/node-rollout.md)
 - [安装 Linux 节点](installation/node-linux.md)
 - [安装 macOS 节点](installation/node-macos.md)
 - [安装 Windows 节点](installation/node-windows.md)
 - [反向代理](installation/reverse-proxy.md)
 - [升级](installation/upgrade.md)
-- [源码和手工运行](installation/manual.md)
-
-### 任务指南
-
-- [生产部署检查清单](guides/production-deployment.md)
-- [单机 all-in-one 部署](guides/all-in-one.md)
-- [节点批量接入](guides/node-rollout.md)
-- [安全加固](guides/security-hardening.md)
-- [高级配置路线](guides/advanced-configuration.md)
-- [流量计费配置](guides/traffic-billing.md)
-- [主题定制](guides/theme-authoring.md)
 
 ### 配置手册
 
@@ -69,6 +62,7 @@ Ithiltir 文档按目标组织：先完成安装，再理解系统边界，最�
 ### 运维
 
 - [运维总览](operations/index.md)
+- [安全加固](operations/security-hardening.md)
 - [节点生命周期](operations/node-lifecycle.md)
 - [数据保留和存储](operations/data-retention.md)
 - [备份和恢复](operations/backup-restore.md)
@@ -96,9 +90,15 @@ Ithiltir 文档按目标组织：先完成安装，再理解系统边界，最�
 - [Linux Node 安装](installation/node-linux.md)
 - [Node 更新](components/node/update.md)
 
-### 开发和发布
+### 开发指南
 
-- [开发准则](contributing/development-guidelines.md)
+- [开发指南总览](guides/index.md)
+- [开发准则](guides/development-guidelines.md)
+- [源码开发环境](guides/source-development.md)
+- [构建](guides/build.md)
+- [主题开发](guides/theme-authoring.md)
+
+### 贡献和发布
+
 - [人工智能政策](contributing/ai-policy.md)
-- [构建](contributing/build.md)
 - [发布版本](contributing/releases.md)

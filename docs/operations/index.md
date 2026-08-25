@@ -49,6 +49,7 @@ Get-Service ithiltir-node
 
 ## 运维文档
 
+- [安全加固](./security-hardening.md)
 - [节点生命周期](./node-lifecycle.md)
 - [数据保留和存储](./data-retention.md)
 - [备份和恢复](./backup-restore.md)

@@ -15,9 +15,9 @@
     "message": "Config",
     "description": "The label for the configuration category in sidebar 'docs'"
   },
-  "sidebar.docs.category.\u6307\u5357": {
-    "message": "Guides",
-    "description": "The label for the guides category in sidebar 'docs'"
+  "sidebar.docs.category.\u5f00\u53d1\u6307\u5357": {
+    "message": "Development Guides",
+    "description": "The label for the development guides category in sidebar 'docs'"
   },
   "sidebar.docs.category.\u8fd0\u7ef4": {
     "message": "Operations",
@@ -39,9 +39,9 @@
     "message": "Node",
     "description": "The label for category 'Node' in sidebar 'docs'"
   },
-  "sidebar.docs.category.\u5f00\u53d1\u548c\u53d1\u5e03": {
-    "message": "Development and Releases",
-    "description": "The label for the development and releases category in sidebar 'docs'"
+  "sidebar.docs.category.\u8d21\u732e\u548c\u53d1\u5e03": {
+    "message": "Contributing and Releases",
+    "description": "The label for the contributing and releases category in sidebar 'docs'"
   },
   "sidebar.docs.doc.\u6587\u6863\u7d22\u5f15": {
     "message": "Documentation Index",

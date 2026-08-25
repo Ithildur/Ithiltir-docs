@@ -50,6 +50,7 @@ Get-Service ithiltir-node
 
 ## Operation Docs
 
+- [Security Hardening](./security-hardening.md)
 - [Node Lifecycle](./node-lifecycle.md)
 - [Data Retention](./data-retention.md)
 - [Backup and Restore](./backup-restore.md)

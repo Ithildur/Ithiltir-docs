@@ -59,8 +59,8 @@ http://127.0.0.1:${NODE_PORT:-9101}/
 
 | 变量 | 说明 |
 | --- | --- |
-| `NODE_HOST` | Local 模式监听地址 |
-| `NODE_PORT` | Local 模式监听端口；Push debug 端口 |
+| `NODE_HOST` | 本地模式监听地址 |
+| `NODE_PORT` | 本地模式监听端口；Push debug 端口 |
 | `ITHILTIR_NODE_REPORT_CONFIG` | 覆盖 report.yaml 路径 |
 | `ITHILTIR_NODE_LOCAL_PAGE_DIR` | 覆盖本地页面目录 |
 | `ITHILTIR_NODE_RUNNER` | Windows runner 启动 node 时设置，用于允许暂存更新 |

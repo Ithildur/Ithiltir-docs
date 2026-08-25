@@ -47,7 +47,6 @@ See:
 - [Alert Rules](./alerts.md)
 - [Notifications](./notifications.md)
 - [Themes](./themes.md)
-- [Advanced Configuration Path](../guides/advanced-configuration.md)
 
 ## Node Config
 

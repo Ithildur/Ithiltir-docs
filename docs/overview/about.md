@@ -43,5 +43,5 @@ Ithiltir 当前不提供多 Dash 实例协调能力。多个 Dash 实例不应�
 
 - 新用户先看 [快速开始](../get-started/quick-start.md)。
 - 部署前先看 [安装部署总览](../installation/index.md)、[系统架构](./architecture.md) 和 [反向代理](../installation/reverse-proxy.md)。
-- 生产环境按 [生产部署检查清单](../guides/production-deployment.md) 核对。
-- 节点接入看 [节点批量接入](../guides/node-rollout.md)、[安装 Linux 节点](../installation/node-linux.md) 和 [Push 模式](../components/node/push.md)。
+- 生产环境按 [生产部署检查清单](../installation/production-deployment.md) 核对。
+- 节点接入看 [节点批量接入](../installation/node-rollout.md)、[安装 Linux 节点](../installation/node-linux.md) 和 [Push 模式](../components/node/push.md)。

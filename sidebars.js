@@ -20,8 +20,10 @@ const sidebars = {
       link: {type: 'doc', id: 'installation/index'},
       items: [
         'installation/requirements',
+        'installation/production-deployment',
+        'installation/all-in-one',
         'installation/dash-linux',
-        'installation/manual',
+        'installation/node-rollout',
         'installation/node-linux',
         'installation/node-macos',
         'installation/node-windows',
@@ -46,23 +48,10 @@ const sidebars = {
     },
     {
       type: 'category',
-      label: '指南',
-      link: {type: 'doc', id: 'guides/index'},
-      items: [
-        'guides/production-deployment',
-        'guides/all-in-one',
-        'guides/node-rollout',
-        'guides/security-hardening',
-        'guides/advanced-configuration',
-        'guides/traffic-billing',
-        'guides/theme-authoring',
-      ],
-    },
-    {
-      type: 'category',
       label: '运维',
       link: {type: 'doc', id: 'operations/index'},
       items: [
+        'operations/security-hardening',
         'operations/node-lifecycle',
         'operations/data-retention',
         'operations/backup-restore',
@@ -118,11 +107,20 @@ const sidebars = {
     },
     {
       type: 'category',
-      label: '开发和发布',
+      label: '开发指南',
+      link: {type: 'doc', id: 'guides/index'},
       items: [
-        'contributing/development-guidelines',
+        'guides/development-guidelines',
+        'guides/source-development',
+        'guides/build',
+        'guides/theme-authoring',
+      ],
+    },
+    {
+      type: 'category',
+      label: '贡献和发布',
+      items: [
         'contributing/ai-policy',
-        'contributing/build',
         'contributing/releases',
       ],
     },

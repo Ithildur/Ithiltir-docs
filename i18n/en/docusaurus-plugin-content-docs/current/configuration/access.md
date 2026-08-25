@@ -15,6 +15,10 @@ Admin APIs require Bearer access tokens from `POST /api/auth/login`. Direct logi
 
 ## Anonymous Reads
 
+Anonymous history uses system setting `history_guest_access_mode`. Anonymous traffic uses traffic setting `guest_access_mode`. Both accept `disabled` or `by_node`; `by_node` still requires `is_guest_visible=true` on each node.
+
+`GET /api/statistics/access` exposes the traffic setting as response field `traffic_guest_access_mode`.
+
 | Resource | Default | Optional access |
 | --- | --- | --- |
 | Brand | Allowed | Always public |
@@ -22,7 +26,7 @@ Admin APIs require Bearer access tokens from `POST /api/auth/login`. Direct logi
 | Groups | Guest-visible scope | Controlled by node visibility |
 | Online rate | Guest-visible nodes only | Controlled by node visibility |
 | History metrics | Disabled | `history_guest_access_mode=by_node` + guest-visible node |
-| Traffic statistics | Disabled | Traffic guest mode + guest-visible node |
+| Traffic statistics | Disabled | Traffic `guest_access_mode=by_node` + guest-visible node |
 
 ## Site Brand
 

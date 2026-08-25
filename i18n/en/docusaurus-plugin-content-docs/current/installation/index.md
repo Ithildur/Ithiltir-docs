@@ -12,9 +12,9 @@ Ithiltir has two deployment targets: the Dash control plane and Ithiltir-node in
 | Path | Use case | Start here |
 | --- | --- | --- |
 | Quick validation | Single host, small scale, personal use | [Quick Start](../get-started/quick-start.md) |
-| Single-host production | Dash, PostgreSQL, TimescaleDB, and Redis on one host | [All-in-One Deployment](../guides/all-in-one.md) |
-| Standard production | Dash + reverse proxy + managed database operations | [Production Deployment Checklist](../guides/production-deployment.md) |
-| Source validation | Development, troubleshooting, config validation | [Source and Manual Run](./manual.md) |
+| Single-host production | Dash, PostgreSQL, TimescaleDB, and Redis on one host | [All-in-One Deployment](./all-in-one.md) |
+| Standard production | Dash + reverse proxy + managed database operations | [Production Deployment Checklist](./production-deployment.md) |
+| Source validation | Development, troubleshooting, config validation | [Source Development](../guides/source-development.md) |
 
 ## Deployment Order
 
@@ -77,8 +77,9 @@ https://dash.example.com/api/node/static
 
 - [Requirements](./requirements.md)
 - [Install Dash](./dash-linux.md)
+- [Node Rollout](./node-rollout.md)
 - [Install Linux Node](./node-linux.md)
 - [Reverse Proxy](./reverse-proxy.md)
 - [Upgrade](./upgrade.md)
-- [Production Deployment Checklist](../guides/production-deployment.md)
-- [All-in-One Deployment](../guides/all-in-one.md)
+- [Production Deployment Checklist](./production-deployment.md)
+- [All-in-One Deployment](./all-in-one.md)

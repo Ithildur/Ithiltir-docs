@@ -118,6 +118,8 @@ Dash 从 Node 上报的网卡计数器生成流量统计。原始入站和出站
 
 ## P95 状态
 
+P95 只在 `billing` 模式且节点启用 `traffic_p95_enabled` 时计算。至少需要 20 个有效样本。
+
 `p95_status` 可能是：
 
 - `available`
@@ -127,3 +129,14 @@ Dash 从 Node 上报的网卡计数器生成流量统计。原始入站和出站
 - `snapshot_without_p95`
 
 只有 `available` 时，P95 字段才不是 `null`。
+
+## 游客访问
+
+匿名流量数据需要同时满足：
+
+```text
+guest_access_mode = by_node
+node.is_guest_visible = true
+```
+
+任一条件不满足时，不返回该节点的匿名流量数据。完整可见性规则见 [访问控制](./access.md)。

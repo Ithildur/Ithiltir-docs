@@ -12,10 +12,11 @@ Ithiltir documentation is organized by reader goal: install the system, understa
 | Goal | Start here |
 | --- | --- |
 | Get a working instance | [Quick Start](get-started/quick-start.md) |
-| Deploy for production | [Install Overview](installation/index.md), [Production Deployment Checklist](guides/production-deployment.md) |
-| Add nodes | [Node Rollout](guides/node-rollout.md), [Install Linux Node](installation/node-linux.md) |
-| Change configuration | [Config Overview](configuration/index.md), [Advanced Configuration Path](guides/advanced-configuration.md) |
+| Deploy for production | [Install Overview](installation/index.md), [Production Deployment Checklist](installation/production-deployment.md) |
+| Add nodes | [Node Rollout](installation/node-rollout.md), [Install Linux Node](installation/node-linux.md) |
+| Change configuration | [Config Overview](configuration/index.md) |
 | Troubleshoot | [Logging](operations/logging.md), [Troubleshooting](operations/troubleshooting.md) |
+| Secondary development | [Development Guides](guides/index.md) |
 | Look up contracts | [Reference Overview](reference/index.md) |
 | Review release changes | [Release Notes](release-notes.md) |
 
@@ -36,23 +37,15 @@ Ithiltir documentation is organized by reader goal: install the system, understa
 
 - [Install Overview](installation/index.md)
 - [Requirements](installation/requirements.md)
+- [Production Deployment Checklist](installation/production-deployment.md)
+- [All-in-One Deployment](installation/all-in-one.md)
 - [Install Dash](installation/dash-linux.md)
+- [Node Rollout](installation/node-rollout.md)
 - [Install Linux Node](installation/node-linux.md)
 - [Install macOS Node](installation/node-macos.md)
 - [Install Windows Node](installation/node-windows.md)
 - [Reverse Proxy](installation/reverse-proxy.md)
 - [Upgrade](installation/upgrade.md)
-- [Source and Manual Run](installation/manual.md)
-
-### Task Guides
-
-- [Production Deployment Checklist](guides/production-deployment.md)
-- [All-in-One Deployment](guides/all-in-one.md)
-- [Node Rollout](guides/node-rollout.md)
-- [Security Hardening](guides/security-hardening.md)
-- [Advanced Configuration Path](guides/advanced-configuration.md)
-- [Traffic Billing](guides/traffic-billing.md)
-- [Theme Authoring](guides/theme-authoring.md)
 
 ### Configuration Manual
 
@@ -69,6 +62,7 @@ Ithiltir documentation is organized by reader goal: install the system, understa
 ### Operations
 
 - [Operations Overview](operations/index.md)
+- [Security Hardening](operations/security-hardening.md)
 - [Node Lifecycle](operations/node-lifecycle.md)
 - [Data Retention](operations/data-retention.md)
 - [Backup and Restore](operations/backup-restore.md)
@@ -96,9 +90,15 @@ Ithiltir documentation is organized by reader goal: install the system, understa
 - [Install Linux Node](installation/node-linux.md)
 - [Node Update](components/node/update.md)
 
-### Development and Releases
+### Development Guides
 
-- [Development Guidelines](contributing/development-guidelines.md)
+- [Development Guides Overview](guides/index.md)
+- [Development Guidelines](guides/development-guidelines.md)
+- [Source Development](guides/source-development.md)
+- [Build](guides/build.md)
+- [Theme Development](guides/theme-authoring.md)
+
+### Contributing and Releases
+
 - [AI Policy](contributing/ai-policy.md)
-- [Build](contributing/build.md)
 - [Releases](contributing/releases.md)

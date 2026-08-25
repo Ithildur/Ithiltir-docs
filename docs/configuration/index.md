@@ -46,7 +46,6 @@ Ithiltir 的配置按职责分为三层。先确认配置属于哪一层，再�
 - [告警规则](./alerts.md)
 - [通知渠道](./notifications.md)
 - [主题](./themes.md)
-- [高级配置路线](../guides/advanced-configuration.md)
 
 ## 节点配置
 

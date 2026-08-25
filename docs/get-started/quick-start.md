@@ -137,7 +137,7 @@ go run ./cmd/dash migrate -config config.local.yaml
 go run ./cmd/dash -debug
 ```
 
-单机本地页面可以通过 Local 模式运行：
+单机本地页面可以通过本地模式运行：
 
 ```bash
 ./node local
@@ -150,4 +150,4 @@ go run ./cmd/dash -debug
 - Dash 配置见 [Dash 配置](../configuration/dash.md)。
 - 节点模式见 [节点概览](../components/node/index.md)。
 - 反向代理见 [反向代理](../installation/reverse-proxy.md)。
-- 生产上线前按 [生产部署检查清单](../guides/production-deployment.md) 核对。
+- 生产上线前按 [生产部署检查清单](../installation/production-deployment.md) 核对。

@@ -68,3 +68,9 @@ The rebuild range is the intersection of raw NIC retention in `database.retentio
 - Monthly `months` must be in `1..24`.
 - Responses keep raw `in_*` and `out_*` fields and expose selected-view fields.
 - P95 fields are non-null only when `p95_status=available`.
+
+P95 is calculated only in `billing` mode for nodes with `traffic_p95_enabled`. It requires at least 20 valid samples.
+
+## Guest Access
+
+Anonymous traffic data requires both traffic setting `guest_access_mode=by_node` and `node.is_guest_visible=true`. If either condition is false, the node's anonymous traffic data is not returned. See [Access Control](./access.md) for the complete visibility rules.
