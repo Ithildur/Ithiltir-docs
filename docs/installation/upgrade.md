@@ -74,6 +74,8 @@ sudo /opt/Ithiltir-dash/bin/dash update reinstall --yes --test --lang zh
 
 管理台控制器要求 Linux/systemd 和 `systemd-run`。它会把不可变执行计划持久化后，通过 transient unit 启动包内 `dash update execute`。手工 `dash update` 可以在显式 `--service-manager=none` 模式下运行。
 
+管理台发起手工更新时，会把目标版本保存在当前浏览器 session，并显示不可关闭的更新遮罩。遮罩每 10 秒请求一次本机 `/api/version`，单次请求超时 5 秒。Dash 切换或重启期间请求失败会显示重连状态；检测到已安装版本大于等于目标版本后，用户确认才会重新加载页面。迁移耗时本身不会触发失败状态，只有后台任务明确返回 `failed` 时才显示失败并允许关闭遮罩查看任务详情。
+
 ## 事务和恢复
 
 更新器会：

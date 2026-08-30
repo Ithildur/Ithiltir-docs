@@ -75,6 +75,8 @@ System / Dash Update supports `release` and `prerelease` channels:
 
 The admin controller requires Linux/systemd and `systemd-run`. It persists an immutable plan, then starts the packaged `dash update execute` through a transient unit. Manual `dash update` also supports explicit `--service-manager=none`.
 
+When the admin console starts a manual update, it stores the target version in the current browser session and displays a non-dismissible update overlay. The overlay requests local `/api/version` every 10 seconds with a five-second timeout. Request failures during Dash cutover or restart show a reconnecting state. After the installed version is at least the target, the page reloads only after confirmation. Migration duration alone does not cause failure; the overlay reports failure only when the backend job explicitly returns `failed`, then allows dismissal to inspect job details.
+
 ## Transaction and Recovery
 
 The updater:

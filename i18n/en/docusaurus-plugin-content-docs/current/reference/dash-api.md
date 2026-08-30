@@ -46,6 +46,8 @@ Error format:
 
 Optional Bearer endpoints treat invalid Bearer tokens as anonymous requests.
 
+`GET /api/statistics/traffic/ifaces?server_id=<id>` returns interface names previously reported by the node. Results are ordered by latest sample time, with actively reporting interfaces first; equal timestamps are ordered by interface name. Historical interfaces remain listed for querying older traffic data.
+
 ## Auth Sessions
 
 `POST /api/auth/login` request bodies must include `password` and `persistence`. `persistence` allows `session` or `persistent`. Successful responses include `access_token`, `expires_at`, and `csrf_token`, and set refresh/CSRF cookies. Malformed login JSON returns `400 invalid_json`, invalid `persistence` returns `400 invalid_persistence`, and login rate limiting returns `429 rate_limited`.

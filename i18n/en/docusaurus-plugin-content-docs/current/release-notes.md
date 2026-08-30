@@ -9,6 +9,31 @@ Release Notes record version changes that affect deployment, upgrades, configura
 
 ## Dash
 
+### 0.3.2
+
+Release date: 2026-08-30
+
+GitHub Release: [Ithiltir 0.3.2](https://github.com/Ithildur/Ithiltir/releases/tag/0.3.2)
+
+#### Alerts and Traffic
+
+- Existing non-offline alerts remain open when a node snapshot is missing, invalid, or stale. Dash closes an event only after a fresh sample proves that the condition cleared or after the corresponding rule is unmounted.
+- The traffic interface list keeps historical interfaces but now orders them by latest sample time. An interface that is still reporting appears first, preventing the admin console from selecting an inactive interface with no current-cycle data by default.
+
+#### Updates and Interface
+
+- After a manual Dash update starts, the admin console stores the target version in the current browser session and blocks the stale UI with a root-level overlay. It checks the local version every 10 seconds during service cutover, shows a reconnecting state while Dash is unavailable, and waits for confirmation before reloading after the target version is installed.
+- Browser wait time does not mark an update as failed. The overlay reports failure only after the backend job explicitly reaches the `failed` terminal state.
+- Alert management now opens on the Events tab by default. The language menu uses a 250 ms hover delay while click activation remains immediate.
+
+#### Compatibility
+
+- This release has no database migration, configuration-format change, or new HTTP path.
+- Historical interfaces are not deleted and remain available for old traffic queries; only the default list order changes.
+- Managed installations can upgrade directly from `0.3.1` with `dash update`.
+
+Read [Upgrade](./installation/upgrade.md) before upgrading from `0.3.1`.
+
 ### 0.3.1
 
 Release date: 2026-08-24

@@ -37,6 +37,8 @@ Process memory holds the node auth index, alert pending/cooldown state, MTProto 
 
 The admin update controller requires Linux/systemd. Manual `dash update` also supports explicit `--service-manager=none`. Jobs and transactions persist under `$DASH_HOME/runtime/dash-update`.
 
+After the admin console starts a manual update, the browser session stores the target version. A root runtime blocks the stale UI and polls local `/api/version` until the backend job explicitly fails or the installed version reaches the target. Successful updates reload the document only after user confirmation.
+
 SMART, thermal, and full RAID details are runtime state. On Linux, a root-side `smartctl` helper writes `/run/ithiltir-node/smart.json`, and a root-side `/proc` netns helper writes `/run/ithiltir-node/connections.json`; Ithiltir-node only reads those caches. SMART cache freshness, helper availability, device health, full thermal sensor payloads, and full RAID array/member payloads are kept in current snapshots or hot caches rather than historical PostgreSQL metric rows. SMART temperature for confirmed physical disks is reduced into `disk_physical_metrics.temp_c`; virtual disks and RAID devices are ignored. Thermal data is reduced into `cpu_temp_c` for host history, while full thermal details are split into a separate frontend field cache and composed back into front node JSON on read.
 
 TCP/UDP connection counts are persisted numeric metrics. They are written to `tcp_conn` and `udp_conn` and remain available to history queries as `conn.tcp` and `conn.udp`. On Linux, full host/netns connection counts come from the root-side connections cache because Node runs with low privileges. The Linux installer compiles this helper locally when `cc`, `gcc`, or `clang` is available. If the cache is missing or stale, or the helper cannot be compiled, Node uses its built-in connection counting, which may miss container connections.
@@ -59,6 +61,8 @@ Node IP is an observation from authenticated Node requests. Dash reads the first
 ## Alerts
 
 Alert evaluation reads the latest process-local report snapshot or the current PostgreSQL projection, never the frontend Redis cache.
+
+An existing non-offline firing alert remains open when its snapshot is missing, invalid, stale, or lacks an optional runtime field. Only a fresh sample that proves the condition cleared closes it as recovered. Unmounting or invalidating the rule closes the corresponding event.
 
 Alert notifications enter the PostgreSQL outbox and are delivered by one process-local worker without runtime leases. If the first target load fails without a last-good snapshot, the transition is delayed; with a last-good snapshot, the event and outbox commit against that snapshot. Remote delivery failure does not roll back the alert event.
 

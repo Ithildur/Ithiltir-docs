@@ -95,6 +95,8 @@ The alert service does not open new alert events during the first minute after s
 
 Open firing events persist in PostgreSQL and are restored after restart. Pending and cooldown state and the dirty queue are process-local and reset on restart. Startup reconciliation, restored open events, and later reports resume evaluation.
 
+An existing firing event remains open when the node snapshot is missing, invalid, stale, or lacks an optional runtime field required by the rule. The event closes as recovered only when a fresh snapshot can be evaluated and no longer matches the condition. Unmounting or invalidating a rule closes its event without waiting for another node snapshot.
+
 Alert events and notification outbox rows share one persistence boundary. If the first target load fails without a last-good snapshot, the transition is delayed; an available last-good snapshot is used to commit the event and outbox. Delivery failures do not roll back alert events. Retry, pause, block, and discard behavior is documented under [Notifications](./notifications.md).
 
 ## Alert Records

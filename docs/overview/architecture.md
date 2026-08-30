@@ -53,6 +53,7 @@ Ithiltir Dash 是单实例应用。根入口只启动一个 HTTP 进程，该进
 - `--no-redis` 会把 Redis 承载的会话和前台缓存改用进程内内存，并跳过 Redis 配置和版本校验。
 - `app.timezone` 在启动时编译。空值使用本地时区；非空值必须是有效 IANA 时区名，否则配置加载失败，错误中会包含配置值。
 - 管理台更新控制器要求 Linux/systemd；手工 `dash update` 也支持显式 `--service-manager=none`。任务和事务写入 `$DASH_HOME/runtime/dash-update`，不写入 PostgreSQL。
+- 管理台发起手工更新后，浏览器 session 保存目标版本。根级运行时阻止继续操作旧界面，并轮询本机 `/api/version`，直到后台任务明确失败或已安装版本达到目标；成功后由用户确认重新加载文档。
 - 节点鉴权、待下发 Node 更新请求、告警 pending/cooldown、MTProto 登录握手和流量重建任务使用进程内内存，不走 Redis。
 - 开放告警事件会从 PostgreSQL 恢复；pending 和 cooldown 在重启后重置。
 - 流量用量累计和五分钟流量明细的处理进度保存在 PostgreSQL；手工重建任务状态不持久化。
@@ -61,6 +62,7 @@ Ithiltir Dash 是单实例应用。根入口只启动一个 HTTP 进程，该进
 - Linux PSI pressure 指标是固定数值时序数据。PSI 的 `avg10`、`avg60`、`avg300` 和 `total` 会作为可空列保存到 `server_metrics` 和 `server_current_metrics`；缺失列表示不可用，不表示 0 压力。Dashboard 持久化会忽略采集原因/状态字符串。PSI 当前不接入告警评估。
 - 告警评估读取进程内最新上报快照或 PostgreSQL 当前投影，不读取前台 Redis 缓存。内置离线、RAID、SMART 健康失败和 NVMe 关键告警规则来自快照新鲜度和上报磁盘状态。
 - 告警服务启动后 1 分钟内不会新开告警事件。
+- 快照缺失、非法、过期或缺少可选运行字段时，已有非离线 firing 告警保持开放；只有新鲜样本明确证明条件消失时才按恢复关闭。取消挂载或使规则无效会关闭对应事件。
 - 告警通知写入 PostgreSQL outbox，并由单进程 worker 投递，不使用运行时租约。首次加载通知目标失败且没有 last-good 快照时，状态转换延后重试；已有 last-good 快照时继续按该快照提交事件和 outbox。远端发送失败不回滚告警事件。
 - 服务器、磁盘 I/O、磁盘容量和物理盘温度的原始采样使用 1 小时时间分块，并在 1 天后无损压缩。`database.metrics_raw_retention_days` 控制原始采样的保留期，默认值为 8 天。15 分钟聚合保留 16 天，1 小时聚合保留 32 天。
 - 历史曲线根据查询范围使用原始采样或聚合数据，并包含最新的实时采样。`server_online_30m` 仅统计已经结束的 30 分钟时段。

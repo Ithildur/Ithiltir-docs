@@ -45,6 +45,8 @@ slug: /Reference/DashAPI
 
 Bearer 可选端点会把无效 Bearer 当作匿名请求。
 
+`GET /api/statistics/traffic/ifaces?server_id=<id>` 返回该节点历史上报过的网卡名。结果按最后采样时间倒序排列，最近仍在上报的网卡优先；采样时间相同时按网卡名升序排列。历史网卡不会从列表中删除，可继续用于查询旧流量数据。
+
 ## 认证会话
 
 `POST /api/auth/login` 请求体必须包含 `password` 和 `persistence`。`persistence` 允许 `session` 或 `persistent`。成功响应包含 `access_token`、`expires_at` 和 `csrf_token`，并写入 refresh/CSRF cookie。格式错误的登录 JSON 返回 `400 invalid_json`，非法 `persistence` 返回 `400 invalid_persistence`，登录限流返回 `429 rate_limited`。
