@@ -26,7 +26,7 @@ Dash is not designed for multiple active instances writing the same runtime stat
 
 | Store | Data |
 | --- | --- |
-| PostgreSQL | nodes, groups, metrics, traffic facts, alert rules, alert events, notification outbox, settings, theme metadata |
+| PostgreSQL | nodes, groups, metrics, node uptime, traffic facts, alert rules, alert events, notification outbox, settings, theme metadata |
 | TimescaleDB | hypertables, retention policy, time-series compression path |
 | Redis | admin sessions and disposable frontend caches |
 | Filesystem | Dash config, notification encryption key, install identity, immutable releases, themes, and persistent update state |
@@ -81,6 +81,14 @@ After a switch from `lite` to `billing`, Dash generates five-minute records star
 Historical five-minute records use one process-local rebuild task that is available only in `billing` mode. It rewrites one node at a time in six-hour ranges and invalidates overlapping snapshots. Switching to `lite` completes the current range and then stops the task. Rebuild state resets on Dash restart.
 
 Every node stores an explicit billing cycle. Global settings provide only the default direction; `traffic_direction_mode=default` inherits it. A node cycle change invalidates and locally repairs only that node's derived monthly rows.
+
+## Uptime Data Flow
+
+PostgreSQL/TimescaleDB jobs maintain node uptime. The minute job stores online durations covered by reports for each completed minute in `node_online`; the `node_online_1h` continuous aggregate sums online and observed durations by hour. Both datasets retain 46 days.
+
+HTTP queries primarily read hourly aggregates and include minute records that have not yet been materialized. The dashboard displays the latest 45 calendar days and refreshes daily statistics independently every 60 seconds. Hourly details load on demand; the browser caches up to 45 dates per node for 60 seconds.
+
+No new observations are generated before the first report, after deletion, or for missed sampling windows. Missing minutes remain unknown and are not automatically backfilled. Guest uptime visibility does not affect database jobs and is independent of historical-chart access. See [Data Retention](../operations/data-retention.md).
 
 ## Public URL
 

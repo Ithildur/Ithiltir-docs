@@ -26,7 +26,7 @@ slug: /Install/ProductionDeployment
 
 源码运行或自定义打包才需要：
 
-- Go 1.26.6+。
+- Go 1.27.1+。
 - Bun 1.3.11。
 
 ## Dash 安装

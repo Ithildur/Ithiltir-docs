@@ -9,6 +9,28 @@ Release Notes record version changes that affect deployment, upgrades, configura
 
 ## Dash
 
+### 0.3.3
+
+Release date: 2026-09-19
+
+GitHub Release: [Ithiltir 0.3.3](https://github.com/Ithildur/Ithiltir/releases/tag/0.3.3)
+
+#### Uptime and Dashboard
+
+- Node cards show uptime for the latest 45 calendar days, including today. Hover over a day or select it with the keyboard to inspect its 24 hourly rates. The tooltip opens after the detail loads, with a 200 ms debounce when moving between days.
+- Rates use online durations covered by node reports. Today and the current hour include only completed minutes. Unobserved periods remain unknown instead of counting as offline.
+- System settings add a guest uptime switch and SLA color thresholds. Uptime is enabled for guest-visible nodes by default. Rates below 99% are yellow and rates below 95% are red; both thresholds are configurable.
+- Card spacing adapts to visible content, avoiding an empty row when uptime is hidden.
+
+#### Upgrades and APIs
+
+- Upgrading from `0.3.2` applies migration `0014` and starts collecting uptime history. Minute records and hourly aggregates are retained for 46 days. Earlier uptime is not backfilled automatically.
+- Daily and hourly uptime APIs are available. Guest uptime access is independent of history-metric and traffic access settings.
+- Metric reports must finish persistence within 5 seconds of receipt by the server. Expired reports return `503` and are not persisted.
+- Source builds require Go 1.27.1+. Package installations do not require Go.
+
+Existing nodes and metric history are preserved. Prerelease installations using the early boolean uptime schema must follow the prerelease instructions in [Upgrade](./installation/upgrade.md); installations already using durations retain their uptime history.
+
 ### 0.3.2
 
 Release date: 2026-08-30

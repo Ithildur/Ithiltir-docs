@@ -17,6 +17,15 @@ Error format:
 { "code": "<string>", "message": "<string>" }
 ```
 
+## Request Conventions
+
+- All `/api` responses, including authentication and routing errors, carry `Cache-Control: no-store`. The API body limit is 24 MiB, with smaller limits on some endpoints; size limits apply when a body is read.
+- Method names are case-sensitive. Dash implements GET, HEAD, POST, PUT, PATCH, and DELETE. Other methods, including OPTIONS and lowercase `get`, return `501 not_implemented`. Implemented methods return `404 not_found` for unknown paths or `405 method_not_allowed` with `Allow` when an existing endpoint does not accept the method. GET APIs do not imply HEAD.
+- `/api/version/` and admin module roots listed below also accept their forms without a trailing slash, without redirects. Node-ID PATCH and DELETE paths also accept trailing slashes; other endpoints do not automatically gain aliases.
+- JSON requests require a valid `application/json` media type; valid parameters are allowed. Invalid media types or parameters return `415 unsupported_media_type`.
+- JSON field names are case-sensitive. Unknown fields are ignored unless an endpoint specifies stricter validation. Duplicate object keys and invalid UTF-8 are rejected. Clients must not depend on response whitespace, object-key order, or HTML-character escaping.
+- Node metrics must finish persistence within 5 seconds of server receipt. Authentication, body reading, and node-lock waits consume that budget. Expired reports return `503 service_unavailable` without persisting metrics.
+
 ## Authentication
 
 | Method | Use |
@@ -36,6 +45,8 @@ Error format:
 | `GET` | `/api/front/metrics` | Optional Bearer | Current front metrics |
 | `GET` | `/api/front/groups` | Optional Bearer | Front groups |
 | `GET` | `/api/metrics/online` | Optional Bearer | Online rate |
+| `GET` | `/api/metrics/uptime` | Optional Bearer | Uptime for the latest 45 calendar days |
+| `GET` | `/api/metrics/uptime/day` | Optional Bearer | 24 hourly rates for one calendar day |
 | `GET` | `/api/metrics/history` | Optional Bearer | History metrics |
 | `GET` | `/api/statistics/access` | Optional Bearer | Anonymous access settings |
 | `GET` | `/api/statistics/traffic/settings` | Optional Bearer | Traffic settings |
@@ -47,6 +58,14 @@ Error format:
 Optional Bearer endpoints treat invalid Bearer tokens as anonymous requests.
 
 `GET /api/statistics/traffic/ifaces?server_id=<id>` returns interface names previously reported by the node. Results are ordered by latest sample time, with actively reporting interfaces first; equal timestamps are ordered by interface name. Historical interfaces remain listed for querying older traffic data.
+
+## Node Uptime
+
+- `GET /api/metrics/uptime` (also with a trailing slash) returns `{enabled, timezone, generated_at, warning_sla, error_sla, nodes}`. Each node has a string `server_id` and 45 `days`, oldest first including today. Each day has `date` (`YYYY-MM-DD`), `percent` (0–100 or `null`), and `observed_ms` (observed milliseconds). Dates follow `app.timezone`, or the server's local timezone when unset. All dates are present even when no observations exist.
+- Authenticated callers receive all non-deleted nodes. Guests receive only guest-visible nodes when `uptime_guest_visible` is enabled; otherwise the daily endpoint returns `200` with `enabled: false` and an empty node list. SLA thresholds come from system settings and do not affect sampling.
+- `GET /api/metrics/uptime/day?server_id=<id>&date=YYYY-MM-DD` (also `/day/`) returns `{date, hours, observed_ms}`. Both arrays have 24 entries indexed by local clock hour. Missing or future hours have a `null` percentage and zero observed milliseconds. On a daylight-saving transition, a skipped hour is unknown and repeated clock hours combine their durations. Disabled guest access returns `403 forbidden`; hidden, deleted, and absent nodes return `404 not_found` to guests. Invalid IDs or dates outside the same 45-day window return `400 invalid_request`; database failures return `503 service_unavailable`.
+- Percentages are `100 × online milliseconds / observed milliseconds`, weighted by duration. A report covers the interval from its server receive time until `app.node_offline_threshold` later; overlapping intervals count once. The first current-metrics row starts the node's observation window. Only completed minutes are included, normally finalized six seconds after each minute boundary; current-day and current-hour values can lag by about one minute plus that delay. Missing minutes are unknown and excluded from the denominator. A percentage is not proof of complete coverage; `observed_ms` reports how much was observed. The existing `/api/metrics/online` retains its previous contract and data source.
+- The dashboard refreshes daily uptime independently every 60 seconds, and loads hour details only for an expanded day. Disabling guest access hides uptime; logging out discards authenticated uptime state.
 
 ## Auth Sessions
 
@@ -267,7 +286,9 @@ Channel reads include delivery health, retry/probe times, and pending/blocked co
 | `POST` | `/api/admin/system/themes/{id}/apply` | Apply theme |
 | `DELETE` | `/api/admin/system/themes/{id}` | Delete theme |
 
-System settings include `history_guest_access_mode`, `dash_update_channel`, `dash_update_mode`, `logo_url`, `page_title`, and `topbar_text`. `PATCH` accepts partial updates. `PUT` is a full replacement.
+System settings include `history_guest_access_mode`, `dash_update_channel`, `dash_update_mode`, `logo_url`, `page_title`, `topbar_text`, `uptime_guest_visible`, `uptime_warning_sla`, and `uptime_error_sla`. `PATCH` accepts partial updates. `PUT` requires the first six fields.
+
+`uptime_guest_visible` defaults to `true`. Warning and error thresholds default to `99` and `95`, allow decimals, and must satisfy `0 <= error < warning <= 100`. Omitted or null uptime fields retain their previous values in both PATCH and PUT. Invalid thresholds return `400 invalid_fields` and roll back the whole update. These settings control access and presentation without changing sampling.
 
 New `logo_url` values accept same-origin absolute paths, supported base64 image data URLs, or external HTTPS URLs. Stored external HTTP logos remain readable; a `PATCH` for other fields does not revalidate an omitted logo.
 

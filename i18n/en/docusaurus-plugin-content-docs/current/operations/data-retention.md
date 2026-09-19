@@ -54,6 +54,24 @@ Raw NIC metrics and service checks remain controlled by `database.retention_days
 
 Dash synchronizes TimescaleDB policies at startup or during `dash migrate` after retention configuration changes. Data already outside the new window is removed by a later policy job rather than by a synchronous scan while loading configuration.
 
+## Uptime History
+
+Node cards use separate uptime datasets:
+
+| Dataset | Retention | Contents |
+| --- | --- | --- |
+| `node_online` | 46 days | Online and observed milliseconds for each node and completed minute |
+| `node_online_1h` | 46 days | Hourly sums of online and observed durations |
+| Dashboard window | Latest 45 calendar days, including today | Calendar boundaries use `app.timezone` |
+
+The rate is `100 × online duration / observed duration`, weighted by duration. Each report covers the interval from server receipt until `app.node_offline_threshold` later; overlapping intervals count once. No observations are generated before a node's first valid report or after deletion. Nodes that have never reported have no uptime records.
+
+A PostgreSQL/TimescaleDB job calculates the previous minute about 6 seconds after each minute boundary. Only completed minutes count. Queries include minute data for the current hour, while database jobs refresh hourly aggregates. Today and the current hour can lag by approximately one minute plus the sampling delay.
+
+A missing minute is unknown and excluded from the denominator. Missed job windows and minutes spanning a database restart are not backfilled automatically. The API's `observed_ms` reports actual observed duration; 100% does not imply full-day coverage.
+
+Both retention periods are independent of `database.metrics_raw_retention_days` and `database.retention_days`. Disabling guest visibility does not stop sampling. Enabling uptime through an upgrade starts collecting new records; Dash has no general feature to reconstruct uptime from historical CPU or other metric charts.
+
 ## Traffic Retention
 
 Configuration:

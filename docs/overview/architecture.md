@@ -12,7 +12,7 @@ Ithiltir Dash 是单实例应用。根入口只启动一个 HTTP 进程，该进
 | --- | --- |
 | `cmd/dash` | 进程入口、配置加载、依赖装配、迁移入口和关闭流程 |
 | HTTP 服务 | 挂载 `/api`、`/theme`、`/deploy` 和 SPA |
-| PostgreSQL + TimescaleDB | 持久化指标历史、流量事实、节点元数据、告警规则、告警通知 outbox 和系统设置 |
+| PostgreSQL + TimescaleDB | 持久化指标历史、节点 Uptime、流量事实、节点元数据、告警规则、告警通知 outbox 和系统设置 |
 | Redis | 默认保存管理员会话和可丢弃的前台缓存 |
 | 进程内内存 | 节点鉴权索引、告警 pending/cooldown、MTProto 登录握手、易失 Node 更新请求和流量重建状态；`--no-redis` 时还承接会话和前台缓存 |
 | Ithiltir-node | 上报指标和静态主机信息；Windows runner 启动时接收更新 manifest |
@@ -74,6 +74,14 @@ Ithiltir Dash 是单实例应用。根入口只启动一个 HTTP 进程，该进
 - 流量方向模式只改变选中的计费视图；原始入站和出站计数仍分开保存。
 - 历史指标默认不对游客公开。`history_guest_access_mode=by_node` 时，只对游客可见节点开放。
 - 流量统计是否对游客公开由流量设置控制，并仍受节点可见性限制。
+
+## Uptime 数据流
+
+节点在线统计由 PostgreSQL/TimescaleDB 定时任务维护。分钟任务按已结束分钟，将原始上报覆盖的在线时长写入 `node_online`；小时连续聚合 `node_online_1h` 汇总在线和观测时长。两者均保留 46 天。
+
+HTTP 查询主要读取小时聚合，并包含尚未物化的分钟数据。看板展示最近 45 个自然日，日统计独立每 60 秒刷新；小时明细在选择日期后按需读取，浏览器按节点缓存最多 45 天的明细，缓存有效期 60 秒。
+
+首次上报前、删除后和缺失采样窗口不生成新观测。缺失分钟保持未知，不自动补历史。游客 Uptime 开关不影响数据库任务，也不继承历史曲线访问设置。详见 [数据保留和存储](../operations/data-retention.md)。
 
 ## 鉴权边界
 

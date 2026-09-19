@@ -32,21 +32,23 @@ Authorization: Bearer <access_token>
 
 ## 匿名访客
 
-匿名访问由两个独立开关控制：
+匿名历史指标、流量统计和 Uptime 分别控制：
 
-| 设置 | 作用 |
-| --- | --- |
-| `history_guest_access_mode` | 历史指标匿名访问 |
-| 流量设置 `guest_access_mode` | 流量统计匿名访问 |
+| 设置 | 作用 | 允许值 |
+| --- | --- | --- |
+| `history_guest_access_mode` | 历史指标匿名访问 | `disabled`、`by_node` |
+| 流量设置 `guest_access_mode` | 流量统计匿名访问 | `disabled`、`by_node` |
+| `uptime_guest_visible` | 卡片 Uptime 和小时明细匿名访问 | `true`、`false`，默认 `true` |
 
-允许值：
-
-- `disabled`
-- `by_node`
-
-`by_node` 仍然受节点的 `is_guest_visible` 限制。也就是说，开全局开关以后，还要在节点上标记允许游客可见。
+三者均受节点 `is_guest_visible` 限制。Uptime 不继承历史指标或流量的访问设置。
 
 `GET /api/statistics/access` 将流量设置映射为响应字段 `traffic_guest_access_mode`。
+
+### Uptime 设置
+
+管理台系统设置提供游客 Uptime 开关，以及黄色警告和红色错误的 SLA 阈值。按每日在线率判断：低于 `uptime_warning_sla` 为黄色，低于 `uptime_error_sla` 为红色；达到警告阈值为绿色，无观测数据为灰色。小时明细使用同一组阈值。
+
+默认阈值分别为 `99` 和 `95`，单位是百分数，允许小数，必须满足 `0 <= error < warning <= 100`。设置写入 PostgreSQL，保存后生效，不需要重启。游客开关和颜色阈值均不影响后台采样。
 
 ## Bearer 可选端点
 
@@ -91,5 +93,6 @@ X-Node-Secret: <node-secret>
 | 品牌信息 `/api/front/brand` | 可见 | 不需要配置 |
 | 前台节点列表和指标 | 只显示游客可见节点 | 节点 `is_guest_visible=true` |
 | 在线率 `/api/metrics/online` | 只显示游客可见节点 | 节点 `is_guest_visible=true` |
+| Uptime `/api/metrics/uptime` 和 `/day` | 只显示游客可见节点 | `uptime_guest_visible=true` + 节点可见 |
 | 历史指标 `/api/metrics/history` | 禁止 | `history_guest_access_mode=by_node` + 节点可见 |
 | 流量统计 `/api/statistics/traffic/*` | 禁止 | 流量设置 `guest_access_mode=by_node` + 节点可见 |

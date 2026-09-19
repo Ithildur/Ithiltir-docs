@@ -16,6 +16,15 @@ slug: /Reference/DashAPI
 { "code": "<string>", "message": "<string>" }
 ```
 
+## 请求约定
+
+- `/api` 及其子路径的响应均带 `Cache-Control: no-store`，包括鉴权和路由错误。API 请求体上限为 24 MiB，部分端点使用更小限制；只在读取请求体时检查大小。
+- 方法名区分大小写。Dash 实现 GET、HEAD、POST、PUT、PATCH、DELETE；其他方法（包括 OPTIONS 和小写 `get`）返回 `501 not_implemented`。已实现的方法访问未知路径返回 `404 not_found`，访问已有端点但方法不匹配返回 `405 method_not_allowed` 和 `Allow`。GET API 不隐含 HEAD。
+- 下面表格中的 `/api/version/` 和管理模块根路径同时接受无尾斜线形式，不发生重定向。节点 ID 的 PATCH、DELETE 也接受尾斜线；其他端点不会自动增加别名。
+- JSON 请求要求合法的 `application/json` 媒体类型，允许合法参数；非法媒体类型或参数返回 `415 unsupported_media_type`。
+- JSON 字段名区分大小写；接口未另行约束时忽略未知字段。重复对象键和无效 UTF-8 会被拒绝。客户端不得依赖响应的空白、对象键顺序或 HTML 字符转义形式。
+- 节点指标入库截止时间为服务端接收后 5 秒，鉴权、读取请求体和等待节点锁均消耗该预算；超时上报返回 `503 service_unavailable`，不写入指标。
+
 ## 鉴权
 
 | 方式 | 用途 |
@@ -35,6 +44,8 @@ slug: /Reference/DashAPI
 | `GET` | `/api/front/metrics` | 可选 Bearer | 当前看板指标 |
 | `GET` | `/api/front/groups` | 可选 Bearer | 前台分组 |
 | `GET` | `/api/metrics/online` | 可选 Bearer | 在线率 |
+| `GET` | `/api/metrics/uptime` | 可选 Bearer | 最近 45 个自然日的 Uptime |
+| `GET` | `/api/metrics/uptime/day` | 可选 Bearer | 指定日期的 24 小时 Uptime |
 | `GET` | `/api/metrics/history` | 可选 Bearer | 历史指标 |
 | `GET` | `/api/statistics/access` | 可选 Bearer | 匿名访问设置 |
 | `GET` | `/api/statistics/traffic/settings` | 可选 Bearer | 流量设置 |
@@ -46,6 +57,14 @@ slug: /Reference/DashAPI
 Bearer 可选端点会把无效 Bearer 当作匿名请求。
 
 `GET /api/statistics/traffic/ifaces?server_id=<id>` 返回该节点历史上报过的网卡名。结果按最后采样时间倒序排列，最近仍在上报的网卡优先；采样时间相同时按网卡名升序排列。历史网卡不会从列表中删除，可继续用于查询旧流量数据。
+
+## 节点 Uptime
+
+- `GET /api/metrics/uptime`（兼容尾斜线）返回 `{enabled, timezone, generated_at, warning_sla, error_sla, nodes}`。每个节点包含字符串 `server_id` 和按日期升序排列的 45 个 `days`，包括今天；每天包含 `date`（`YYYY-MM-DD`）、`percent`（0～100 或 `null`）和 `observed_ms`（已观测毫秒数）。日期使用 `app.timezone`，未配置时使用服务端本地时区；没有观测的日期也始终返回。
+- 已认证请求返回全部未删除节点。游客只有在 `uptime_guest_visible` 开启时才能读取游客可见节点；关闭时日统计返回 `200`、`enabled: false` 和空节点列表。SLA 阈值来自系统设置，不影响采样。
+- `GET /api/metrics/uptime/day?server_id=<id>&date=YYYY-MM-DD`（兼容 `/day/`）返回 `{date, hours, observed_ms}`，两个数组各有 24 项，按当地钟表小时索引。缺失和未来小时的百分比为 `null`、观测毫秒数为零；夏令时跳过的小时为未知，重复小时合并时长。游客访问关闭返回 `403 forbidden`；对游客，隐藏、删除或不存在的节点统一返回 `404 not_found`。节点 ID 非法或日期超出同一 45 天窗口时返回 `400 invalid_request`，数据库故障返回 `503 service_unavailable`。
+- 在线率为 `100 × 在线毫秒数 / 观测毫秒数`，按时长加权。一次上报的有效区间从服务端接收时间延续至 `app.node_offline_threshold` 之后，重叠区间只计算一次；节点首次创建当前指标行时开始统计。只计入已结束的分钟，正常在整分后 6 秒归集，今天和当前小时的值最多约滞后一分钟加归集延时。缺失分钟表示未知，不计入分母；百分比不保证覆盖完整，`observed_ms` 表明已观测时长。既有 `/api/metrics/online` 保持原有契约和数据来源。
+- 卡片的日统计独立每 60 秒刷新，仅在展开某天时加载小时明细。关闭游客访问会隐藏 Uptime；退出登录后丢弃已认证状态下读取的 Uptime 数据。
 
 ## 认证会话
 
@@ -268,7 +287,9 @@ SMART 温度历史只来自后端确认的物理盘。虚拟盘和 RAID 设备�
 | `POST` | `/api/admin/system/themes/{id}/apply` | 应用主题 |
 | `DELETE` | `/api/admin/system/themes/{id}` | 删除主题 |
 
-系统设置包含 `history_guest_access_mode`、`dash_update_channel`、`dash_update_mode`、`logo_url`、`page_title` 和 `topbar_text`。`PATCH` 接受局部更新；`PUT` 是全量替换。
+系统设置包含 `history_guest_access_mode`、`dash_update_channel`、`dash_update_mode`、`logo_url`、`page_title`、`topbar_text`、`uptime_guest_visible`、`uptime_warning_sla` 和 `uptime_error_sla`。`PATCH` 接受局部更新；`PUT` 必须提交前六个字段。
+
+`uptime_guest_visible` 默认为 `true`；警告和错误阈值默认为 `99`、`95`，允许小数，必须满足 `0 <= error < warning <= 100`。PATCH 和 PUT 中省略或为 `null` 的 Uptime 字段保留原值。非法阈值返回 `400 invalid_fields`，整次更新回滚。开关和阈值只控制访问与展示，不改变采样。
 
 新写入的 `logo_url` 只接受同源绝对路径、受支持图片类型的 base64 data URL 或外部 HTTPS URL。存量外部 HTTP Logo 继续读取；`PATCH` 修改其他字段时不会重新校验未提交的 Logo。
 

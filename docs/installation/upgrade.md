@@ -6,6 +6,18 @@ slug: /Install/Upgrade
 
 Ithiltir 有两类升级：Dash 升级和 Node 升级。Dash 数据库迁移只支持前向演进。
 
+## 从 0.3.2 升级到 0.3.3
+
+受管安装使用下方的 Dash 更新命令；更新器会自动执行迁移 `0014`。升级前备份 PostgreSQL、配置文件和通知配置密钥。Uptime 从迁移后开始积累，不会自动还原升级前的在线率。已有节点、CPU、内存及流量历史保持不变。
+
+Uptime 默认对游客可见节点开放。如需关闭，在管理台系统设置中关闭游客 Uptime 开关。
+
+### 0.3.3 预发布实例
+
+早期预发布版的 `node_online` 使用 `online` 布尔列，正式版使用 `online_ms` 和 `observed_ms`。仍使用旧结构的实例必须先停止 Dash、备份并重建 Uptime 分钟表、小时聚合及其任务，再应用正式版 `0014` 并执行 `dash migrate`。该操作会重新开始 Uptime 历史，不重建节点及其他指标历史。
+
+Goose 不会重跑已经执行的 `0014`。已使用时长结构的预发布实例可正常升级并保留 Uptime 历史；无需重建这些表。详细兼容性说明见[主仓库破坏性变更](https://github.com/Ithildur/Ithiltir/blob/0.3.3/docs/breaking-changes_CN.md)。
+
 ## 从 0.2.7 升级
 
 升级前确认：

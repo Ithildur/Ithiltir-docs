@@ -7,6 +7,18 @@ title: Upgrade
 
 Dash database migrations are forward-only. Node updates use a separate lifecycle.
 
+## Upgrading from 0.3.2 to 0.3.3
+
+Use the Dash update commands below for managed installations; the updater applies migration `0014` automatically. Back up PostgreSQL, configuration files, and the notification configuration key first. Uptime history starts after migration and does not reconstruct earlier availability. Existing nodes, CPU, memory, and traffic history are preserved.
+
+Uptime is enabled for guest-visible nodes by default. Disable the guest uptime switch in system settings if needed.
+
+### 0.3.3 Prerelease Installations
+
+Early prereleases used a boolean `online` column in `node_online`; the release uses `online_ms` and `observed_ms`. Installations still using the old schema must stop Dash, back up and recreate the uptime minute table, hourly aggregate and jobs, then apply the release's `0014` and run `dash migrate`. This resets uptime history without rebuilding nodes or other metric history.
+
+Goose does not rerun an already applied `0014`. Prereleases already using the duration schema can upgrade normally and retain their uptime history; those tables do not need rebuilding. See the [repository's breaking changes](https://github.com/Ithildur/Ithiltir/blob/0.3.3/docs/breaking-changes.md) for compatibility details.
+
 ## Upgrading from 0.2.7
 
 Before upgrading, verify:

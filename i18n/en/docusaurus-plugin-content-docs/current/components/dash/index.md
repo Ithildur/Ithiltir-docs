@@ -16,6 +16,14 @@ Ithiltir Dash is a single-instance, self-hosted server monitoring dashboard. One
 - Theme upload, activation, and preview.
 - Node deployment assets and install scripts.
 
+## Node Uptime
+
+The 45 bars at the bottom of each card represent the latest 45 calendar days, including today, in Dash's `app.timezone`. Hover over a day or focus the row and use the arrow keys, Home, or End to inspect its 24 hourly rates. The tooltip appears after hourly data loads; Escape dismisses it.
+
+Uptime measures online durations covered by node reports. It differs from the host time since boot shown below the card title. Today and the current hour include only completed minutes, and daily statistics refresh every 60 seconds. Unobserved periods are gray; system settings control the yellow and red thresholds.
+
+Uptime is enabled for guest-visible nodes by default and can be disabled in system settings. See [Access Control](../../configuration/access.md) for settings and [Data Retention](../../operations/data-retention.md) for calculation and retention rules.
+
 ## Runtime Shape
 
 Default deployment:
