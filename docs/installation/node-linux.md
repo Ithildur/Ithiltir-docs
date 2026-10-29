@@ -111,3 +111,7 @@ rc-service ithiltir-node restart
 ```bash
 /var/lib/ithiltir-node/current/ithiltir-node report list
 ```
+
+## PVE 宿主机
+
+Dash `0.4.0` 配套 Node `0.3.0`。在上述安装命令末尾追加 `--pve` 可安装 root helper；`--no-pve` 停用，省略则保留已有选择。该功能仅支持 PVE/systemd，Node 自更新不替换 helper。VM 历史还要求 gRPC 查询连接，见 [PVE 监控](./pve.md)。

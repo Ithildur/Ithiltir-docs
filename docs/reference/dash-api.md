@@ -300,3 +300,94 @@ SMART 温度历史只来自后端确认的物理盘。虚拟盘和 RAID 设备�
 `POST /api/admin/system/dash-update/run` 请求体包含 `action=update|reinstall`、`channel` 和 `lang`。当前客户端还应提交前次检查返回的 `target_version`、`expected_current_version` 和 `expected_install_revision`，形成不可变计划。旧客户端可以省略三者，由服务端在入队前重新检查。计划过期时任务以 `failure_code=install_changed` 失败，不会改选目标版本。成功启动返回 `202`；已有任务返回 `409`；当前版本执行普通更新返回 `409 dash_update_current`；更新器不可用返回 `503 dash_update_unavailable`。
 
 状态响应可能包含 `phase`、`failure_code` 和 `recovery_path`。`failure_code=recovery_required` 时必须以 root 执行 `dash update recover`。更新任务和事务持久化在 `$DASH_HOME/runtime/dash-update`，不会因 Dash 进程重启丢失。
+
+## PVE 访问权限
+
+系统设置接口（`GET`、`PATCH` 和 `PUT /api/admin/system/settings`）包含布尔字段 `pve_guest_visible`，默认 `false`。PATCH、PUT 中未提交或为 `null` 时保持原值；显式 `false` 关闭游客访问。
+
+`GET /api/virt/{id}` 和 `GET /api/virt/{id}/vms/{vmid}/history` 使用相同权限：
+
+- 管理员使用有效 Bearer token 访问，不受游客开关限制。
+- 游客仅能在开关开启时查看游客可见宿主机的 VM 名称、IP、快照和历史。开关关闭返回 `403 forbidden`；开启后宿主隐藏、不存在或已删除返回 `404 not_found`。
+- 读取访问设置或节点可见性失败返回 `503 virt_unavailable`。响应使用 `Cache-Control: no-store`。
+
+## 虚拟机当前快照
+
+- `POST /api/node/virt`：使用 `X-Node-Secret`，节点归属由密钥决定；JSON body 上限 4 MiB。成功返回 `204`，不携带更新 manifest。
+- `GET /api/virt/{id}`：返回 `{ "snapshot": ..., "received_at": ..., "stale": false }` 及下述图表设置。无快照时，前两项为 `null`、`stale` 为 `true`。
+- `GET /api/admin/nodes/deploy` 的布尔字段 `pve` 表示发布包中是否有与 Node 版本匹配且校验通过的 PVE helper。安装方法见 [PVE 监控](../installation/pve.md)。
+
+上报体和 `snapshot` 使用同一结构：
+
+```json
+{
+  "schema": 1,
+  "provider": "pve",
+  "host": "pve-a",
+  "collected_at": "2026-09-28T10:00:00Z",
+  "last_success_at": "2026-09-28T10:00:00Z",
+  "ttl_seconds": 90,
+  "status": "ok",
+  "vms": [{"id": 100, "name": "guest", "status": "running", "template": false, "collected_at": "2026-09-28T10:00:00Z", "ttl_seconds": 90, "cpus": 2, "cpu_ratio": 0.25}]
+}
+```
+
+`status` 为 `ok` 或 `error`。成功时，`last_success_at` 是最近一次成功读取 VM 清单的时间，可早于快照组装时间 `collected_at`；`vms: []` 表示成功枚举且没有 VM。失败时须提供 `error`，可保留上次成功的清单及时间；没有历史样本时允许 `vms: null`。
+
+### VM 字段
+
+必填字段为 `id`、`name`、`status`、`template`。以下字段可选，缺失表示未知：
+
+| 字段 | 含义 |
+| --- | --- |
+| `qmp_status` | QEMU 状态，保留暂停等状态 |
+| `cpus`、`cpu_ratio` | vCPU 数及 CPU 使用比例；比例按相邻 `/proc` 进程计数差值除以时间和 vCPU 数计算，首次采样未知 |
+| `memory_bytes`、`memory_limit_bytes` | 内存用量和上限；用量取 cgroup 用量减文件缓存，有 balloon 数据时取来宾总量减空闲量 |
+| `disk_capacity_bytes` | 低频查询的 PVE `maxdisk`，不是来宾文件系统用量 |
+| `disk_read_bytes`、`disk_write_bytes`、`net_in_bytes`、`net_out_bytes` | 磁盘和网络累计字节数 |
+| `uptime_seconds` | 运行时长，单位秒 |
+| `net_rate_limits_mbps`、`ips` | 网卡限速和 IP，规则见下文 |
+
+清单保留关机 VM、排除模板。只有 QMP 状态为 `running` 才上报动态指标和 IP。
+
+可选字段 `collected_at`、`ttl_seconds` 记录 VM 的实际观测时间和有效期（helper 使用 90 秒），独立于外层快照。缺少观测时间表示动态指标未知。观测过期后，helper 和 Dash 省略 CPU、内存用量、磁盘/网络计数及运行时长，将状态标为 `unknown`，保留原观测时间和配置；IP 有效期独立判断。
+
+### 网卡限速和 IP
+
+`net_rate_limits_mbps` 按网卡名（如 `net0`）记录限速，值为 JSON 数字，单位 Mbps（1 Mbps = 1,000,000 bit/s），四舍五入至两位小数。PVE `rate` 从 MiB/s 换算，例如 `12.5` 上报 `104.86`。每个值分别适用于该网卡的收、发方向。`0` 表示未配置限速；字段缺失表示未采集到网卡配置。
+
+helper 读取 `/etc/pve/qemu-server/<vmid>.conf` 的当前配置，忽略待应用修改和快照段。限速解析失败时省略该字段并记录日志，基础指标继续上报。
+
+可选 `ips` 数组最多包含 1024 个不重复 IPv4/IPv6 地址，包含私网地址，排除回环、链路本地、未指定、多播及非法地址。IP 来自运行中的 VM Guest Agent。采集频率和退避见 [PVE 监控](../installation/pve.md)。
+
+`ips_collected_at`、`ips_ttl_seconds` 独立描述 IP 有效期，不能用快照 `stale` 代替。helper 使用 900 秒 TTL；查询失败时可沿用未过期样本并保留原时间，过期或已知早于 VM 本次启动的样本会被省略。成功查询无地址时可以只有时间和 TTL 而没有 `ips`。
+
+这两个字段可省略，此时 IP 新鲜度未知。提供时，时间须非零且不晚于外层快照 `collected_at`，可以晚于 VM 的 `collected_at`；TTL 为 1–3600 秒。
+
+### 上报限制和缓存
+
+最多 4096 台 VM，ID 不得重复；名称和宿主名最多 255 字节，状态字符串最多 64 字节，错误最多 1024 字节。计数器须为非负有符号 64 位整数；`ttl_seconds` 为 1–3600 秒；采集时间最多超前服务端 5 分钟。
+
+非法 JSON 或数据返回 `400 invalid_virt`；body 超限返回 `413 body_too_large`；密钥无效返回 `401 unauthorized`，失败鉴权按 IP 限流；快照更新失败返回 `503 virt_unavailable`。
+
+Dash 在 Redis 中缓存每宿主最新一份快照，`--no-redis` 使用进程内存。快照从接收起保留 10 分钟。重复或较旧报告返回 `204`，不覆盖快照或刷新接收时间；采样时间已超过 10 分钟的报告也返回 `204`，不再缓存。
+
+`stale` 根据成功采样时间、接收时间和报告的 `ttl_seconds` 判断，可在缓存删除前变为 `true`。缓存到期或内存模式重启后返回空快照；Dash 重启不延长 Redis 缓存的有效期。Redis 读写失败返回 `503 virt_unavailable`，不切换到内存。
+
+VM 数据不生成独立节点、不更新宿主在线率、不写宿主历史或流量统计。不支持 LXC、HA 配置和 VM 控制。
+
+### VM 图表设置
+
+快照读取接口还返回 `vm_cpu_threshold`（整数，默认 80）、`vm_memory_threshold`（整数，默认 90）、`vm_memory_enabled`（布尔值，默认 false），没有快照时也返回这些字段。`GET /api/admin/nodes` 返回上述持久化节点设置，并提供可选的 `os`、`platform`、`kernel_version` 字段用于识别系统。`PATCH /api/admin/nodes/{id}` 接受这三个设置字段；未提交或为 null 时保留原值。阈值必须为 1–100 的整数，范围错误返回 `400 invalid_vm_threshold`，字段类型错误返回 `400 invalid_request`。
+
+这些设置用于 VM 历史图表标注，不发送通知；管理台仅对 PVE 节点启用设置入口。CPU 阈值为百分比。内存标注需开启，并按每个历史点的 `memory_limit_bytes` 计算；上限缺失或为零时不参与判断。标注统计所选 AVERAGE/MAX 值严格超过阈值的采样点数，缺失值不补零，点数不代表持续超限时长。
+
+## PVE 历史查询
+
+`GET /api/virt/{id}/vms/{vmid}/history` 从已连接节点读取 PVE RRD。参数：`timeframe=hour|day|week|month|year`，默认 `hour`；`consolidation=AVERAGE|MAX`，默认 `AVERAGE`。
+
+响应包含 `source: "pve_rrd"`、`vm_id`、`timeframe`、`consolidation`、`collected_at`、`points`。`collected_at` 是读取时间；每点的 `timestamp` 是采样时间，可选字段为 `cpu_ratio`、`memory_bytes`、`memory_limit_bytes`、`disk_read_bytes_per_second`、`disk_write_bytes_per_second`、`net_in_bytes_per_second`、`net_out_bytes_per_second`。缺失值表示未知，历史聚合和分辨率由 PVE 决定。
+
+历史查询错误：`400 invalid_query`/`invalid_id`、`403 forbidden`、`404 not_found`（节点）/`vm_not_found`（VM）、`429 busy`、`501 unsupported`、`503 node_offline`/`virt_unavailable`、`504 deadline_exceeded`、`502 source_unavailable`/`invalid_result`。查询要求本地新鲜的成功 VM 清单及支持历史查询的 helper 服务。Dash 不持久化 VM 历史，不将其计入宿主流量、在线率或计费。
+
+`GET /api/admin/nodes/{id}/virt/capabilities` 仅供管理员进行安装诊断，返回 `{"connected":true,"pve_history":true,"version":"...","helper_version":"..."}`；会话断开时能力标志为 false。缺少鉴权时返回 `401 unauthorized`。

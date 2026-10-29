@@ -14,6 +14,7 @@ Ithiltir 的部署对象有两个：Dash 主控端和 Ithiltir-node 节点端。
 | 单机生产 | Dash、PostgreSQL、TimescaleDB、Redis 同机 | [单机 all-in-one 部署](./all-in-one.md) |
 | 标准生产 | Dash + 反向代理 + 独立数据库运维 | [生产部署检查清单](./production-deployment.md) |
 | 源码验证 | 开发、排错、验证配置 | [源码开发环境](../guides/source-development.md) |
+| PVE 虚拟机 | QEMU VM 快照、Guest Agent IP 和历史查询 | [PVE 监控](./pve.md) |
 
 ## 部署顺序
 

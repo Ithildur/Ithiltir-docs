@@ -31,6 +31,7 @@ Ithiltir Dash 是单实例应用。根入口只启动一个 HTTP 进程，该进
 | `/api/metrics` | 历史指标和在线率查询 |
 | `/api/statistics` | 统计访问策略和流量统计查询 |
 | `/api/node` | 节点上报和节点身份读取 |
+| `/api/virt` | 按宿主可见性授权的 VM 快照和历史查询 |
 | `/api/admin` | 管理台写操作 |
 | `/theme` | 当前主题 CSS、主题 manifest 和预览图 |
 | `/deploy` | 安装脚本和节点发布资产 |
@@ -97,3 +98,17 @@ HTTP 查询主要读取小时聚合，并包含尚未物化的分钟数据。看
 ## 前端和反向代理
 
 默认部署边界是同源路径。生产反向代理应把 `/api`、`/theme`、`/deploy` 转给 Dash 后端，`/` 保持为 Dash SPA。跨域后端地址需要同时配置 CORS、cookie 和 CSRF 策略。`app.public_url` 必须是根路径 URL，不支持 `/dash` 这类路径前缀。
+
+## gRPC 与 PVE
+
+HTTP 与 gRPC 共用 `nodeingest.Receiver` 处理鉴权、验证和宿主指标写入。`nodesession.Hub` 管理进程内查询会话；断开时取消待完成查询，不重放。会话心跳不刷新宿主在线状态。
+
+PVE root helper 在内存中保存各 VM 的观测结果，通过 Unix socket 提供给非特权 Node。Node 独立上报到 `/api/node/virt`；Dash 在 Redis 或 `--no-redis` 内存中缓存最新快照 10 分钟，重复或更旧报告不续期。
+
+VM 历史经查询会话按需读取 PVE RRD，访问权限由 `/api/virt/{id}` 父级统一检查。Dash 仅持久化 PVE 游客开关和节点图表阈值，VM 数据不写入 PostgreSQL，不参与宿主计费和 Uptime。
+
+采样和部署配置见 [PVE 监控](../installation/pve.md)。
+
+## 通知存储与投递
+
+通知配置以密文保存于 `config_sealed`；告警全局设置由迁移初始化，读取不修改配置。通知 worker 每 3 秒处理到期任务，按渠道及触发/恢复类型合并 Telegram 和邮件，Webhook 和探针逐条发送。恢复通知等待对应触发通知完成。

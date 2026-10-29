@@ -25,6 +25,7 @@ const sidebars = {
         'installation/dash-linux',
         'installation/node-rollout',
         'installation/node-linux',
+        'installation/pve',
         'installation/node-macos',
         'installation/node-windows',
         'installation/reverse-proxy',

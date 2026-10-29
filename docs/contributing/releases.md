@@ -24,7 +24,7 @@ MAJOR.MINOR.PATCH[-PRERELEASE][+BUILD]
 Dash 发布包会携带 Ithiltir-node 资产。打包时可以显式指定：
 
 ```bash
-bash scripts/package.sh --version 1.2.3 --node-version 1.2.3 -o release -t linux/amd64 --tar-gz
+bash scripts/package.sh --version 0.4.0 --node-version 0.3.0 --with-pve -o release -t linux/amd64 --tar-gz
 ```
 
 省略 `--node-version` 时，脚本从 `https://github.com/Ithildur/Ithiltir-node.git` 取最新兼容 tag：
@@ -37,8 +37,9 @@ bash scripts/package.sh --version 1.2.3 --node-version 1.2.3 -o release -t linux
 
 ```bash
 bash scripts/package.sh \
-  --version 1.2.3-alpha.1 \
-  --node-version 1.2.3-alpha.1 \
+  --version 0.4.0 \
+  --node-version 0.3.0 \
+  --with-pve \
   --node-local \
   -o release \
   -t linux/amd64 \
@@ -57,6 +58,8 @@ Ithiltir-node-windows-amd64.exe
 Ithiltir-node-windows-arm64.exe
 Ithiltir-runner-windows-amd64.exe
 Ithiltir-runner-windows-arm64.exe
+Ithiltir-pve-cache-linux-amd64
+Ithiltir-pve-cache-linux-arm64
 ```
 
 Windows 保留 `.exe`，checksums 单独上传。
@@ -78,6 +81,7 @@ Dash 发布包包含：
 - `update_dash_linux.sh`。
 - `deploy/<platform>/install.*`。
 - 5 个 Node 二进制和 2 个 Windows runner。
+- 两个 Linux PVE helper，以及 `deploy/linux/pve-cache.env`。
 
 发布格式 v1 的 `release.env` 包含 Dash 版本、Node 版本、目标 OS/arch 和 7 个 Node/runner 资产的 SHA-256。候选 `bin/dash` 必须报告与 manifest 一致的 Dash 和 Node 版本。
 
@@ -104,3 +108,7 @@ Ithiltir-node 稳定发布构建可以显式传入发布说明文件：
 ```
 
 稳定发布未传 `--release-notes` 时，构建脚本会生成临时发布说明文件。预发布仍按 GoReleaser 默认行为处理。
+
+## Dash 0.4.0 / Node 0.3.0
+
+先发布 Node `0.3.0` 及同版本的两个 Linux PVE helper，再以 `--with-pve` 打包发布 Dash `0.4.0`。发布前验证 `deploy/linux/pve-cache.env` 及两个 helper 的版本和 SHA-256。资产布局见[构建](../guides/build.md)，数据库迁移见[升级](../installation/upgrade.md)。

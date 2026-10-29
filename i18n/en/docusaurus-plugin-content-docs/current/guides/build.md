@@ -31,8 +31,9 @@ go build ./cmd/dash
 
 ```bash
 bash scripts/package.sh \
-  --version 1.2.3 \
-  --node-version 1.2.3 \
+  --version 0.4.0 \
+  --node-version 0.3.0 \
+  --with-pve \
   -o release \
   -t linux/amd64 \
   --tar-gz
@@ -46,6 +47,7 @@ Common options:
 | `--version VERSION` | Inject Dash version |
 | `--use-git-tag` | Use the unique tag on the current commit as version |
 | `--node-version VERSION` | Bundled Ithiltir-node version |
+| `--with-pve` | Bundle matching Linux PVE helpers and their checksum manifest |
 | `--node-local` | Use locally built node assets |
 | `--release` | Release mode, requires `--use-git-tag` |
 
@@ -56,7 +58,7 @@ Each package writes format-v1 `release.env` with Dash/Node versions, target OS/a
 PowerShell package script:
 
 ```powershell
-powershell -File scripts/package.ps1 -Version 1.2.3 -NodeVersion 1.2.3 -OutDir release -Targets linux/amd64 -Zip
+powershell -File scripts/package.ps1 -Version 0.4.0 -NodeVersion 0.3.0 -WithPVE -OutDir release -Targets linux/amd64 -Zip
 ```
 
 ## Ithiltir-node
@@ -66,7 +68,7 @@ Build config is in `.goreleaser.yaml`.
 Local build:
 
 ```bash
-./scripts/build.sh --version 1.2.3-alpha.1
+./scripts/build.sh --version 0.3.0
 ```
 
 Release build:
@@ -81,7 +83,7 @@ Windows:
 .\scripts\build.ps1 -UseGitTag -Release
 ```
 
-The script installs GoReleaser `v2.15.2` when missing.
+The script installs GoReleaser `v2.17.1` when missing.
 
 ## Docs
 
@@ -93,3 +95,14 @@ npm run build
 Release checks also run Go tests, frontend lint/typecheck/build, package the target, and verify the manifest, seven bundled Node/runner assets, frontend entries, and install/update scripts are present and non-empty.
 
 Docs build does not require tests first. Code changes should add tests when they affect public contracts, state machines, error paths, concurrency, serialization, or historical bug areas.
+
+## PVE Release Assets
+
+The release workflow enables `--with-pve`, as shown in the packaging commands above. Helpers share Node's `--node-version` and use these assets:
+
+| Release asset | Local path |
+| --- | --- |
+| `Ithiltir-pve-cache-linux-amd64` | `linux/pve_cache_linux_amd64` |
+| `Ithiltir-pve-cache-linux-arm64` | `linux/pve_cache_linux_arm64` |
+
+With `--with-pve`, either missing helper fails packaging. `deploy/linux/pve-cache.env` records `format_version=1`, `node_version`, and both helper SHA-256 values; `release.env` v1 still records the seven Node/runner assets. See [Release Conventions](../contributing/releases.md) for release order.

@@ -32,15 +32,16 @@ Authorization: Bearer <access_token>
 
 ## 匿名访客
 
-匿名历史指标、流量统计和 Uptime 分别控制：
+匿名历史指标、流量统计、Uptime 和 PVE 分别控制：
 
 | 设置 | 作用 | 允许值 |
 | --- | --- | --- |
 | `history_guest_access_mode` | 历史指标匿名访问 | `disabled`、`by_node` |
 | 流量设置 `guest_access_mode` | 流量统计匿名访问 | `disabled`、`by_node` |
 | `uptime_guest_visible` | 卡片 Uptime 和小时明细匿名访问 | `true`、`false`，默认 `true` |
+| `pve_guest_visible` | VM 名称、IP、快照及历史匿名访问 | `true`、`false`，默认 `false` |
 
-三者均受节点 `is_guest_visible` 限制。Uptime 不继承历史指标或流量的访问设置。
+四者均受节点 `is_guest_visible` 限制，PVE 和 Uptime 不继承历史指标或流量的访问设置。
 
 `GET /api/statistics/access` 将流量设置映射为响应字段 `traffic_guest_access_mode`。
 
@@ -57,6 +58,7 @@ Authorization: Bearer <access_token>
 - `/api/front/*`
 - `/api/metrics/*`
 - `/api/statistics/*`
+- `/api/virt/*`
 
 缺失、格式错误、过期、已撤销或无法通过校验的 Bearer token 会被当作匿名请求处理。客户端不能仅凭 HTTP 200 判断自己拿到了管理员视图。
 
@@ -74,6 +76,7 @@ Authorization: Bearer <access_token>
 /api/node/identity
 /api/node/metrics
 /api/node/static
+/api/node/virt
 ```
 
 必须携带：
@@ -96,3 +99,6 @@ X-Node-Secret: <node-secret>
 | Uptime `/api/metrics/uptime` 和 `/day` | 只显示游客可见节点 | `uptime_guest_visible=true` + 节点可见 |
 | 历史指标 `/api/metrics/history` | 禁止 | `history_guest_access_mode=by_node` + 节点可见 |
 | 流量统计 `/api/statistics/traffic/*` | 禁止 | 流量设置 `guest_access_mode=by_node` + 节点可见 |
+| VM 快照和历史 `/api/virt/*` | 禁止 | `pve_guest_visible=true` + 宿主节点可见 |
+
+`GET /api/statistics/access` 同时返回 `pve_guest_visible`。PVE 游客开关关闭时返回 `403 forbidden`；开启但宿主隐藏、不存在或已删除时返回 `404 not_found`。管理员不受游客开关限制；capabilities 接口仅管理员可用。设置见 [PVE 监控](../installation/pve.md)。

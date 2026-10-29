@@ -95,3 +95,19 @@ http:
 ## 节点安装脚本
 
 节点安装脚本的下载地址和上报地址都依赖 `app.public_url`。改域名、端口或 HTTPS 后，要同步更新配置并重启 Dash，否则管理台显示的安装命令会继续使用旧地址。
+
+## Node gRPC
+
+Node `ITHILTIR_NODE_TRANSPORT=grpc` 或 `auto` 要求代理支持 HTTP/2 和 gRPC。在已启用 TLS/HTTP/2 的 Nginx server 中加入：
+
+```nginx
+location /ithiltir.node.v1.Node/ {
+    grpc_pass grpc://127.0.0.1:8080;
+    grpc_set_header Host $host;
+    grpc_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    grpc_read_timeout 75s;
+    grpc_send_timeout 75s;
+}
+```
+
+替换为实际 Dash 后端地址，保留现有 HTTP locations。RPC 使用根路径，不继承上报 URL 的自定义前缀；`app.grpc_port` 不启用第二监听端口。gRPC/auto 不会因 TLS 或鉴权失败改用明文。普通 HTTP 代理配置只能保证 HTTP 上报；[PVE 历史](./pve.md) 需要查询流正常连接。

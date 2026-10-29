@@ -297,3 +297,94 @@ New `logo_url` values accept same-origin absolute paths, supported base64 image 
 `GET /api/admin/system/dash-update/check` returns the target version and opaque `install_revision`. `POST /run` accepts `action=update|reinstall`, `channel`, `lang`, and the immutable plan fields from the check response. A stale plan finishes with `failure_code=install_changed` and never selects another target.
 
 Update jobs and transactions persist under `$DASH_HOME/runtime/dash-update`. `failure_code=recovery_required` requires root to run `dash update recover`.
+
+## PVE Access
+
+System settings (`GET`, `PATCH`, and `PUT /api/admin/system/settings`) include `pve_guest_visible`, a boolean defaulting to `false`. Omitted or `null` values preserve the current setting in PATCH and PUT; explicit `false` disables guest access.
+
+`GET /api/virt/{id}` and `GET /api/virt/{id}/vms/{vmid}/history` share the same access policy:
+
+- Administrators use a valid Bearer token and are not restricted by the guest switch.
+- Guests can view VM names, IPs, snapshots, and history only when the switch is enabled and the host is guest-visible. A disabled switch returns `403 forbidden`; with it enabled, hidden, missing, or deleted hosts return `404 not_found`.
+- Access-setting or visibility lookup failures return `503 virt_unavailable`. Responses use `Cache-Control: no-store`.
+
+## Virtual machine snapshots
+
+- `POST /api/node/virt` authenticates with `X-Node-Secret`; the key determines the owning host. Its JSON body limit is 4 MiB. Success returns `204` without an update manifest.
+- `GET /api/virt/{id}` returns `{ "snapshot": ..., "received_at": ..., "stale": false }` plus the chart settings below. Without a snapshot, the first two fields are `null` and `stale` is `true`.
+- The `pve` boolean in `GET /api/admin/nodes/deploy` indicates whether the package contains verified PVE helpers matching the Node version. See [PVE Monitoring](../installation/pve.md) for installation.
+
+The report and returned snapshot have the same shape:
+
+```json
+{
+  "schema": 1,
+  "provider": "pve",
+  "host": "pve-a",
+  "collected_at": "2026-09-28T10:00:00Z",
+  "last_success_at": "2026-09-28T10:00:00Z",
+  "ttl_seconds": 90,
+  "status": "ok",
+  "vms": [{"id": 100, "name": "guest", "status": "running", "template": false, "collected_at": "2026-09-28T10:00:00Z", "ttl_seconds": 90, "cpus": 2, "cpu_ratio": 0.25}]
+}
+```
+
+`status` is `ok` or `error`. On success, `last_success_at` is the latest successful inventory read time and may precede the snapshot assembly time, `collected_at`; `vms: []` means a successful empty inventory. Failures require `error` and may retain the last successful inventory and time; without an earlier sample, `vms: null` is allowed.
+
+### VM Fields
+
+Required fields are `id`, `name`, `status`, and `template`. The following fields are optional; missing values mean unknown:
+
+| Field | Meaning |
+| --- | --- |
+| `qmp_status` | QEMU state, including paused states |
+| `cpus`, `cpu_ratio` | vCPU count and CPU usage ratio; the ratio uses consecutive `/proc` process counter deltas divided by elapsed time and vCPU count. The first sample is unknown |
+| `memory_bytes`, `memory_limit_bytes` | Memory usage and limit; usage is cgroup usage minus file cache, or guest total minus free memory when balloon data is available |
+| `disk_capacity_bytes` | PVE `maxdisk` from a low-frequency query, not guest filesystem usage |
+| `disk_read_bytes`, `disk_write_bytes`, `net_in_bytes`, `net_out_bytes` | Cumulative disk and network bytes |
+| `uptime_seconds` | Uptime in seconds |
+| `net_rate_limits_mbps`, `ips` | NIC rate limits and IPs, described below |
+
+The inventory includes stopped VMs and excludes templates. Dynamic metrics and IPs require QMP status `running`.
+
+Optional `collected_at` and `ttl_seconds` record the VM's observation time and lifetime (90 seconds in the helper), independently of the enclosing snapshot. Missing observation metadata means live metrics are unknown. On expiry, the helper and Dash omit CPU, memory usage, disk/network counters, and uptime, and set the state to `unknown`. The original observation time and configuration remain; IP freshness is evaluated separately.
+
+### NIC Rate Limits and IPs
+
+`net_rate_limits_mbps` maps NIC names (such as `net0`) to JSON numbers in Mbps (1 Mbps = 1,000,000 bit/s), rounded to two decimal places. PVE `rate` is converted from MiB/s: `12.5` becomes `104.86`. Each value applies separately to that NIC's receive and transmit directions. Zero means no configured limit; an absent field means NIC configuration was not collected.
+
+The helper reads the current configuration in `/etc/pve/qemu-server/<vmid>.conf`, ignoring pending changes and saved snapshots. Invalid rate values are logged and omit this field; basic metrics reporting continues.
+
+Optional `ips` contains up to 1024 unique IPv4/IPv6 addresses, including private addresses and excluding loopback, link-local, unspecified, multicast, and invalid addresses. IPs come from the running VM's Guest Agent. See [PVE Monitoring](../installation/pve.md) for collection intervals and backoff.
+
+`ips_collected_at` and `ips_ttl_seconds` describe IP freshness independently of snapshot `stale`. The helper uses a 900-second TTL. Failed queries may reuse an unexpired sample with its original time; expired samples and samples known to predate the VM's current boot are omitted. A successful empty query may have a timestamp and TTL without `ips`.
+
+These two fields may be omitted, leaving IP freshness unknown. When provided, the timestamp must be nonzero and no later than the enclosing snapshot's `collected_at`, but may be later than the VM's `collected_at`. TTL must be 1–3600 seconds.
+
+### Report Limits and Caching
+
+Limits: 4096 unique VM IDs; 255-byte names and host names; 64-byte state strings; 1024-byte errors. Counters must be nonnegative signed 64-bit integers; `ttl_seconds` must be 1–3600 seconds; collection time may be at most 5 minutes ahead of the server.
+
+Invalid JSON or data returns `400 invalid_virt`; oversized bodies return `413 body_too_large`; invalid secrets return `401 unauthorized`, with failed authentication rate limited by IP. Snapshot update failures return `503 virt_unavailable`.
+
+Dash caches the latest snapshot per host in Redis, or in process memory with `--no-redis`, for 10 minutes from receipt. Duplicate or older reports return `204` without replacing the snapshot or refreshing its receipt time. Reports collected more than 10 minutes ago also return `204` and are not cached.
+
+`stale` uses the successful sample time, receipt time, and reported `ttl_seconds`; it can become `true` before cache removal. Cache expiry or a memory-mode restart returns an empty snapshot. Restarting Dash does not extend Redis cache expiry. Redis read/write failures return `503 virt_unavailable` without an in-memory fallback.
+
+VM data does not create nodes, refresh host uptime, or enter host history or traffic statistics. LXC, HA configuration, and VM controls are unsupported.
+
+### VM Chart Settings
+
+The snapshot read endpoint also returns `vm_cpu_threshold` (integer, default 80), `vm_memory_threshold` (integer, default 90), and `vm_memory_enabled` (boolean, default false), including when no snapshot exists. `GET /api/admin/nodes` returns these persisted node settings plus optional `os`, `platform`, and `kernel_version` for platform identification. `PATCH /api/admin/nodes/{id}` accepts the three settings; omitted or null fields remain unchanged. Thresholds must be integers from 1 to 100; out-of-range values return `400 invalid_vm_threshold`, and invalid field types return `400 invalid_request`.
+
+These settings annotate VM history charts without sending notifications; the admin console enables the settings entry only for PVE nodes. CPU thresholds are percentages. Memory annotations must be enabled and use each point's `memory_limit_bytes`; missing or zero limits are excluded. Annotations count selected AVERAGE/MAX samples strictly above the threshold. Missing values are not zero, and sample counts do not measure continuous exceedance duration.
+
+## PVE history queries
+
+`GET /api/virt/{id}/vms/{vmid}/history` reads PVE RRD from the connected node. Parameters: `timeframe=hour|day|week|month|year` (default `hour`), `consolidation=AVERAGE|MAX` (default `AVERAGE`).
+
+Results contain `source: "pve_rrd"`, `vm_id`, `timeframe`, `consolidation`, `collected_at`, and `points`. `collected_at` is the fetch time; each point's `timestamp` is its sample time. Optional point fields are `cpu_ratio`, `memory_bytes`, `memory_limit_bytes`, `disk_read_bytes_per_second`, `disk_write_bytes_per_second`, `net_in_bytes_per_second`, and `net_out_bytes_per_second`. Missing values remain unknown. PVE determines historical aggregation and resolution.
+
+History errors: `400 invalid_query`/`invalid_id`, `403 forbidden`, `404 not_found` (node)/`vm_not_found` (VM), `429 busy`, `501 unsupported`, `503 node_offline`/`virt_unavailable`, `504 deadline_exceeded`, `502 source_unavailable`/`invalid_result`. Queries require a fresh successful local VM inventory and a running helper service with history support. Dash does not persist VM history or include it in host traffic, uptime or billing.
+
+`GET /api/admin/nodes/{id}/virt/capabilities` is administrator-only and returns `{"connected":true,"pve_history":true,"version":"...","helper_version":"..."}` for installation diagnostics; disconnected sessions return false flags. Missing authentication returns `401 unauthorized`.

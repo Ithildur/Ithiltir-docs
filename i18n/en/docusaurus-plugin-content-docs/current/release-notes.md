@@ -9,6 +9,23 @@ Release Notes record version changes that affect deployment, upgrades, configura
 
 ## Dash
 
+### 0.4.0
+
+#### PVE and Node Transport
+
+- Pairs with Node `0.3.0` for QEMU VM inventory, details, IPs, and PVE RRD history, opened from the host's PVE icon.
+- gRPC shares the HTTP listener. Node still defaults to HTTP; history requires `grpc` or `auto` and compatible proxy forwarding.
+- Release packages bundle PVE helpers. Append `--pve` to the Linux installation command to enable them.
+- PVE guest access defaults to disabled and still respects host visibility when enabled. VM CPU/memory thresholds annotate history charts without sending alerts.
+
+#### Upgrade and Notifications
+
+- Upgrading from `0.3.3` requires migration `0015`. Reverting only the binary afterward is unsupported. See [Upgrade](./installation/upgrade.md) for migration details and recovery steps.
+- Telegram and email notifications are grouped by channel and trigger/recovery transition. Webhooks and probes are still sent individually; recovery notifications wait for their opening notification to finish.
+- Source builds require Go `1.27.3` and Bun `1.3.11`.
+
+See [PVE Monitoring](./installation/pve.md) for deployment and supported features.
+
 ### 0.3.3
 
 Release date: 2026-09-19
@@ -204,6 +221,14 @@ GitHub Release: [Ithiltir 0.2.6](https://github.com/Ithildur/Ithiltir/releases/t
 - Back up the database before production upgrades. The release-package updater runs migrations; manual binary replacement requires manual migration.
 
 ## Node
+
+### 0.3.0
+
+- Pairs with Dash `0.4.0`, adding gRPC and transport negotiation while keeping HTTP as the default. Live metrics requests time out after 7 seconds; after a timeout, the next round starts as soon as the current one finishes.
+- Linux releases add amd64/arm64 `pve-cache` assets that serve VM snapshots and PVE RRD history queries over a Unix socket. VM metrics and Guest Agent IPs expire independently.
+- Node self-update does not replace the root helper; reinstall with `--pve` to update it.
+
+See [PVE Monitoring](./installation/pve.md) for installation and sampling parameters, and [Node Protocol](./reference/node-protocol.md) for transport details.
 
 ### 0.2.4
 

@@ -93,7 +93,7 @@ Static info is reported once after node startup. If static collection is incompl
 
 ## Success Rules
 
-The node treats only `200 OK` as success. Non-200 responses affect only the current target and do not block other targets.
+Host metrics, static data, and identity HTTP requests require `200 OK`; VM reports to `/api/node/virt` succeed with `204`. Failures affect only the current target and do not block other targets.
 
 The `/api/node/metrics` response body only affects updates:
 
@@ -145,3 +145,47 @@ Manifests matching the currently reported version are ignored first. If multiple
 Dash clears the pending upgrade task after the node reports the exact target version or a higher SemVer precedence. Different build metadata at the same SemVer precedence is treated as a distinct node binary and can still be delivered.
 
 After a successful update, Windows runner replaces `%ProgramData%\Ithiltir-node\bin\ithiltir-node.exe`. Linux/macOS atomically switches `/var/lib/ithiltir-node/current`, then the existing runtime manager restarts Node.
+
+## Node gRPC transport
+
+The `ithiltir.node.v1.Node` service uses HTTP/2 on Dash's existing HTTP listener; `app.grpc_port` has no effect. See [Reverse Proxy](../installation/reverse-proxy.md) for TLS proxy configuration. The protocol is defined in Dash's `protocol/node.proto`; `bash scripts/generate-node-protocol.sh [node-repository]` synchronizes both repositories with pinned generator versions.
+
+### RPC Requests and Responses
+
+Requests authenticate with `x-node-secret` metadata.
+
+| RPC | Successful response |
+| --- | --- |
+| `Identify(Empty)` | `install_id`, `created`, `protocol_version: 1` |
+| `Metrics(Report)` | `Reply.json` contains the existing JSON response and update manifest |
+| `Static(Report)`, `Virt(Report)` | `Empty` |
+
+`Report.json` carries the existing UTF-8 JSON, preserving missing fields and 64-bit integers. Metrics and static payloads are limited to 1 MiB; VM snapshots to 4 MiB. Validation, receipt deadlines, and write rules match HTTP.
+
+Authentication failures return `UNAUTHENTICATED` and are rate limited by IP. Rate limits or oversized messages return `RESOURCE_EXHAUSTED`; invalid JSON or report fields return `INVALID_ARGUMENT`. Other processing failures return `UNAVAILABLE` or `INTERNAL`; VM snapshot storage failures return `UNAVAILABLE` with `virt_unavailable`.
+
+### Query Sessions
+
+`Connect` is a node-initiated bidirectional query stream. Capabilities must arrive within 5 seconds; reconnection replaces the previous session for that node. Dash checks credentials before dispatching queries and every second while connected. Both sides send heartbeats every 20 seconds and close the connection after 60 seconds without a message. Heartbeats do not refresh metrics or uptime.
+
+Queries have a 10-second total deadline, at most 32 pending per node, and a 2 MiB result limit. Disconnection fails pending queries without replay.
+
+### Transport Selection
+
+Set `ITHILTIR_NODE_TRANSPORT` on Node:
+
+| Value | Behavior |
+| --- | --- |
+| `http` (default) | Report over HTTP |
+| `grpc` | Use RPC only |
+| `auto` | Probe `Identify` before reporting; success fixes gRPC for that target's process lifetime. An unavailable or incompatible probe can select HTTP on the same URL and scheme |
+
+`auto` does not switch to HTTP after authentication or authorization failure. Neither `auto` nor `grpc` downgrades to plaintext. See “HTTPS Fallback” above for `http` fallback rules.
+
+Node disables gRPC policy retries, but gRPC may transparently retry calls known not to have been processed. An uncertain metrics response is not replayed over another transport; subsequent rounds read the latest metrics. VM snapshots are deduplicated by sample time.
+
+## VM Reporting
+
+With `ITHILTIR_NODE_PVE_SOCKET`, Node reads VM observations from the local helper. HTTP reports independently to the target's sibling `/virt` endpoint, using `X-Node-Secret` and returning `204` on success; gRPC uses `Virt(Report)`. VM reports do not carry updates or refresh host uptime; failures retry with independent backoff.
+
+Host metrics requests time out after 7 seconds; after a timeout, the next round starts as soon as the current one finishes. See [Dash API](./dash-api.md) for VM fields, lifetimes, and errors, and [PVE Monitoring](../installation/pve.md) for installation.

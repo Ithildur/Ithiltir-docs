@@ -6,6 +6,14 @@ slug: /Install/Upgrade
 
 Ithiltir 有两类升级：Dash 升级和 Node 升级。Dash 数据库迁移只支持前向演进。
 
+## 从 0.3.3 升级到 0.4.0
+
+升级前备份 PostgreSQL，并单独保存 `$DASH_HOME/configs/notify-config.key`。受管 `dash update` 停止旧进程后应用 `0015`，再启动新版本。该迁移新增 PVE 访问和节点 VM 图表设置，删除已无业务用途的租约、通知 `config` 占位列和固定全局账期列；已有通知密文、渠道设置、节点账期及历史保持不变。
+
+应用 `0015` 后不能只换回 `0.3.3` 二进制。更新中断时执行 `dash update recover`；迁移开始后，恢复会继续完成新版本安装。
+
+现有 HTTP Node 可继续上报。PVE 与 gRPC 配套 Node `0.3.0`；root helper 不随 Node 自更新替换，需按 [PVE 监控](./pve.md) 带 `--pve` 重装。PVE 游客访问默认关闭。
+
 ## 从 0.3.2 升级到 0.3.3
 
 受管安装使用下方的 Dash 更新命令；更新器会自动执行迁移 `0014`。升级前备份 PostgreSQL、配置文件和通知配置密钥。Uptime 从迁移后开始积累，不会自动还原升级前的在线率。已有节点、CPU、内存及流量历史保持不变。

@@ -101,3 +101,17 @@ https://dash.example.com
 It affects browser links, install script output, node target URLs, and reverse-proxy behavior. It must not contain a path prefix such as `/dash`.
 
 Keep browser API calls same-origin. Cross-origin backend addresses require CORS, cookie, and CSRF policies to be configured together.
+
+## gRPC and PVE
+
+HTTP and gRPC share `nodeingest.Receiver` for authentication, validation, and host metric writes. `nodesession.Hub` manages query sessions in process memory; disconnection cancels pending queries without replay. Session heartbeats do not refresh host online state.
+
+The root PVE helper keeps each VM's observations in memory and serves them to unprivileged Node over a Unix socket. Node reports independently to `/api/node/virt`; Dash caches the latest snapshot for 10 minutes in Redis or `--no-redis` memory. Duplicate or older reports do not extend expiry.
+
+VM history is read from PVE RRD on demand through query sessions, with access checked by the `/api/virt/{id}` parent. Dash persists only the PVE guest setting and per-node chart thresholds. VM data is not written to PostgreSQL or included in host billing or uptime.
+
+See [PVE Monitoring](../installation/pve.md) for sampling and deployment configuration.
+
+## Notification Storage and Delivery
+
+Notification configuration is encrypted in `config_sealed`. Migrations initialize global alert settings; reads do not modify them. Every 3 seconds, the notification worker processes due work, grouping Telegram and email by channel and trigger/recovery transition. Webhooks and probes are sent individually. Recovery notifications wait for their opening notification to finish.

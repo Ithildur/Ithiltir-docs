@@ -15,6 +15,7 @@ Ithiltir has two deployment targets: the Dash control plane and Ithiltir-node in
 | Single-host production | Dash, PostgreSQL, TimescaleDB, and Redis on one host | [All-in-One Deployment](./all-in-one.md) |
 | Standard production | Dash + reverse proxy + managed database operations | [Production Deployment Checklist](./production-deployment.md) |
 | Source validation | Development, troubleshooting, config validation | [Source Development](../guides/source-development.md) |
+| PVE VMs | QEMU snapshots, Guest Agent IPs, and history queries | [PVE Monitoring](./pve.md) |
 
 ## Deployment Order
 

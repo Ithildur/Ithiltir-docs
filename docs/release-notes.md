@@ -8,6 +8,23 @@ slug: /ReleaseNotes
 
 ## Dash
 
+### 0.4.0
+
+#### PVE 与节点通信
+
+- 配套 Node `0.3.0`，新增 QEMU VM 清单、详情、IP 和 PVE RRD 历史页面，从宿主机 PVE 图标进入。
+- gRPC 与 HTTP 共用监听地址。Node 默认仍使用 HTTP，历史查询需启用 `grpc` 或 `auto` 并配置代理转发。
+- 正式包携带 PVE helper，在 Linux 安装命令末尾加 `--pve` 启用。
+- PVE 游客访问默认关闭，开启后仍受宿主机可见性限制。VM CPU/内存阈值仅用于历史图表标注，不发送告警。
+
+#### 升级与通知
+
+- 从 `0.3.3` 升级须应用迁移 `0015`。应用后不能仅换回旧二进制，迁移内容和恢复步骤见[升级](./installation/upgrade.md)。
+- Telegram 和邮件通知按渠道及触发/恢复类型合并发送；Webhook 和渠道探针仍逐条发送，恢复通知等待对应触发通知完成。
+- Go 源码构建基线为 `1.27.3`，Bun 为 `1.3.11`。
+
+部署和支持范围见 [PVE 监控](./installation/pve.md)。
+
 ### 0.3.3
 
 发布日期：2026-09-19
@@ -203,6 +220,14 @@ GitHub 发布页：[Ithiltir 0.2.6](https://github.com/Ithildur/Ithiltir/release
 - 生产升级仍应先备份数据库。发布包更新脚本会执行迁移；手工替换二进制后必须手工执行迁移。
 
 ## Node
+
+### 0.3.0
+
+- 配套 Dash `0.4.0`，新增 gRPC 及自动协商，默认仍为 HTTP。实时指标请求超时为 7 秒，超时后当前轮次结束便开始下一轮。
+- Linux 发布资产新增 amd64/arm64 的 `pve-cache`，通过 Unix socket 提供 VM 快照和 PVE RRD 历史查询。VM 指标和 Guest Agent IP 各自独立过期。
+- Node 自更新不替换 root helper，须用 `--pve` 重装更新。
+
+安装和采样参数见 [PVE 监控](./installation/pve.md)，通信协议见[节点上报协议](./reference/node-protocol.md)。
 
 ### 0.2.4
 

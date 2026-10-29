@@ -52,3 +52,9 @@ After trimming, a node secret must contain 8–128 Unicode characters. Use a dis
 ## Settings
 
 Runtime access settings are stored in PostgreSQL and can be changed from the admin console or admin API. Startup config changes still require Dash restart.
+
+## PVE Access
+
+`pve_guest_visible` defaults to `false`. When enabled, guests can read VM names, IPs, snapshots, and history only on hosts with `is_guest_visible=true`. This is independent of history, traffic, and uptime settings. `GET /api/statistics/access` also returns this field.
+
+`/api/virt/*` accepts optional Bearer authentication. Disabled guest access returns `403 forbidden`; hidden, missing, or deleted hosts return `404 not_found` for guests. Administrators are not restricted by the guest switch. The capabilities endpoint is administrator-only. `POST /api/node/virt` requires `X-Node-Secret`, like other node reports. See [PVE Monitoring](../installation/pve.md).

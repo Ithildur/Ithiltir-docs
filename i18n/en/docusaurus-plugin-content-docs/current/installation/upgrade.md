@@ -7,6 +7,14 @@ title: Upgrade
 
 Dash database migrations are forward-only. Node updates use a separate lifecycle.
 
+## Upgrading from 0.3.3 to 0.4.0
+
+Back up PostgreSQL and separately save `$DASH_HOME/configs/notify-config.key`. Managed `dash update` stops the old process, applies `0015`, and starts the new version. The migration adds PVE access and per-node VM chart settings and removes unused leases, the notification `config` placeholder, and fixed global cycle columns. Existing ciphertext, channel settings, node cycles, and history remain intact.
+
+After `0015`, reverting only the binary to `0.3.3` is unsupported. Run `dash update recover` after an interrupted update; once migration begins, recovery completes installation of the new version.
+
+Existing HTTP nodes can continue reporting. PVE and gRPC pair with Node `0.3.0`; Node self-update does not replace the root helper. Reinstall with `--pve` as described in [PVE Monitoring](./pve.md). PVE guest access defaults to disabled.
+
 ## Upgrading from 0.3.2 to 0.3.3
 
 Use the Dash update commands below for managed installations; the updater applies migration `0014` automatically. Back up PostgreSQL, configuration files, and the notification configuration key first. Uptime history starts after migration and does not reconstruct earlier availability. Existing nodes, CPU, memory, and traffic history are preserved.

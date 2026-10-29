@@ -92,7 +92,7 @@ Body：
 
 ## 成功判定
 
-节点只把 `200 OK` 视为成功。非 200 响应只影响当前 target，不阻塞其他 target。
+宿主指标、静态信息和身份 HTTP 请求只把 `200 OK` 视为成功；VM 上报 `/api/node/virt` 成功返回 `204`。非成功响应只影响当前 target，不阻塞其他 target。
 
 `/api/node/metrics` 响应 body 只影响更新：
 
@@ -144,3 +144,47 @@ manifest 必须满足：
 Dash 侧待升级任务会在节点上报完全相同的目标版本或 SemVer 优先级更高的版本后清除。同一 SemVer 优先级但 build metadata 不同的版本视为不同节点二进制，仍可下发。
 
 更新成功后，Windows runner 替换 `%ProgramData%\Ithiltir-node\bin\ithiltir-node.exe` 并重启 Node。Linux/macOS 原子切换 `/var/lib/ithiltir-node/current` 到新的 release 目录，再由既有运行方式重启 Node。
+
+## Node gRPC 传输
+
+`ithiltir.node.v1.Node` 服务通过 HTTP/2 与原 HTTP 接口共用 Dash 监听地址，`app.grpc_port` 不生效。TLS 代理配置见[反向代理](../installation/reverse-proxy.md)。协议定义位于 Dash 的 `protocol/node.proto`；`bash scripts/generate-node-protocol.sh [node仓库目录]` 使用固定版本生成器同步两个仓库。
+
+### RPC 请求与响应
+
+请求通过 metadata `x-node-secret` 鉴权。
+
+| RPC | 成功响应 |
+| --- | --- |
+| `Identify(Empty)` | `install_id`、`created`、`protocol_version: 1` |
+| `Metrics(Report)` | `Reply.json` 包含原 JSON 响应及更新 manifest |
+| `Static(Report)`、`Virt(Report)` | `Empty` |
+
+`Report.json` 携带原 UTF-8 JSON，保留缺失字段和 64 位整数。指标和静态载荷上限为 1 MiB，VM 快照为 4 MiB。校验、接收截止时间和写入规则与 HTTP 相同。
+
+鉴权失败返回 `UNAUTHENTICATED`，按 IP 限流；限流或消息超限返回 `RESOURCE_EXHAUSTED`；非法 JSON 或报告字段返回 `INVALID_ARGUMENT`。其他处理失败返回 `UNAVAILABLE` 或 `INTERNAL`，其中 VM 快照存储失败为 `UNAVAILABLE`，错误标识为 `virt_unavailable`。
+
+### 查询会话
+
+`Connect` 是 Node 主动建立的双向查询流。首条能力声明须在 5 秒内到达；重连替换该节点的旧会话。Dash 在派发查询前及连接期间每秒复查凭据。双方每 20 秒发送心跳，60 秒无消息关闭连接；心跳不刷新指标和在线率。
+
+查询总时限为 10 秒，每节点最多 32 个待完成查询，结果上限为 2 MiB。断线使待完成查询失败，不自动重放。
+
+### 传输选择
+
+Node 通过 `ITHILTIR_NODE_TRANSPORT` 选择传输：
+
+| 值 | 行为 |
+| --- | --- |
+| `http`（默认） | 使用 HTTP 上报 |
+| `grpc` | 只使用 RPC |
+| `auto` | 上报前探测 `Identify`，成功后该目标在进程生命周期内固定使用 gRPC；探测不可达或不兼容时可使用同 URL、同协议的 HTTP |
+
+`auto` 遇到鉴权或授权失败不切换到 HTTP。`auto` 和 `grpc` 不降级到明文；`http` 的回退规则见上方“HTTPS 回落”。
+
+Node 禁用 gRPC 策略重试，但 gRPC 可透明重试确定尚未处理的调用。指标应答不确定时不跨传输重发，后续轮次读取最新指标。VM 快照按采样时间去重。
+
+## VM 上报
+
+设置 `ITHILTIR_NODE_PVE_SOCKET` 后，Node 从本地 helper 读取 VM 观测。HTTP 独立上报到 target 同级的 `/virt`，使用 `X-Node-Secret`，成功返回 `204`；gRPC 使用 `Virt(Report)`。VM 上报不下发更新、不刷新宿主在线率，失败后独立退避重试。
+
+宿主指标请求超时为 7 秒，超时后当前轮次结束便开始下一轮。VM 字段、有效期和错误见 [Dash API](./dash-api.md)，安装见 [PVE 监控](../installation/pve.md)。

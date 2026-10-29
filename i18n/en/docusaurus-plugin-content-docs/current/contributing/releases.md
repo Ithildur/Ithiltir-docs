@@ -25,7 +25,7 @@ Rules:
 Dash packages include Ithiltir-node assets. Specify the bundled node version explicitly:
 
 ```bash
-bash scripts/package.sh --version 1.2.3 --node-version 1.2.3 -o release -t linux/amd64 --tar-gz
+bash scripts/package.sh --version 0.4.0 --node-version 0.3.0 --with-pve -o release -t linux/amd64 --tar-gz
 ```
 
 When `--node-version` is omitted, the script fetches the latest compatible tag from `https://github.com/Ithildur/Ithiltir-node.git`:
@@ -38,8 +38,9 @@ Local node assets must use `--node-version` or `ITHILTIR_NODE_VERSION`:
 
 ```bash
 bash scripts/package.sh \
-  --version 1.2.3-alpha.1 \
-  --node-version 1.2.3-alpha.1 \
+  --version 0.4.0 \
+  --node-version 0.3.0 \
+  --with-pve \
   --node-local \
   -o release \
   -t linux/amd64 \
@@ -58,6 +59,8 @@ Ithiltir-node-windows-amd64.exe
 Ithiltir-node-windows-arm64.exe
 Ithiltir-runner-windows-amd64.exe
 Ithiltir-runner-windows-arm64.exe
+Ithiltir-pve-cache-linux-amd64
+Ithiltir-pve-cache-linux-arm64
 ```
 
 Windows keeps `.exe`. Checksums are uploaded separately.
@@ -101,3 +104,7 @@ Ithiltir-node stable release builds can pass release notes explicitly:
 ```
 
 When `--release-notes` is omitted for a stable release, the build script generates temporary release notes. Prereleases still use GoReleaser's default behavior.
+
+## Dash 0.4.0 / Node 0.3.0
+
+Publish Node `0.3.0` with both matching Linux PVE helpers, then package and release Dash `0.4.0` with `--with-pve`. Before release, verify `deploy/linux/pve-cache.env` and both helper versions and SHA-256 values. See [Build](../guides/build.md) for asset paths and [Upgrade](../installation/upgrade.md) for database migrations.

@@ -96,3 +96,19 @@ http:
 ## Node Install Scripts
 
 Node install script download URLs and report URLs depend on `app.public_url`. After changing domain, port, or HTTPS settings, update the config and restart Dash; otherwise the admin console keeps showing the old install command.
+
+## Node gRPC
+
+Node transport `ITHILTIR_NODE_TRANSPORT=grpc` or `auto` requires HTTP/2 and gRPC proxy support. Add this location inside an existing TLS/HTTP/2 Nginx server:
+
+```nginx
+location /ithiltir.node.v1.Node/ {
+    grpc_pass grpc://127.0.0.1:8080;
+    grpc_set_header Host $host;
+    grpc_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    grpc_read_timeout 75s;
+    grpc_send_timeout 75s;
+}
+```
+
+Use the actual Dash backend address and keep the existing HTTP locations. RPC uses the root service path, independent of any custom report-URL prefix. `app.grpc_port` does not enable a second listener. gRPC/auto never authorize plaintext fallback after TLS or authentication failure. Ordinary HTTP proxying alone supports HTTP reports; [PVE history](./pve.md) also needs a working query stream.

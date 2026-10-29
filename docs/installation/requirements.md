@@ -78,10 +78,10 @@ Linux Node 脚本需要 root/sudo、`pgrep`、`curl` 或 `wget`。Alpine/OpenRC 
 
 只有 Dash 源码构建或自定义打包需要：
 
-- Go 1.27.1+
+- Go 1.27.3+
 - Bun 1.3.11
 - Git
 - tar 或 zip
-- GoReleaser；节点构建脚本会在缺失时安装 `v2.15.2`
+- GoReleaser；节点构建脚本会在缺失时安装 `v2.17.1`
 
 文档站构建需要 Node.js 24（`>=24 <25`）。

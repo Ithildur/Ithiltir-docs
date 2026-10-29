@@ -92,3 +92,12 @@ monitor_dash_pwd=<安装时填写的密码>
 | `ITHILTIR_NODE_REPORT_CONFIG` | 覆盖 `report.yaml` 路径 |
 | `ITHILTIR_NODE_LOCAL_PAGE_DIR` | 覆盖本地页面目录 |
 | `ITHILTIR_NODE_RUNNER` | Windows runner 设置为 `1`，启用暂存更新 |
+
+### Node gRPC 和 PVE
+
+| 变量 | 说明 |
+| --- | --- |
+| `ITHILTIR_NODE_TRANSPORT` | `http`（默认）、`grpc` 或 `auto`；历史查询要求可用的 gRPC 连接 |
+| `ITHILTIR_NODE_PVE_SOCKET` | 启用 VM 上报时连接的 helper socket，标准安装为 `/run/ithiltir-node/pve.sock` |
+
+这些变量设置在 Node 服务中，修改后重启 Node。`APP_GRPC_PORT` 对应的预留字段不启用额外端口；Dash 使用原 HTTP 监听地址。部署见 [PVE 监控](../installation/pve.md)。
