@@ -312,7 +312,7 @@ System settings (`GET`, `PATCH`, and `PUT /api/admin/system/settings`) include `
 
 - `POST /api/node/virt` authenticates with `X-Node-Secret`; the key determines the owning host. Its JSON body limit is 4 MiB. Success returns `204` without an update manifest.
 - `GET /api/virt/{id}` returns `{ "snapshot": ..., "received_at": ..., "stale": false }` plus the chart settings below. Without a snapshot, the first two fields are `null` and `stale` is `true`.
-- The `pve` boolean in `GET /api/admin/nodes/deploy` indicates whether the package contains verified PVE helpers matching the Node version. See [PVE Monitoring](../installation/pve.md) for installation.
+- The `pve` boolean in `GET /api/admin/nodes/deploy` indicates whether the package contains verified PVE helpers matching the Node version. When true, the admin console offers a PVE deployment option that copies the Linux command with `--pve`; `scripts` still contains only `linux`, `macos`, and `windows`. See [PVE Monitoring](../installation/pve.md) for installation.
 
 The report and returned snapshot have the same shape:
 

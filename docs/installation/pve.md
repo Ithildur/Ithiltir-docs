@@ -10,8 +10,10 @@ Dash `0.4.0` 配套 Node `0.3.0`，支持本机 Proxmox VE QEMU VM 的当前状�
 
 安装 PVE 采集服务要求宿主机使用 systemd，并提供 `/etc/pve` 和 `/usr/bin/pvesh`。root helper 负责本机采集，Node 以非特权用户运行。无需 PVE API 用户、token 或本机编译器。
 
+Dash 包含匹配的 PVE helper 时，桌面节点表、移动端卡片和节点设置弹窗均提供 PVE 部署入口。
+
 1. 使用携带 Node `0.3.0` 及同版本 PVE helper 的 Dash 发布包。
-2. 在管理台创建节点，复制 Linux 安装命令，手动追加 `--pve`，在 PVE 宿主机执行。
+2. 在管理台创建节点，复制 PVE 安装命令（已包含 `--pve`），在 PVE 宿主机执行。
 3. 检查采集服务和 Node 服务：
 
 ```bash
@@ -26,34 +28,16 @@ journalctl -u ithiltir-node-pve-cache.service -n 100 --no-pager
 | `/usr/local/libexec/ithiltir-node/pve-cache` | root 所有的 helper 二进制 |
 | `ithiltir-node-pve-cache.service` | 运行 `pve-cache --group <运行组>` |
 | `/run/ithiltir-node/pve.sock` | root 所有、运行组可访问的 Unix socket，权限 `0660` |
-| Node systemd drop-in | 设置 `ITHILTIR_NODE_PVE_SOCKET=/run/ithiltir-node/pve.sock` |
+| Node systemd drop-in | 设置 `ITHILTIR_NODE_PVE_SOCKET=/run/ithiltir-node/pve.sock` 和 `ITHILTIR_NODE_TRANSPORT=grpc` |
 | `/run/ithiltir-node/pve-guest` | 仅 root 可读的 Guest Agent 缓存和退避状态 |
 
 Node 经 socket 读取内存中的观测结果。helper 重启后重新采集基本指标；IP 缓存状态可跨 helper 重启保留，宿主机重启时清空。
 
 ## 启用历史查询
 
-VM 当前快照可通过 HTTP 上报；历史查询需要 Node 到 Dash 的 gRPC 查询连接。执行：
+PVE 安装器会启用 gRPC 上报和历史查询连接。已有 PVE 安装重新执行 PVE 部署命令，即可更新 helper 和传输配置。
 
-```bash
-sudo systemctl edit ithiltir-node.service
-```
-
-加入：
-
-```ini
-[Service]
-Environment=ITHILTIR_NODE_TRANSPORT=grpc
-```
-
-然后重启 Node：
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl restart ithiltir-node.service
-```
-
-也可使用 `auto` 协商传输；默认 `http` 不建立查询连接。gRPC 与 Dash HTTP 共用监听地址，`app.grpc_port` 不生效。HTTPS 代理须支持 HTTP/2 并转发 `/ithiltir.node.v1.Node/`，配置见[反向代理](./reverse-proxy.md)。
+HTTPS 代理须支持 HTTP/2 并转发 `/ithiltir.node.v1.Node/`，应在安装前配置。gRPC 与 Dash HTTP 共用监听地址，`app.grpc_port` 不生效。配置见[反向代理](./reverse-proxy.md)。
 
 管理员调用 `GET /api/admin/nodes/{id}/virt/capabilities`，确认 `connected` 和 `pve_history` 均为 `true`。
 

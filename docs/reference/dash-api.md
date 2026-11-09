@@ -315,7 +315,7 @@ SMART 温度历史只来自后端确认的物理盘。虚拟盘和 RAID 设备�
 
 - `POST /api/node/virt`：使用 `X-Node-Secret`，节点归属由密钥决定；JSON body 上限 4 MiB。成功返回 `204`，不携带更新 manifest。
 - `GET /api/virt/{id}`：返回 `{ "snapshot": ..., "received_at": ..., "stale": false }` 及下述图表设置。无快照时，前两项为 `null`、`stale` 为 `true`。
-- `GET /api/admin/nodes/deploy` 的布尔字段 `pve` 表示发布包中是否有与 Node 版本匹配且校验通过的 PVE helper。安装方法见 [PVE 监控](../installation/pve.md)。
+- `GET /api/admin/nodes/deploy` 的布尔字段 `pve` 表示发布包中是否有与 Node 版本匹配且校验通过的 PVE helper。为 true 时管理台提供 PVE 部署入口，复制 Linux 安装命令并附加 `--pve`；`scripts` 仍只包含 `linux`、`macos` 和 `windows`。安装方法见 [PVE 监控](../installation/pve.md)。
 
 上报体和 `snapshot` 使用同一结构：
 

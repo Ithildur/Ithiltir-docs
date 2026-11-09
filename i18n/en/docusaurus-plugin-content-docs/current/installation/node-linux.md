@@ -76,4 +76,4 @@ OpenRC uses `rc-service ithiltir-node status`. Inspect report config with:
 
 ## PVE Hosts
 
-Dash `0.4.0` pairs with Node `0.3.0`. Append `--pve` to the installation command to install the root helper, or `--no-pve` to disable it; omission preserves the existing choice. This requires PVE/systemd. Node self-update does not replace the helper. VM history also requires a gRPC query connection; see [PVE Monitoring](./pve.md).
+Dash `0.4.0` pairs with Node `0.3.0`. Copy the PVE deployment command from the admin console, or append `--pve` to the Linux command, to install the root helper and configure gRPC, or `--no-pve` to disable it; omission preserves the existing choice. This requires PVE/systemd. Node self-update does not replace the helper. VM history also requires a gRPC query connection; see [PVE Monitoring](./pve.md).

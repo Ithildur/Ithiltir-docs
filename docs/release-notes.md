@@ -10,11 +10,13 @@ slug: /ReleaseNotes
 
 ### 0.4.0
 
+发布日期：2026-11-09
+
 #### PVE 与节点通信
 
 - 配套 Node `0.3.0`，新增 QEMU VM 清单、详情、IP 和 PVE RRD 历史页面，从宿主机 PVE 图标进入。
-- gRPC 与 HTTP 共用监听地址。Node 默认仍使用 HTTP，历史查询需启用 `grpc` 或 `auto` 并配置代理转发。
-- 正式包携带 PVE helper，在 Linux 安装命令末尾加 `--pve` 启用。
+- gRPC 与 HTTP 共用监听地址。普通 Node 安装默认仍使用 HTTP，PVE 安装会配置 gRPC；反向代理需转发 gRPC。
+- 正式包携带 PVE helper，管理台提供 PVE 部署命令复制入口；也可在 Linux 安装命令末尾加 `--pve` 启用。
 - PVE 游客访问默认关闭，开启后仍受宿主机可见性限制。VM CPU/内存阈值仅用于历史图表标注，不发送告警。
 
 #### 升级与通知
@@ -222,6 +224,8 @@ GitHub 发布页：[Ithiltir 0.2.6](https://github.com/Ithildur/Ithiltir/release
 ## Node
 
 ### 0.3.0
+
+发布日期：2026-11-09
 
 - 配套 Dash `0.4.0`，新增 gRPC 及自动协商，默认仍为 HTTP。实时指标请求超时为 7 秒，超时后当前轮次结束便开始下一轮。
 - Linux 发布资产新增 amd64/arm64 的 `pve-cache`，通过 Unix socket 提供 VM 快照和 PVE RRD 历史查询。VM 指标和 Guest Agent IP 各自独立过期。

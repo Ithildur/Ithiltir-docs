@@ -11,8 +11,10 @@ Dash `0.4.0` pairs with Node `0.3.0` for local Proxmox VE QEMU VM snapshots, Gue
 
 Installing the PVE collection service requires a host with systemd, `/etc/pve`, and `/usr/bin/pvesh`. A root helper collects local data while Node runs as an unprivileged user. No PVE API account, token, or on-host compiler is needed.
 
+The PVE option appears when Dash has matching bundled helpers. The desktop table, mobile cards, and node settings dialog all provide it.
+
 1. Use a Dash package containing Node `0.3.0` and matching PVE helpers.
-2. Create a node in the admin console, copy its Linux installation command, manually append `--pve`, and run it on the PVE host.
+2. Create a node in the admin console, copy its PVE installation command (including `--pve`), and run it on the PVE host.
 3. Inspect both services:
 
 ```bash
@@ -27,34 +29,16 @@ The installer verifies the helper SHA-256 and version before stopping an existin
 | `/usr/local/libexec/ithiltir-node/pve-cache` | Root-owned helper binary |
 | `ithiltir-node-pve-cache.service` | Runs `pve-cache --group <runtime-group>` |
 | `/run/ithiltir-node/pve.sock` | Root-owned Unix socket accessible to the runtime group, mode `0660` |
-| Node systemd drop-in | Sets `ITHILTIR_NODE_PVE_SOCKET=/run/ithiltir-node/pve.sock` |
+| Node systemd drop-in | Sets `ITHILTIR_NODE_PVE_SOCKET=/run/ithiltir-node/pve.sock` and `ITHILTIR_NODE_TRANSPORT=grpc` |
 | `/run/ithiltir-node/pve-guest` | Root-only Guest Agent cache and backoff state |
 
 Node reads in-memory observations through the socket. Basic observations are rebuilt after helper restart; IP cache state survives helper restarts and is cleared on host reboot.
 
 ## Enable History Queries
 
-Current VM snapshots can use HTTP reporting. History requires a Node-to-Dash gRPC query connection. Run:
+The PVE installer enables gRPC for reporting and history queries. For an existing PVE installation, re-run the PVE deployment command to update the helper and transport configuration.
 
-```bash
-sudo systemctl edit ithiltir-node.service
-```
-
-Add:
-
-```ini
-[Service]
-Environment=ITHILTIR_NODE_TRANSPORT=grpc
-```
-
-Then restart Node:
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl restart ithiltir-node.service
-```
-
-Alternatively, use `auto` to negotiate transport. The default `http` mode does not open a query connection. gRPC shares Dash's HTTP listener; `app.grpc_port` has no effect. An HTTPS proxy must support HTTP/2 and forward `/ithiltir.node.v1.Node/`. See [Reverse Proxy](./reverse-proxy.md).
+An HTTPS proxy must support HTTP/2 and forward `/ithiltir.node.v1.Node/`; configure it before installing. gRPC shares Dash's HTTP listener; `app.grpc_port` has no effect. See [Reverse Proxy](./reverse-proxy.md).
 
 As an administrator, call `GET /api/admin/nodes/{id}/virt/capabilities` and confirm that both `connected` and `pve_history` are `true`.
 

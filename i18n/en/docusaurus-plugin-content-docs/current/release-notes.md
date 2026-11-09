@@ -11,11 +11,13 @@ Release Notes record version changes that affect deployment, upgrades, configura
 
 ### 0.4.0
 
+Release date: 2026-11-09
+
 #### PVE and Node Transport
 
 - Pairs with Node `0.3.0` for QEMU VM inventory, details, IPs, and PVE RRD history, opened from the host's PVE icon.
-- gRPC shares the HTTP listener. Node still defaults to HTTP; history requires `grpc` or `auto` and compatible proxy forwarding.
-- Release packages bundle PVE helpers. Append `--pve` to the Linux installation command to enable them.
+- gRPC shares the HTTP listener. Ordinary Node installations still default to HTTP; PVE installation configures gRPC. Reverse proxies must forward gRPC.
+- Release packages bundle PVE helpers. Copy the PVE deployment command from the admin console, or append `--pve` to the Linux installation command.
 - PVE guest access defaults to disabled and still respects host visibility when enabled. VM CPU/memory thresholds annotate history charts without sending alerts.
 
 #### Upgrade and Notifications
@@ -223,6 +225,8 @@ GitHub Release: [Ithiltir 0.2.6](https://github.com/Ithildur/Ithiltir/releases/t
 ## Node
 
 ### 0.3.0
+
+Release date: 2026-11-09
 
 - Pairs with Dash `0.4.0`, adding gRPC and transport negotiation while keeping HTTP as the default. Live metrics requests time out after 7 seconds; after a timeout, the next round starts as soon as the current one finishes.
 - Linux releases add amd64/arm64 `pve-cache` assets that serve VM snapshots and PVE RRD history queries over a Unix socket. VM metrics and Guest Agent IPs expire independently.

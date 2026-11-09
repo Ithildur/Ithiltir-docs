@@ -100,4 +100,4 @@ monitor_dash_pwd=<安装时填写的密码>
 | `ITHILTIR_NODE_TRANSPORT` | `http`（默认）、`grpc` 或 `auto`；历史查询要求可用的 gRPC 连接 |
 | `ITHILTIR_NODE_PVE_SOCKET` | 启用 VM 上报时连接的 helper socket，标准安装为 `/run/ithiltir-node/pve.sock` |
 
-这些变量设置在 Node 服务中，修改后重启 Node。`APP_GRPC_PORT` 对应的预留字段不启用额外端口；Dash 使用原 HTTP 监听地址。部署见 [PVE 监控](../installation/pve.md)。
+PVE 安装器通过 systemd drop-in 设置 socket 路径和 `ITHILTIR_NODE_TRANSPORT=grpc`。手工修改这些变量后需重启 Node。`APP_GRPC_PORT` 对应的预留字段不启用额外端口；Dash 使用原 HTTP 监听地址。部署见 [PVE 监控](../installation/pve.md)。

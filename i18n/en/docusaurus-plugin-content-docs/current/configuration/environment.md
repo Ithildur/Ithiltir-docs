@@ -101,4 +101,4 @@ monitor_dash_pwd=<password entered during install>
 | `ITHILTIR_NODE_TRANSPORT` | `http` (default), `grpc`, or `auto`; history needs a working gRPC connection |
 | `ITHILTIR_NODE_PVE_SOCKET` | Helper socket used for VM reporting; standard installation: `/run/ithiltir-node/pve.sock` |
 
-Set these on the Node service and restart Node after changes. The reserved `APP_GRPC_PORT` field does not enable an extra listener; Dash uses its existing HTTP address. See [PVE Monitoring](../installation/pve.md).
+The PVE installer sets the socket path and `ITHILTIR_NODE_TRANSPORT=grpc` in a systemd drop-in. Restart Node after manual changes to these variables. The reserved `APP_GRPC_PORT` field does not enable an extra listener; Dash uses its existing HTTP address. See [PVE Monitoring](../installation/pve.md).
