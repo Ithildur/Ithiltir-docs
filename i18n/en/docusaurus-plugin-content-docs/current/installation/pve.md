@@ -91,3 +91,11 @@ sudo journalctl -u ithiltir-node -n 100 --no-pager
 ```
 
 Node stops reconnecting that target's history query session after `PermissionDenied` or `Unauthenticated`. Restart it after correcting the proxy configuration to establish a new session. Then verify that both `connected` and `pve_history` in capabilities are `true`.
+
+### gRPC Returns 200 and HTML
+
+If logs show `unexpected HTTP status code ... 200 (OK)`, `text/html`, and a body containing `Ithiltir Monitor Dashboard` or frontend HTML, Node received a webpage instead of a gRPC response. A common cause is the origin proxy forwarding gRPC requests over ordinary HTTP/1.1: Dash selects its gRPC handler only for HTTP/2 requests with `application/grpc`; other requests can fall through to frontend routing.
+
+Enabling gRPC in Cloudflare, setting SSL/TLS to Full, and enabling HTTP/2 in Nginx do not replace gRPC forwarding from Nginx to Dash. Follow the [reverse proxy example](./reverse-proxy.md#nginx-example) to give `/ithiltir.node.v1.Node/` its own `grpc_pass`, retaining `location /` for webpages. Node sets the gRPC request Content-Type automatically; do not change the report URL or force a different response Content-Type.
+
+Run `nginx -t && nginx -s reload` on the Nginx host or inside its container. Then restart `ithiltir-node` on the PVE host and inspect its logs. Confirm that HTML responses stop, Dash receives fresh metrics, and both `connected` and `pve_history` in capabilities are `true`.

@@ -45,10 +45,22 @@ https://example.com/dash/api
 
 ## Nginx 示例
 
+在已有证书配置的 HTTPS `server` 中分别转发 gRPC 和普通 HTTP 请求。将域名和后端地址替换为实际值，保留站点的 `ssl_certificate` 和 `ssl_certificate_key` 配置：
+
 ```nginx
 server {
     listen 443 ssl http2;
     server_name dash.example.com;
+
+    location ^~ /ithiltir.node.v1.Node/ {
+        grpc_pass grpc://127.0.0.1:8080;
+        grpc_set_header Host $host;
+        grpc_set_header X-Real-IP $remote_addr;
+        grpc_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        grpc_set_header X-Forwarded-Proto $scheme;
+        grpc_read_timeout 75s;
+        grpc_send_timeout 75s;
+    }
 
     location / {
         proxy_pass http://127.0.0.1:8080;
@@ -98,16 +110,14 @@ http:
 
 ## Node gRPC
 
-Node `ITHILTIR_NODE_TRANSPORT=grpc` 或 `auto` 要求代理支持 HTTP/2 和 gRPC。在已启用 TLS/HTTP/2 的 Nginx server 中加入：
+Node `ITHILTIR_NODE_TRANSPORT=grpc` 或 `auto` 要求代理支持 HTTP/2 和 gRPC。上面的 Nginx 示例使用 `grpc_pass` 将 `/ithiltir.node.v1.Node/` 转发到 Dash，同时保留普通 HTTP 的 `location /`。仅启用客户端侧 HTTP/2 不够，Nginx 到 Dash 的 gRPC 请求也必须使用 HTTP/2。
 
-```nginx
-location /ithiltir.node.v1.Node/ {
-    grpc_pass grpc://127.0.0.1:8080;
-    grpc_set_header Host $host;
-    grpc_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    grpc_read_timeout 75s;
-    grpc_send_timeout 75s;
-}
+RPC 使用根路径 `/ithiltir.node.v1.Node/`，不是 `/api/node/metrics`，也不继承上报 URL 的自定义前缀。`app.grpc_port` 不启用第二监听端口。gRPC/auto 不会因 TLS 或鉴权失败改用明文。普通 HTTP 代理配置只能保证 HTTP 上报；[PVE 历史](./pve.md) 需要查询流正常连接。
+
+修改后在运行 Nginx 的主机或容器内检查并重载配置：
+
+```bash
+nginx -t && nginx -s reload
 ```
 
-替换为实际 Dash 后端地址，保留现有 HTTP locations。RPC 使用根路径，不继承上报 URL 的自定义前缀；`app.grpc_port` 不启用第二监听端口。gRPC/auto 不会因 TLS 或鉴权失败改用明文。普通 HTTP 代理配置只能保证 HTTP 上报；[PVE 历史](./pve.md) 需要查询流正常连接。
+若 Node 收到 `200 OK`、`text/html` 和 Dash 首页，说明请求没有得到 gRPC 响应。检查该路径是否落入普通 `proxy_pass`，导致转发到 Dash 时使用 HTTP/1.1。排查及恢复步骤见 [PVE 监控](./pve.md#grpc-返回-200-和-html)。
