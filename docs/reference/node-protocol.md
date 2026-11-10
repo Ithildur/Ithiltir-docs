@@ -92,7 +92,9 @@ Body：
 
 ## 成功判定
 
-宿主指标、静态信息和身份 HTTP 请求只把 `200 OK` 视为成功；VM 上报 `/api/node/virt` 成功返回 `204`。非成功响应只影响当前 target，不阻塞其他 target。
+宿主指标、静态信息和身份 HTTP 请求只把 `200 OK` 视为成功；VM 上报 `/api/node/virt` 成功返回 `204`。非成功响应只影响当前 target 的成功判定。指标目标在同一轮内并发发送，下一轮等待全部目标结束后读取最新快照，轮次不重叠。
+
+HTTP 和 gRPC 请求均由具体场景设置超时：宿主指标为 `max(6 秒, 上报周期 + 3 秒)`，静态信息和 VM 上报为 10 秒，安装时身份获取总预算为 15 秒。自动传输探测在场景预算内保留 2 秒上限。指标请求超时后，当前轮次结束便开始下一轮；其他情况按上报周期发送，周期已经耗尽时不额外等待。
 
 `/api/node/metrics` 响应 body 只影响更新：
 
@@ -187,4 +189,4 @@ Node 禁用 gRPC 策略重试，但 gRPC 可透明重试确定尚未处理的调
 
 设置 `ITHILTIR_NODE_PVE_SOCKET` 后，Node 从本地 helper 读取 VM 观测。HTTP 独立上报到 target 同级的 `/virt`，使用 `X-Node-Secret`，成功返回 `204`；gRPC 使用 `Virt(Report)`。VM 上报不下发更新、不刷新宿主在线率，失败后独立退避重试。
 
-宿主指标请求超时为 7 秒，超时后当前轮次结束便开始下一轮。VM 字段、有效期和错误见 [Dash API](./dash-api.md)，安装见 [PVE 监控](../installation/pve.md)。
+VM 字段、有效期和错误见 [Dash API](./dash-api.md)，安装见 [PVE 监控](../installation/pve.md)。

@@ -224,6 +224,13 @@ GitHub Release: [Ithiltir 0.2.6](https://github.com/Ithildur/Ithiltir/releases/t
 
 ## Node
 
+### 0.3.1
+
+Release date: 2026-11-10
+
+- Live metrics requests (HTTP/gRPC) now time out after `max(6 seconds, reporting interval + 3 seconds)`, preventing timeout retries from accelerating reports configured with longer intervals.
+- Each operation sets its total request deadline, removing the shared transport's fixed 10-second cap. Static reports and VM reports use a 10-second budget; installation identity lookup uses a 15-second total budget.
+
 ### 0.3.0
 
 Release date: 2026-11-09

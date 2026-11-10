@@ -17,6 +17,8 @@ When `target_url` and `secret` are omitted, the node reads `report.yaml`.
 
 Default interval is 3 seconds.
 
+Metrics requests (HTTP/gRPC) time out after `max(6 seconds, reporting interval + 3 seconds)`. Targets send concurrently within a round; the next round waits for all targets to finish and reads the latest snapshot. Rounds never overlap. If the reporting interval has elapsed by the end of a round, the next round starts immediately.
+
 ## Target URL
 
 Target URL must point to Dash metrics endpoint:

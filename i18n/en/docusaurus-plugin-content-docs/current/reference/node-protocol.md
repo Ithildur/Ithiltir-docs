@@ -93,7 +93,9 @@ Static info is reported once after node startup. If static collection is incompl
 
 ## Success Rules
 
-Host metrics, static data, and identity HTTP requests require `200 OK`; VM reports to `/api/node/virt` succeed with `204`. Failures affect only the current target and do not block other targets.
+Host metrics, static data, and identity HTTP requests require `200 OK`; VM reports to `/api/node/virt` succeed with `204`. Failures affect only the current target's success status. Metrics targets send concurrently within a round; the next round waits for all targets to finish and reads the latest snapshot. Rounds never overlap.
+
+Request deadlines are set by each operation for both HTTP and gRPC: host metrics use `max(6 seconds, reporting interval + 3 seconds)`, static reports and VM reports use 10 seconds, and installation identity lookup has a 15-second total budget. Automatic transport probing retains its 2-second limit within the operation's budget. After a metrics timeout, the next round starts as soon as the current one finishes. Otherwise, rounds follow the reporting interval, with no extra wait if the interval has elapsed.
 
 The `/api/node/metrics` response body only affects updates:
 
@@ -188,4 +190,4 @@ Node disables gRPC policy retries, but gRPC may transparently retry calls known 
 
 With `ITHILTIR_NODE_PVE_SOCKET`, Node reads VM observations from the local helper. HTTP reports independently to the target's sibling `/virt` endpoint, using `X-Node-Secret` and returning `204` on success; gRPC uses `Virt(Report)`. VM reports do not carry updates or refresh host uptime; failures retry with independent backoff.
 
-Host metrics requests time out after 7 seconds; after a timeout, the next round starts as soon as the current one finishes. See [Dash API](./dash-api.md) for VM fields, lifetimes, and errors, and [PVE Monitoring](../installation/pve.md) for installation.
+See [Dash API](./dash-api.md) for VM fields, lifetimes, and errors, and [PVE Monitoring](../installation/pve.md) for installation.
