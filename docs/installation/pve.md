@@ -39,6 +39,8 @@ PVE 安装器会启用 gRPC 上报和历史查询连接。已有 PVE 安装重�
 
 HTTPS 代理须支持 HTTP/2 并转发 `/ithiltir.node.v1.Node/`，应在安装前配置。gRPC 与 Dash HTTP 共用监听地址，`app.grpc_port` 不生效。配置见[反向代理](./reverse-proxy.md)。
 
+使用 Cloudflare 代理时，应先在对应域名的 **Network（网络）→ gRPC** 中开启 gRPC。源站入口须使用 HTTPS 443、支持通过 ALPN 协商 HTTP/2，Cloudflare SSL/TLS 模式至少为 Full。未开启 gRPC 时，Cloudflare 会返回 `403 Forbidden`。完整要求见 [Cloudflare gRPC 文档](https://developers.cloudflare.com/network/grpc-connections/)。
+
 管理员调用 `GET /api/admin/nodes/{id}/virt/capabilities`，确认 `connected` 和 `pve_history` 均为 `true`。
 
 ## 看板和访问权限
@@ -75,3 +77,16 @@ VM 历史按需读取 PVE RRD，支持 `hour/day/week/month/year` 与 `AVERAGE/M
 - `node_offline` 表示查询会话未连接；`unsupported` 表示不支持历史查询；`busy` 表示查询并发已满；`deadline_exceeded` 表示查询超时。
 
 接口详情见 [Dash API](../reference/dash-api.md) 和[节点协议](../reference/node-protocol.md)。
+
+### Cloudflare 返回 403
+
+如果 Node 日志同时出现 `PermissionDenied`、`unexpected HTTP status code ... 403` 和 `text/html`，且响应正文是 Cloudflare 错误页，先检查上述 gRPC 开关；已开启时，再检查 Cloudflare 安全事件和源站 gRPC 代理配置。`credentials rejected` 也可能由代理返回的 403 触发，不能单凭这条日志判断节点密钥错误。
+
+修正配置后重启 Node，并检查日志：
+
+```bash
+sudo systemctl restart ithiltir-node
+sudo journalctl -u ithiltir-node -n 100 --no-pager
+```
+
+Node 收到 `PermissionDenied` 或 `Unauthenticated` 后会停止该目标的历史查询重连，修正代理配置后仍需重启才能重新建立查询会话。最后检查 capabilities 中的 `connected` 和 `pve_history` 是否均为 `true`。

@@ -40,6 +40,8 @@ The PVE installer enables gRPC for reporting and history queries. For an existin
 
 An HTTPS proxy must support HTTP/2 and forward `/ithiltir.node.v1.Node/`; configure it before installing. gRPC shares Dash's HTTP listener; `app.grpc_port` has no effect. See [Reverse Proxy](./reverse-proxy.md).
 
+When using Cloudflare's proxy, enable **Network → gRPC** for the domain before installing. The origin endpoint must use HTTPS on port 443 and negotiate HTTP/2 through ALPN; Cloudflare's SSL/TLS mode must be at least Full. With gRPC disabled, Cloudflare returns `403 Forbidden`. See the [Cloudflare gRPC documentation](https://developers.cloudflare.com/network/grpc-connections/) for the full requirements.
+
 As an administrator, call `GET /api/admin/nodes/{id}/virt/capabilities` and confirm that both `connected` and `pve_history` are `true`.
 
 ## Dashboard and Access
@@ -76,3 +78,16 @@ History reads PVE RRD on demand with `hour/day/week/month/year` and `AVERAGE/MAX
 - `node_offline` means no connected query session; `unsupported` means history queries are unsupported; `busy` means query concurrency is full; `deadline_exceeded` means the query timed out.
 
 See [Dash API](../reference/dash-api.md) and [Node Protocol](../reference/node-protocol.md) for wire contracts.
+
+### Cloudflare Returns 403
+
+If Node logs show `PermissionDenied`, `unexpected HTTP status code ... 403`, and `text/html` with a Cloudflare error page in the response, check the gRPC toggle above first. If it is already enabled, inspect Cloudflare security events and the origin's gRPC proxy configuration. A proxy's 403 response can also trigger `credentials rejected`; that message alone does not establish that the node key is wrong.
+
+After correcting the configuration, restart Node and inspect its logs:
+
+```bash
+sudo systemctl restart ithiltir-node
+sudo journalctl -u ithiltir-node -n 100 --no-pager
+```
+
+Node stops reconnecting that target's history query session after `PermissionDenied` or `Unauthenticated`. Restart it after correcting the proxy configuration to establish a new session. Then verify that both `connected` and `pve_history` in capabilities are `true`.
