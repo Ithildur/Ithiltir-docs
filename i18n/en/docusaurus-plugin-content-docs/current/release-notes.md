@@ -9,13 +9,21 @@ Release Notes record version changes that affect deployment, upgrades, configura
 
 ## Dash
 
-### 0.4.1 (2026-11-23)
+### 0.4.1
 
-This release bundles Node and the PVE helpers from Node `0.3.2`.
+Release date: 2026-11-23
+
+[GitHub Release](https://github.com/Ithildur/Ithiltir/releases/tag/0.4.1)
+
+#### Dashboard and Node Statistics
 
 - `GET /api/front/metrics` returns `{sent_at, nodes}` for both full and paginated lists. Update clients to read `response.nodes`. The dashboard uses `sent_at` and the node’s `received_at` to determine online status.
 - `GET /api/front/metrics/{id}` returns one node with the same visibility rules as the list. The statistics page uses this endpoint for its node overview.
 - Expanded PVE history charts load as they approach the viewport. The page runs up to four history queries per host at a time. Switching network interfaces after a traffic rebuild fetches the selected interface’s data once.
+
+#### Installation and Upgrades
+
+- This release bundles Node and the PVE helpers from Node `0.3.2`.
 - Source builds use `bash scripts/package.sh`. Unpacked installations are written to `<out>/<os>/<arch>/Ithiltir-dash/`. ZIP output requires a locally installed `zip` command.
 - Upgrading from the official `0.4.0` release requires no new database migration.
 

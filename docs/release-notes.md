@@ -8,13 +8,21 @@ slug: /ReleaseNotes
 
 ## Dash
 
-### 0.4.1（2026-11-23）
+### 0.4.1
 
-正式包内置 Node `0.3.2` 及同版本的 PVE helper。
+发布日期：2026-11-23
+
+[GitHub 发布页](https://github.com/Ithildur/Ithiltir/releases/tag/0.4.1)
+
+#### 看板与节点统计
 
 - `GET /api/front/metrics` 的全量和分页响应均改为 `{sent_at, nodes}`，旧客户端需改读 `response.nodes`。看板用 `sent_at` 和节点的 `received_at` 判断在线状态。
 - 新增 `GET /api/front/metrics/{id}`，按列表的可见性规则返回单个节点。统计页通过此接口读取节点概览。
 - 已展开的 PVE 历史图接近视口时开始加载，同一宿主机页面最多同时查询四份历史。流量重建后切换网卡，只加载一次所选网卡的数据。
+
+#### 安装与升级
+
+- 正式包内置 Node `0.3.2` 及同版本的 PVE helper。
 - 源码打包统一使用 `bash scripts/package.sh`，解包目录改为 `<out>/<os>/<arch>/Ithiltir-dash/`。输出 ZIP 需自行安装 `zip`。
 - 从正式版 `0.4.0` 升级无需新增数据库迁移。
 
