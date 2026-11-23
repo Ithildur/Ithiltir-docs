@@ -79,9 +79,10 @@ Dash 发布包包含：
 - `dist/index.html` 和 `dist/theme-bootstrap.js`。
 - `install_dash_linux.sh`。
 - `update_dash_linux.sh`。
-- `deploy/<platform>/install.*`。
 - 5 个 Node 二进制和 2 个 Windows runner。
 - 两个 Linux PVE helper，以及 `deploy/linux/pve-cache.env`。
+
+Node 安装脚本嵌入 `bin/dash`。启动 Dash 后，客户端通过 `/deploy/linux/install.sh`、`/deploy/macos/install.sh` 或 `/deploy/windows/install.ps1` 下载对应脚本。
 
 发布格式 v1 的 `release.env` 包含 Dash 版本、Node 版本、目标 OS/arch 和 7 个 Node/runner 资产的 SHA-256。候选 `bin/dash` 必须报告与 manifest 一致的 Dash 和 Node 版本。
 
@@ -89,7 +90,7 @@ Dash 发布包包含：
 
 发布包里的安装脚本负责首次安装。`apt-get` 系统会尝试准备 PostgreSQL 16、匹配主版本的 TimescaleDB 和 Redis。后续版本变化由 `dash update` 负责，`update_dash_linux.sh` 只是兼容包装。
 
-发布工作流必须通过 Go 测试、前端 lint/typecheck/build、发布包构建和格式 v1 资产校验。缺少必需文件、空文件、版本不一致或摘要不匹配时不得发布。
+发布工作流运行 Go 测试、前端检查和构建，再调用打包脚本生成归档。打包脚本根据实际收到的文件生成摘要。受管更新器会拒绝缺少必需文件、包含空的必需文件或版本、摘要不匹配的发布包。
 
 ## 发布说明
 

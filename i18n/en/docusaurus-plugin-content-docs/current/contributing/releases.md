@@ -80,12 +80,14 @@ Dash packages include:
 - `dist/index.html` and `dist/theme-bootstrap.js`.
 - `install_dash_linux.sh`.
 - `update_dash_linux.sh`.
-- `deploy/<platform>/install.*`.
 - Five Node binaries and two Windows runners.
+- Two Linux PVE helpers and `deploy/linux/pve-cache.env`.
+
+The Node installation scripts are embedded in `bin/dash`. A running Dash serves them at `/deploy/linux/install.sh`, `/deploy/macos/install.sh`, and `/deploy/windows/install.ps1`.
 
 Format-v1 `release.env` records Dash/Node versions, target OS/architecture, and SHA-256 for all seven Node/runner assets. Candidate `bin/dash` must report matching versions. Packages must never include `config.local.yaml`, local credentials, or the notification key.
 
-The release workflow must pass Go tests, frontend lint/typecheck/build, package construction, and format-v1 asset validation. Missing, empty, version-mismatched, or digest-mismatched assets block publication.
+The release workflow runs Go tests, checks and builds the frontend, and invokes the packager. The packager records digests of the files it receives. The managed updater rejects releases with missing or empty required files, mismatched versions, or incorrect digests.
 
 ## Release Notes
 

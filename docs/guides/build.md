@@ -54,24 +54,14 @@ bash scripts/package.sh \
 | `--node-local` | 从 `deploy/node` 读取本地节点二进制 |
 | `--node-local-dir DIR` | 从指定目录读取本地节点二进制 |
 | `--release` | 发布模式，要求 `--use-git-tag` |
-| `--zip` | 输出 zip |
+| `--zip` | 输出 ZIP，需要预装 `zip` 命令 |
 | `--tar-gz` | 输出 tar.gz |
+
+每个目标的安装目录为 `<OUT_DIR>/<os>/<arch>/Ithiltir-dash/`。归档写入 `<OUT_DIR>/`。
 
 Dash 主控端发布包当前主要面向 Linux amd64 和 Linux arm64。macOS 与 Windows 的 deploy 资产只用于节点。
 
 每个发布包写入格式 v1 `release.env`，记录 Dash/Node 版本、目标 OS/arch 和全部 Node/runner 资产 SHA-256。包内只复制 `configs/config.example.yaml`；本地 `config.local.yaml` 不进入产物。
-
-PowerShell：
-
-```powershell
-powershell -File scripts/package.ps1 `
-  -Version 0.4.0 `
-  -NodeVersion 0.3.0 `
-  -WithPVE `
-  -OutDir release `
-  -Targets linux/amd64 `
-  -Zip
-```
 
 ## Ithiltir-node
 

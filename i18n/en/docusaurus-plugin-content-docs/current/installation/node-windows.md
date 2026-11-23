@@ -28,6 +28,8 @@ The script follows at most five Node/runner asset redirects. They must keep the 
 
 ## Installed Files
 
+On reinstall, the script downloads both Node and the runner, then configures the report target with the downloaded Node. It stops the existing service and replaces the files after those steps succeed. A download or report configuration failure leaves the running service available.
+
 | Path | Content |
 | --- | --- |
 | `%ProgramData%\Ithiltir-node\bin\ithiltir-node.exe` | node binary |

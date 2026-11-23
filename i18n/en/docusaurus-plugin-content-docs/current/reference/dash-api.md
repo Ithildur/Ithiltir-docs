@@ -43,6 +43,7 @@ Error format:
 | `GET` | `/api/version/` | None | Dash and bundled node version |
 | `GET` | `/api/front/brand` | Optional Bearer | Brand info |
 | `GET` | `/api/front/metrics` | Optional Bearer | Current front metrics |
+| `GET` | `/api/front/metrics/{id}` | Optional Bearer | Current metrics for one node |
 | `GET` | `/api/front/groups` | Optional Bearer | Front groups |
 | `GET` | `/api/metrics/online` | Optional Bearer | Online rate |
 | `GET` | `/api/metrics/uptime` | Optional Bearer | Uptime for the latest 45 calendar days |
@@ -203,9 +204,15 @@ Only `guest_access_mode`, `usage_mode`, and `direction_mode` are writable. Sendi
 - Traffic summary, daily, and monthly responses keep raw `in_*` and `out_*` fields. The active accounting view is exposed through `selected_bytes`, `selected_p95_bytes_per_sec`, `selected_peak_bytes_per_sec`, and selected direction fields.
 - Clients use `data_complete`, `coverage_ratio`, `gap_count`, and `reset_count`. The deprecated `partial` field has been removed.
 
-## History Metrics
+## Current Node Metrics
 
-`GET /api/front/metrics` node objects can include `node.tags`, `disk.smart`, `disk.temperature_devices[]`, top-level `thermal`, and top-level `pressure`. SMART, thermal, and pressure runtime payloads are cached separately from the front node snapshot and are reattached only when `received_at` matches.
+`GET /api/front/metrics` returns `{ "sent_at": "...", "nodes": [...] }` for both full and paginated reads. An empty result or page has `nodes: []`. The top-level `sent_at` is the UTC time in RFC 3339 format when Dash prepares the response. Subtract a node's `observation.received_at` from this timestamp to calculate how long ago Dash received its last report.
+
+`GET /api/front/metrics/{id}` returns one node object with the same fields as an entry in `nodes`. Both endpoints restrict anonymous reads to guest-visible nodes. The single-node endpoint returns `404 not_found` if the node does not exist, was deleted, has no report yet, or is hidden from the requesting guest. An ID outside the positive int64 range returns `400 invalid_id`.
+
+`GET /api/front/metrics` node objects can include `node.tags`, `disk.smart`, `disk.temperature_devices[]`, top-level `thermal`, and top-level `pressure`. The snapshot carries the reported PSI values in `pressure`. Only SMART and thermal are attached from separate caches when `received_at` matches.
+
+## History Metrics
 
 `GET /api/metrics/history` supports temperature metrics:
 
@@ -286,7 +293,7 @@ Channel reads include delivery health, retry/probe times, and pending/blocked co
 | `POST` | `/api/admin/system/themes/{id}/apply` | Apply theme |
 | `DELETE` | `/api/admin/system/themes/{id}` | Delete theme |
 
-System settings include `history_guest_access_mode`, `dash_update_channel`, `dash_update_mode`, `logo_url`, `page_title`, `topbar_text`, `uptime_guest_visible`, `uptime_warning_sla`, and `uptime_error_sla`. `PATCH` accepts partial updates. `PUT` requires the first six fields.
+System settings include `history_guest_access_mode`, `dash_update_channel`, `dash_update_mode`, `logo_url`, `page_title`, `topbar_text`, `pve_guest_visible`, `pve_guest_names_visible`, `uptime_guest_visible`, `uptime_warning_sla`, and `uptime_error_sla`. `PATCH` accepts partial updates. `PUT` requires the first six fields.
 
 `uptime_guest_visible` defaults to `true`. Warning and error thresholds default to `99` and `95`, allow decimals, and must satisfy `0 <= error < warning <= 100`. Omitted or null uptime fields retain their previous values in both PATCH and PUT. Invalid thresholds return `400 invalid_fields` and roll back the whole update. These settings control access and presentation without changing sampling.
 
@@ -300,13 +307,15 @@ Update jobs and transactions persist under `$DASH_HOME/runtime/dash-update`. `fa
 
 ## PVE Access
 
-System settings (`GET`, `PATCH`, and `PUT /api/admin/system/settings`) include `pve_guest_visible`, a boolean defaulting to `false`. Omitted or `null` values preserve the current setting in PATCH and PUT; explicit `false` disables guest access.
+`GET /api/admin/system/settings` returns `pve_guest_visible` and `pve_guest_names_visible`. Both default to `false`. Omitting either field or setting it to `null` in PATCH or PUT preserves its current value.
 
-`GET /api/virt/{id}` and `GET /api/virt/{id}/vms/{vmid}/history` share the same access policy:
+`GET /api/virt/{id}` returns the current VM snapshot.
 
 - Administrators use a valid Bearer token and are not restricted by the guest switch.
-- Guests can view VM names, IPs, snapshots, and history only when the switch is enabled and the host is guest-visible. A disabled switch returns `403 forbidden`; with it enabled, hidden, missing, or deleted hosts return `404 not_found`.
+- Guests need `pve_guest_visible` and a guest-visible host. Guest responses omit IP addresses and IP observation metadata. VM names require `pve_guest_names_visible` as well. Disabled guest access returns `403 forbidden`. With access enabled, hidden, missing, or deleted hosts return `404 not_found`.
 - Access-setting or visibility lookup failures return `503 virt_unavailable`. Responses use `Cache-Control: no-store`.
+
+`GET /api/virt/{id}/vms/{vmid}/history` requires a valid administrator Bearer token. Anonymous requests return `401 unauthorized` regardless of the guest settings.
 
 ## Virtual machine snapshots
 
@@ -385,6 +394,6 @@ These settings annotate VM history charts without sending notifications; the adm
 
 Results contain `source: "pve_rrd"`, `vm_id`, `timeframe`, `consolidation`, `collected_at`, and `points`. `collected_at` is the fetch time; each point's `timestamp` is its sample time. Optional point fields are `cpu_ratio`, `memory_bytes`, `memory_limit_bytes`, `disk_read_bytes_per_second`, `disk_write_bytes_per_second`, `net_in_bytes_per_second`, and `net_out_bytes_per_second`. Missing values remain unknown. PVE determines historical aggregation and resolution.
 
-History errors: `400 invalid_query`/`invalid_id`, `403 forbidden`, `404 not_found` (node)/`vm_not_found` (VM), `429 busy`, `501 unsupported`, `503 node_offline`/`virt_unavailable`, `504 deadline_exceeded`, `502 source_unavailable`/`invalid_result`. Queries require a fresh successful local VM inventory and a running helper service with history support. Dash does not persist VM history or include it in host traffic, uptime or billing.
+History errors: `400 invalid_query`/`invalid_id`, `401 unauthorized`, `404 not_found` (node)/`vm_not_found` (VM), `429 busy`, `501 unsupported`, `503 node_offline`/`virt_unavailable`, `504 deadline_exceeded`, `502 source_unavailable`/`invalid_result`. Queries require a fresh successful local VM inventory and a running helper service with history support. Dash does not persist VM history or include it in host traffic, uptime or billing.
 
 `GET /api/admin/nodes/{id}/virt/capabilities` is administrator-only and returns `{"connected":true,"pve_history":true,"version":"...","helper_version":"..."}` for installation diagnostics; disconnected sessions return false flags. Missing authentication returns `401 unauthorized`.

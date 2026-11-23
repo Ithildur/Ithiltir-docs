@@ -6,9 +6,15 @@ slug: /Install/Upgrade
 
 Ithiltir 有两类升级：Dash 升级和 Node 升级。Dash 数据库迁移只支持前向演进。
 
+## 从 0.4.0 升级到 0.4.1
+
+正式版 `0.4.0` 与 `0.4.1` 使用相同的数据库结构，本次升级没有待执行的新迁移。
+
+读取 `GET /api/front/metrics` 的客户端需改为遍历 `response.nodes`。此前响应体直接是节点数组，此变更也适用于分页请求。仅需一个节点时，可改用 `GET /api/front/metrics/{id}`。时间字段和访问规则见 [Dash HTTP API](../reference/dash-api.md)。
+
 ## 从 0.3.3 升级到 0.4.0
 
-升级前备份 PostgreSQL，并单独保存 `$DASH_HOME/configs/notify-config.key`。受管 `dash update` 停止旧进程后应用 `0015`，再启动新版本。该迁移新增 PVE 访问和节点 VM 图表设置，删除已无业务用途的租约、通知 `config` 占位列和固定全局账期列；已有通知密文、渠道设置、节点账期及历史保持不变。
+升级前备份 PostgreSQL，并单独保存 `$DASH_HOME/configs/notify-config.key`。受管 `dash update` 停止旧进程后应用 `0015` 和 `0016`，再启动新版本。`0016` 新增默认关闭的游客 VM 名称开关。`0015`新增 PVE 访问和节点 VM 图表设置，删除已无业务用途的租约、通知 `config` 占位列和固定全局账期列；已有通知密文、渠道设置、节点账期及历史保持不变。
 
 应用 `0015` 后不能只换回 `0.3.3` 二进制。更新中断时执行 `dash update recover`；迁移开始后，恢复会继续完成新版本安装。
 

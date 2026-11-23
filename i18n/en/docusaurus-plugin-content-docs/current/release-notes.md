@@ -9,6 +9,16 @@ Release Notes record version changes that affect deployment, upgrades, configura
 
 ## Dash
 
+### 0.4.1 (2026-11-23)
+
+This release bundles Node and the PVE helpers from Node `0.3.2`.
+
+- `GET /api/front/metrics` returns `{sent_at, nodes}` for both full and paginated lists. Update clients to read `response.nodes`. The dashboard uses `sent_at` and the node’s `received_at` to determine online status.
+- `GET /api/front/metrics/{id}` returns one node with the same visibility rules as the list. The statistics page uses this endpoint for its node overview.
+- Expanded PVE history charts load as they approach the viewport. The page runs up to four history queries per host at a time. Switching network interfaces after a traffic rebuild fetches the selected interface’s data once.
+- Source builds use `bash scripts/package.sh`. Unpacked installations are written to `<out>/<os>/<arch>/Ithiltir-dash/`. ZIP output requires a locally installed `zip` command.
+- Upgrading from the official `0.4.0` release requires no new database migration.
+
 ### 0.4.0
 
 Release date: 2026-11-09
@@ -223,6 +233,12 @@ GitHub Release: [Ithiltir 0.2.6](https://github.com/Ithildur/Ithiltir/releases/t
 - Back up the database before production upgrades. The release-package updater runs migrations; manual binary replacement requires manual migration.
 
 ## Node
+
+### 0.3.2 (2026-11-22)
+
+- When a host metrics request reaches its local HTTP or gRPC deadline, the next round sends the latest snapshot over a fresh connection to that target.
+- With PVE enabled, VM snapshots and reverse queries share a dedicated gRPC connection. A timeout on the host metrics connection leaves the PVE session available.
+- Official Node binaries use the `grpcnotrace` build tag to omit the legacy gRPC trace pages.
 
 ### 0.3.1
 

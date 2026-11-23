@@ -17,7 +17,7 @@ When `target_url` and `secret` are omitted, the node reads `report.yaml`.
 
 Default interval is 3 seconds.
 
-Metrics requests (HTTP/gRPC) time out after `max(6 seconds, reporting interval + 3 seconds)`. Targets send concurrently within a round; the next round waits for all targets to finish and reads the latest snapshot. Rounds never overlap. If the reporting interval has elapsed by the end of a round, the next round starts immediately.
+Metrics requests (HTTP/gRPC) time out after `max(6 seconds, reporting interval + 3 seconds)`. Targets send concurrently. Once all targets finish, the next round reads the latest snapshot. If a request reached its local deadline, the next round starts immediately and opens a fresh connection to the affected target. Otherwise, the next round follows the configured interval.
 
 ## Target URL
 

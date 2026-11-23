@@ -42,6 +42,7 @@ slug: /Reference/DashAPI
 | `GET` | `/api/version/` | 无 | Dash 和打包 node 版本 |
 | `GET` | `/api/front/brand` | 可选 Bearer | 品牌信息 |
 | `GET` | `/api/front/metrics` | 可选 Bearer | 当前看板指标 |
+| `GET` | `/api/front/metrics/{id}` | 可选 Bearer | 指定节点的当前指标 |
 | `GET` | `/api/front/groups` | 可选 Bearer | 前台分组 |
 | `GET` | `/api/metrics/online` | 可选 Bearer | 在线率 |
 | `GET` | `/api/metrics/uptime` | 可选 Bearer | 最近 45 个自然日的 Uptime |
@@ -204,9 +205,15 @@ Bearer 可选端点会把无效 Bearer 当作匿名请求。
 - 流量 summary、daily、monthly 响应保留原始 `in_*` 和 `out_*` 字段，并通过 `selected_bytes`、`selected_p95_bytes_per_sec`、`selected_peak_bytes_per_sec` 及其方向字段暴露当前计费视图。
 - 客户端应使用 `data_complete`、`coverage_ratio`、`gap_count` 和 `reset_count` 展示完整性。废弃字段 `partial` 已删除。
 
-## 历史指标
+## 当前节点指标
 
-`GET /api/front/metrics` 的节点结构可以包含 `node.tags`、`disk.smart`、`disk.temperature_devices[]`、顶层 `thermal` 和顶层 `pressure`。SMART、thermal 和 pressure 运行时 payload 与前台节点快照分开缓存，只有 `received_at` 匹配时才会重新挂回节点快照。
+`GET /api/front/metrics` 的全量和分页响应均为 `{ "sent_at": "...", "nodes": [...] }`。没有可见节点或请求的页为空时，`nodes` 为 `[]`。顶层 `sent_at` 是 Dash 准备发送本次响应时的 UTC 时间，采用 RFC 3339 格式。它与节点的 `observation.received_at` 之差表示距 Dash 上次收到该节点上报的时长。
+
+`GET /api/front/metrics/{id}` 直接返回单个节点，结构与 `nodes` 中的一项相同。两个接口都按游客可见性过滤匿名请求。节点不存在、已删除、尚无上报或对当前游客不可见时，单节点接口返回 `404 not_found`。ID 不是正整数或超出 int64 范围时返回 `400 invalid_id`。
+
+`GET /api/front/metrics` 的节点视图可以包含 `node.tags`、`disk.smart`、`disk.temperature_devices[]`、顶层 `thermal` 和顶层 `pressure`。`pressure` 来自该次指标快照。仅 SMART 和 thermal 从独立缓存读取，并在 `received_at` 匹配时合入快照。
+
+## 历史指标
 
 `GET /api/metrics/history` 支持温度指标：
 
@@ -287,7 +294,7 @@ SMART 温度历史只来自后端确认的物理盘。虚拟盘和 RAID 设备�
 | `POST` | `/api/admin/system/themes/{id}/apply` | 应用主题 |
 | `DELETE` | `/api/admin/system/themes/{id}` | 删除主题 |
 
-系统设置包含 `history_guest_access_mode`、`dash_update_channel`、`dash_update_mode`、`logo_url`、`page_title`、`topbar_text`、`uptime_guest_visible`、`uptime_warning_sla` 和 `uptime_error_sla`。`PATCH` 接受局部更新；`PUT` 必须提交前六个字段。
+系统设置包含 `history_guest_access_mode`、`dash_update_channel`、`dash_update_mode`、`logo_url`、`page_title`、`topbar_text`、`pve_guest_visible`、`pve_guest_names_visible`、`uptime_guest_visible`、`uptime_warning_sla` 和 `uptime_error_sla`。`PATCH` 接受局部更新；`PUT` 必须提交前六个字段。
 
 `uptime_guest_visible` 默认为 `true`；警告和错误阈值默认为 `99`、`95`，允许小数，必须满足 `0 <= error < warning <= 100`。PATCH 和 PUT 中省略或为 `null` 的 Uptime 字段保留原值。非法阈值返回 `400 invalid_fields`，整次更新回滚。开关和阈值只控制访问与展示，不改变采样。
 
@@ -303,13 +310,15 @@ SMART 温度历史只来自后端确认的物理盘。虚拟盘和 RAID 设备�
 
 ## PVE 访问权限
 
-系统设置接口（`GET`、`PATCH` 和 `PUT /api/admin/system/settings`）包含布尔字段 `pve_guest_visible`，默认 `false`。PATCH、PUT 中未提交或为 `null` 时保持原值；显式 `false` 关闭游客访问。
+`GET /api/admin/system/settings` 返回 `pve_guest_visible` 和 `pve_guest_names_visible`，两者默认均为 `false`。PATCH、PUT 中省略某个字段或传 `null` 时，该字段保留原值。
 
-`GET /api/virt/{id}` 和 `GET /api/virt/{id}/vms/{vmid}/history` 使用相同权限：
+`GET /api/virt/{id}` 返回当前 VM 快照。
 
 - 管理员使用有效 Bearer token 访问，不受游客开关限制。
-- 游客仅能在开关开启时查看游客可见宿主机的 VM 名称、IP、快照和历史。开关关闭返回 `403 forbidden`；开启后宿主隐藏、不存在或已删除返回 `404 not_found`。
+- 游客需开启 `pve_guest_visible` 且宿主机对游客可见。游客响应省略 IP 地址及 IP 观测时间和有效期。显示 VM 名称还需开启 `pve_guest_names_visible`。关闭游客快照访问时返回 `403 forbidden`；开启后，隐藏、不存在或已删除的宿主机均返回 `404 not_found`。
 - 读取访问设置或节点可见性失败返回 `503 virt_unavailable`。响应使用 `Cache-Control: no-store`。
+
+`GET /api/virt/{id}/vms/{vmid}/history` 需要有效的管理员 Bearer token。无论游客开关如何设置，匿名请求均返回 `401 unauthorized`。
 
 ## 虚拟机当前快照
 
@@ -388,6 +397,6 @@ VM 数据不生成独立节点、不更新宿主在线率、不写宿主历史�
 
 响应包含 `source: "pve_rrd"`、`vm_id`、`timeframe`、`consolidation`、`collected_at`、`points`。`collected_at` 是读取时间；每点的 `timestamp` 是采样时间，可选字段为 `cpu_ratio`、`memory_bytes`、`memory_limit_bytes`、`disk_read_bytes_per_second`、`disk_write_bytes_per_second`、`net_in_bytes_per_second`、`net_out_bytes_per_second`。缺失值表示未知，历史聚合和分辨率由 PVE 决定。
 
-历史查询错误：`400 invalid_query`/`invalid_id`、`403 forbidden`、`404 not_found`（节点）/`vm_not_found`（VM）、`429 busy`、`501 unsupported`、`503 node_offline`/`virt_unavailable`、`504 deadline_exceeded`、`502 source_unavailable`/`invalid_result`。查询要求本地新鲜的成功 VM 清单及支持历史查询的 helper 服务。Dash 不持久化 VM 历史，不将其计入宿主流量、在线率或计费。
+历史查询错误：`400 invalid_query`/`invalid_id`、`401 unauthorized`、`404 not_found`（节点）/`vm_not_found`（VM）、`429 busy`、`501 unsupported`、`503 node_offline`/`virt_unavailable`、`504 deadline_exceeded`、`502 source_unavailable`/`invalid_result`。查询要求本地新鲜的成功 VM 清单及支持历史查询的 helper 服务。Dash 不持久化 VM 历史，不将其计入宿主流量、在线率或计费。
 
 `GET /api/admin/nodes/{id}/virt/capabilities` 仅供管理员进行安装诊断，返回 `{"connected":true,"pve_history":true,"version":"...","helper_version":"..."}`；会话断开时能力标志为 false。缺少鉴权时返回 `401 unauthorized`。

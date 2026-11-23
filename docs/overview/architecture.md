@@ -105,7 +105,7 @@ HTTP 与 gRPC 共用 `nodeingest.Receiver` 处理鉴权、验证和宿主指标�
 
 PVE root helper 在内存中保存各 VM 的观测结果，通过 Unix socket 提供给非特权 Node。Node 独立上报到 `/api/node/virt`；Dash 在 Redis 或 `--no-redis` 内存中缓存最新快照 10 分钟，重复或更旧报告不续期。
 
-VM 历史经查询会话按需读取 PVE RRD，访问权限由 `/api/virt/{id}` 父级统一检查。Dash 仅持久化 PVE 游客开关和节点图表阈值，VM 数据不写入 PostgreSQL，不参与宿主计费和 Uptime。
+管理员通过 Node 查询会话按需读取 PVE RRD 历史。两个 PVE 游客开关分别控制当前快照和 VM 名称的可见性。Dash 在 PostgreSQL 中保存开关和节点图表阈值。VM 数据不写入 PostgreSQL，也不参与宿主机计费和 Uptime。
 
 采样和部署配置见 [PVE 监控](../installation/pve.md)。
 

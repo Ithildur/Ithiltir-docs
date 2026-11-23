@@ -46,9 +46,9 @@ As an administrator, call `GET /api/admin/nodes/{id}/virt/capabilities` and conf
 
 ## Dashboard and Access
 
-Click the host card's PVE icon to open `/pve/{id}`. The page shows VM inventory, details, and history; `?vm=<vmid>` selects a VM. Snapshots refresh every 15 seconds. History loads when selecting a VM or range and on manual refresh.
+Click the host card’s PVE icon to open `/pve/{id}`. VM snapshots refresh every 15 seconds. Administrators can expand a VM for details or select one with `?vm=<vmid>`. An expanded history chart loads as it approaches the viewport. Changing the time range or refreshing the chart queries it again.
 
-Guest access is disabled by default. Enabling system setting `pve_guest_visible` exposes VM names, IPs, snapshots, and history only for guest-visible hosts. This switch is independent of host history, traffic, and uptime permissions.
+Guests can read VM snapshots only when `pve_guest_visible` is enabled and the host is guest-visible. VM names also require `pve_guest_names_visible`. Both settings default to `false`. Guest snapshots omit IP addresses. VM history requires administrator authentication.
 
 Per-node VM CPU/memory thresholds annotate historical charts only; they do not send alerts. CPU defaults to 80%. Memory defaults to 90% and requires explicit enablement; evaluation uses each historical point's memory limit and leaves missing values unknown.
 

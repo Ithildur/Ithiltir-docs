@@ -8,6 +8,16 @@ slug: /ReleaseNotes
 
 ## Dash
 
+### 0.4.1（2026-11-23）
+
+正式包内置 Node `0.3.2` 及同版本的 PVE helper。
+
+- `GET /api/front/metrics` 的全量和分页响应均改为 `{sent_at, nodes}`，旧客户端需改读 `response.nodes`。看板用 `sent_at` 和节点的 `received_at` 判断在线状态。
+- 新增 `GET /api/front/metrics/{id}`，按列表的可见性规则返回单个节点。统计页通过此接口读取节点概览。
+- 已展开的 PVE 历史图接近视口时开始加载，同一宿主机页面最多同时查询四份历史。流量重建后切换网卡，只加载一次所选网卡的数据。
+- 源码打包统一使用 `bash scripts/package.sh`，解包目录改为 `<out>/<os>/<arch>/Ithiltir-dash/`。输出 ZIP 需自行安装 `zip`。
+- 从正式版 `0.4.0` 升级无需新增数据库迁移。
+
 ### 0.4.0
 
 发布日期：2026-11-09
@@ -222,6 +232,12 @@ GitHub 发布页：[Ithiltir 0.2.6](https://github.com/Ithildur/Ithiltir/release
 - 生产升级仍应先备份数据库。发布包更新脚本会执行迁移；手工替换二进制后必须手工执行迁移。
 
 ## Node
+
+### 0.3.2（2026-11-22）
+
+- 宿主机指标的 HTTP 或 gRPC 请求达到 Node 本地超时时，下一轮通过新连接向该目标发送最新快照。
+- 启用 PVE 后，VM 快照与反向查询共用一条独立的 gRPC 连接。宿主机指标连接超时后，PVE 查询会话仍可用。
+- 官方 Node 二进制使用 `grpcnotrace` 构建，移除了 gRPC 的旧版跟踪页面。
 
 ### 0.3.1
 

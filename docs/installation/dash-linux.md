@@ -43,7 +43,9 @@ sudo bash install_dash_linux.sh --lang zh --service-manager=none
 
 安装器要求 `pgrep`。受支持的 Debian/Ubuntu 环境可以由安装器准备 PostgreSQL 16+、与 PostgreSQL 主版本匹配的 TimescaleDB 和 Redis。Alpine 必须预先准备这些服务。
 
-Redis 运行时最低支持版本为 `6.2.0`，推荐版本为 `8.2.3` 及以上。安装器的本地部署目标是推荐版本；默认源码版本为 `8.2.5`。使用远端 Redis 时，安装器按实际 `redis.addr` 执行 `PING` 和 `INFO server`，不会根据本机 `redis-server` 判断远端版本。
+安装器将数据库账号和数据库名自动转为小写。若输入 PostgreSQL 保留关键字（如 `User`），会提示重新输入该项。创建角色和数据库前会完成两项检查。
+
+常规 systemd 安装器默认使用本机 Redis，并检查本机是否达到推荐版本 `8.2.3+`。选择源码安装时默认使用 `8.2.5`。使用远程 Redis 需自行部署服务，在 `configs/config.local.yaml` 中设置 `redis.addr`，按需填写 `redis.password`。Dash 运行时要求该端点为 Redis `6.2.0` 或以上。
 
 ## 安装结果
 

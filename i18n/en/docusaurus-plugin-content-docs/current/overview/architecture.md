@@ -108,7 +108,7 @@ HTTP and gRPC share `nodeingest.Receiver` for authentication, validation, and ho
 
 The root PVE helper keeps each VM's observations in memory and serves them to unprivileged Node over a Unix socket. Node reports independently to `/api/node/virt`; Dash caches the latest snapshot for 10 minutes in Redis or `--no-redis` memory. Duplicate or older reports do not extend expiry.
 
-VM history is read from PVE RRD on demand through query sessions, with access checked by the `/api/virt/{id}` parent. Dash persists only the PVE guest setting and per-node chart thresholds. VM data is not written to PostgreSQL or included in host billing or uptime.
+Administrators query VM history on demand from PVE RRD through the Node query session. The two PVE guest settings control access to current snapshots and VM names. Dash persists these settings and per-node chart thresholds in PostgreSQL. VM data is excluded from PostgreSQL, host billing, and uptime.
 
 See [PVE Monitoring](../installation/pve.md) for sampling and deployment configuration.
 

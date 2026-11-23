@@ -7,9 +7,15 @@ title: Upgrade
 
 Dash database migrations are forward-only. Node updates use a separate lifecycle.
 
+## Upgrading from 0.4.0 to 0.4.1
+
+The official `0.4.0` release and `0.4.1` use the same database schema. This upgrade has no pending database migrations.
+
+Clients that read `GET /api/front/metrics` must iterate over `response.nodes`. Earlier versions returned the node array directly. This change also applies to paginated requests. Clients that need one node can use `GET /api/front/metrics/{id}`. See the [Dash HTTP API](../reference/dash-api.md) for timestamp semantics and access rules.
+
 ## Upgrading from 0.3.3 to 0.4.0
 
-Back up PostgreSQL and separately save `$DASH_HOME/configs/notify-config.key`. Managed `dash update` stops the old process, applies `0015`, and starts the new version. The migration adds PVE access and per-node VM chart settings and removes unused leases, the notification `config` placeholder, and fixed global cycle columns. Existing ciphertext, channel settings, node cycles, and history remain intact.
+Back up PostgreSQL and separately save `$DASH_HOME/configs/notify-config.key`. Managed `dash update` stops the old process, applies `0015` and `0016`, and starts the new version. Migration `0016` adds the guest VM name setting, disabled by default. Migration `0015` adds PVE access and per-node VM chart settings and removes unused leases, the notification `config` placeholder, and fixed global cycle columns. Existing ciphertext, channel settings, node cycles, and history remain intact.
 
 After `0015`, reverting only the binary to `0.3.3` is unsupported. Run `dash update recover` after an interrupted update; once migration begins, recovery completes installation of the new version.
 

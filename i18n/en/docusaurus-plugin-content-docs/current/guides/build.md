@@ -50,16 +50,14 @@ Common options:
 | `--with-pve` | Bundle matching Linux PVE helpers and their checksum manifest |
 | `--node-local` | Use locally built node assets |
 | `--release` | Release mode, requires `--use-git-tag` |
+| `--zip` | Write a ZIP archive (requires the `zip` command) |
+| `--tar-gz` | Write a tar.gz archive |
+
+Each target has its own unpacked directory under `<OUT_DIR>/<os>/<arch>/Ithiltir-dash/`. Archives are written directly to `<OUT_DIR>/`.
 
 Dash release packages currently target Linux amd64 and Linux arm64. macOS and Windows deploy assets are for nodes.
 
 Each package writes format-v1 `release.env` with Dash/Node versions, target OS/architecture, and SHA-256 for all Node/runner assets. Only `configs/config.example.yaml` is copied; local config is excluded.
-
-PowerShell package script:
-
-```powershell
-powershell -File scripts/package.ps1 -Version 0.4.0 -NodeVersion 0.3.0 -WithPVE -OutDir release -Targets linux/amd64 -Zip
-```
 
 ## Ithiltir-node
 

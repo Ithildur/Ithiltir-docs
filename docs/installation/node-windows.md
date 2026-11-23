@@ -27,6 +27,8 @@ install_node.ps1 <dash_ip> [dash_port] <secret> [interval_seconds] [extra args..
 
 ## 安装结果
 
+重装时，脚本先下载 Node 和 runner，再用下载的 Node 配置上报目标。两次下载和上报配置都成功后，才停止原服务并替换文件。下载或上报配置失败时，运行中的服务继续工作。
+
 | 路径 | 内容 |
 | --- | --- |
 | `%ProgramData%\Ithiltir-node\bin\ithiltir-node.exe` | node 二进制 |

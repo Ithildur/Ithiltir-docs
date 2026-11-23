@@ -30,6 +30,8 @@ Guest uptime uses the independent boolean system setting `uptime_guest_visible`,
 | Uptime and hourly details | Guest-visible nodes only | `uptime_guest_visible=true` + guest-visible node |
 | History metrics | Disabled | `history_guest_access_mode=by_node` + guest-visible node |
 | Traffic statistics | Disabled | Traffic `guest_access_mode=by_node` + guest-visible node |
+| Current VM snapshot | Disabled | `pve_guest_visible=true` + guest-visible host |
+| VM history | Disabled | Administrator only |
 
 ### Uptime Settings
 
@@ -55,6 +57,6 @@ Runtime access settings are stored in PostgreSQL and can be changed from the adm
 
 ## PVE Access
 
-`pve_guest_visible` defaults to `false`. When enabled, guests can read VM names, IPs, snapshots, and history only on hosts with `is_guest_visible=true`. This is independent of history, traffic, and uptime settings. `GET /api/statistics/access` also returns this field.
+`pve_guest_visible` allows guests to read current VM snapshots for hosts with `is_guest_visible=true`. Guest snapshots omit IP addresses. Showing VM names also requires `pve_guest_names_visible`. Both switches default to `false`. `GET /api/statistics/access` reports `pve_guest_visible`.
 
-`/api/virt/*` accepts optional Bearer authentication. Disabled guest access returns `403 forbidden`; hidden, missing, or deleted hosts return `404 not_found` for guests. Administrators are not restricted by the guest switch. The capabilities endpoint is administrator-only. `POST /api/node/virt` requires `X-Node-Secret`, like other node reports. See [PVE Monitoring](../installation/pve.md).
+`GET /api/virt/{id}` accepts optional Bearer authentication. For guests, disabled snapshot access returns `403 forbidden`. When enabled, hidden, missing, or deleted hosts return `404 not_found`. VM history and capabilities require administrator authentication. `POST /api/node/virt` requires `X-Node-Secret`. See [PVE Monitoring](../installation/pve.md).

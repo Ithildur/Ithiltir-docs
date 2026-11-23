@@ -31,7 +31,9 @@ sudo bash install_dash_linux.sh --lang en --service-manager=none
 
 The installer requires `pgrep`. Supported Debian/Ubuntu hosts can have PostgreSQL 16+, matching TimescaleDB, and Redis prepared by the installer. Alpine must have those services preinstalled.
 
-Redis runtime support starts at `6.2.0`; `8.2.3+` is recommended and is the managed install target. The default source version is `8.2.5`. Remote Redis is checked at its configured endpoint with `PING` and `INFO server`.
+The installer converts the database role and database name to lowercase. Entering a PostgreSQL reserved keyword such as `User` prompts for another name for that field. Both names are checked before the installer creates the role or database.
+
+The standard systemd installer checks and provisions local Redis (recommended `8.2.3+`, default source version `8.2.5`). For remote Redis, provision the endpoint yourself and configure `redis.addr` and any required `redis.password` in `configs/config.local.yaml`. Dash requires Redis `6.2.0+` at that address.
 
 ## Layout
 

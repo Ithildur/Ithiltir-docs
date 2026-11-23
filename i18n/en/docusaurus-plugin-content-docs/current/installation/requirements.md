@@ -31,7 +31,7 @@ Alpine must already have PostgreSQL 16+, matching TimescaleDB, and Redis 6.2.0+ 
 
 Dash runs `PING` and `INFO server` against the configured endpoint. The Redis ACL user must allow both commands. An unavailable service, unknown version, or version below `6.2.0` stops startup; versions below `8.2.3` run with a warning.
 
-When the installer manages local Redis, it targets `8.2.3+`; the default source version is `8.2.5`. Remote-only Redis does not require a local `redis-server` binary.
+The standard systemd installer checks and provisions local Redis (recommended `8.2.3+`, default source version `8.2.5`). For remote Redis, provision the endpoint yourself and configure `redis.addr` and any required `redis.password` in `configs/config.local.yaml`. Dash requires Redis `6.2.0+` at that address.
 
 Redis stores admin sessions and disposable frontend caches. With `--no-redis`, those move to process memory and disappear on restart. Alert pending/cooldown state and MTProto login handshakes are process-local in both modes.
 

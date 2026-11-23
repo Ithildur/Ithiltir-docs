@@ -50,7 +50,7 @@ https://dashboard.example/api/node/metrics
 - target 路径以 `/metrics` 结尾时，静态元数据发到同级 `/static` URL。
 - `report install <url> <key>` 要求 target URL 以 `/metrics` 结尾；写入本地配置前会调用同级 `/identity` URL。
 - 指标目标在同一轮内并发发送，下一轮等待全部目标结束后读取最新快照，轮次不重叠。
-- 指标请求（HTTP/gRPC）超时为 `max(6 秒, 上报周期 + 3 秒)`。当前轮次结束时若上报周期已经耗尽，立即开始下一轮。
+- 指标请求（HTTP/gRPC）的超时为 `max(6 秒, 上报周期 + 3 秒)`。任一目标达到本地超时时，当前轮次结束后立即开始下一轮，通过新连接向该目标发送最新快照。其余情况按配置的周期发送。
 
 ## 传输和鉴权
 

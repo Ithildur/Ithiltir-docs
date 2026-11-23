@@ -43,7 +43,7 @@ Dash 发布包里的 `install_dash_linux.sh` 支持：
 
 Dash 运行时支持 Redis `6.2.0+`，推荐 `8.2.3+`。启动会对实际配置端点执行 `PING` 和 `INFO server`，因此 Redis ACL 用户必须允许这两个命令。低于最低版本、服务不可达或无法读取版本时 Dash 停止启动；低于推荐版本时只记录 warning。
 
-安装器自行部署 Redis 时以推荐版本为目标。系统仓库无法提供 `8.2.3+` 时，可以选择源码安装/升级，默认源码版本为 `8.2.5`。只使用远程 Redis 时，不要求本机存在 `redis-server` 二进制。
+常规 systemd 安装器默认使用本机 Redis，并检查本机是否达到推荐版本 `8.2.3+`。选择源码安装时默认使用 `8.2.5`。使用远程 Redis 需自行部署服务，在 `configs/config.local.yaml` 中设置 `redis.addr`，按需填写 `redis.password`。Dash 运行时要求该端点为 Redis `6.2.0` 或以上。
 
 Redis 默认保存：
 

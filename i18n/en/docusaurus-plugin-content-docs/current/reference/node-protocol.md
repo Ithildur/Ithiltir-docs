@@ -188,6 +188,8 @@ Node disables gRPC policy retries, but gRPC may transparently retry calls known 
 
 ## VM Reporting
 
+With Node `0.3.2`, host metrics and static reports share one gRPC connection. When `ITHILTIR_NODE_PVE_SOCKET` enables PVE, `Virt` and `Connect` share a second connection. Renewing the host connection after a metrics timeout leaves the PVE query session in place.
+
 With `ITHILTIR_NODE_PVE_SOCKET`, Node reads VM observations from the local helper. HTTP reports independently to the target's sibling `/virt` endpoint, using `X-Node-Secret` and returning `204` on success; gRPC uses `Virt(Report)`. VM reports do not carry updates or refresh host uptime; failures retry with independent backoff.
 
 See [Dash API](./dash-api.md) for VM fields, lifetimes, and errors, and [PVE Monitoring](../installation/pve.md) for installation.

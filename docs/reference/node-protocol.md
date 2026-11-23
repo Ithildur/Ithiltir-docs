@@ -187,6 +187,8 @@ Node 禁用 gRPC 策略重试，但 gRPC 可透明重试确定尚未处理的调
 
 ## VM 上报
 
+从 Node `0.3.2` 起，宿主机指标与静态信息共用一条 gRPC 连接。通过 `ITHILTIR_NODE_PVE_SOCKET` 启用 PVE 后，`Virt` 和 `Connect` 共用另一条连接。指标超时后重建宿主机连接，PVE 查询会话继续使用原连接。
+
 设置 `ITHILTIR_NODE_PVE_SOCKET` 后，Node 从本地 helper 读取 VM 观测。HTTP 独立上报到 target 同级的 `/virt`，使用 `X-Node-Secret`，成功返回 `204`；gRPC 使用 `Virt(Report)`。VM 上报不下发更新、不刷新宿主在线率，失败后独立退避重试。
 
 VM 字段、有效期和错误见 [Dash API](./dash-api.md)，安装见 [PVE 监控](../installation/pve.md)。
