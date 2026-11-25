@@ -88,13 +88,20 @@ http:
 
 ## Caddy Example
 
+Caddy terminates TLS at the public endpoint and forwards RPCs under `/ithiltir.node.v1.Node/` to Dash with their paths intact. The `h2c://` upstream uses cleartext HTTP/2 on the loopback connection. The second rule handles the dashboard, HTTP API, and downloads.
+
 ```caddy
 dash.example.com {
+    reverse_proxy /ithiltir.node.v1.Node/* h2c://127.0.0.1:8080
     reverse_proxy 127.0.0.1:8080
 }
 ```
 
-Use the same Dash config as above.
+Use the Dash listener and trusted proxy settings shown above. With the standard Caddyfile path, validate and reload the configuration with:
+
+```bash
+caddy validate --config /etc/caddy/Caddyfile && caddy reload --config /etc/caddy/Caddyfile
+```
 
 ## Trusted Proxies
 
@@ -111,7 +118,7 @@ Node install script download URLs and report URLs depend on `app.public_url`. Af
 
 ## Node gRPC
 
-Node transport `ITHILTIR_NODE_TRANSPORT=grpc` or `auto` requires HTTP/2 and gRPC proxy support. The Nginx example above uses `grpc_pass` for `/ithiltir.node.v1.Node/` while keeping `location /` for ordinary HTTP. Enabling HTTP/2 only on the client-facing listener is insufficient; gRPC requests from Nginx to Dash must also use HTTP/2.
+When Node uses `ITHILTIR_NODE_TRANSPORT=grpc` or `auto`, gRPC requests need HTTP/2 on both hops. The node connects to the proxy over HTTPS. The proxy reaches the local Dash listener using `grpc_pass` (Nginx) or `h2c://` (Caddy), as shown above.
 
 RPC uses the root service path `/ithiltir.node.v1.Node/`, not `/api/node/metrics` or any custom report-URL prefix. `app.grpc_port` does not enable a second listener. gRPC/auto never authorize plaintext fallback after TLS or authentication failure. Ordinary HTTP proxying alone supports HTTP reports; [PVE history](./pve.md) also needs a working query stream.
 

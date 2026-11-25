@@ -87,13 +87,20 @@ http:
 
 ## Caddy 示例
 
+Caddy 在公网入口终止 TLS，并将 `/ithiltir.node.v1.Node/` 下的 RPC 原样转发到本机 Dash。`h2c://` 为这一段回环连接启用明文 HTTP/2。网页、HTTP API 和安装包下载使用第二条规则。
+
 ```caddy
 dash.example.com {
+    reverse_proxy /ithiltir.node.v1.Node/* h2c://127.0.0.1:8080
     reverse_proxy 127.0.0.1:8080
 }
 ```
 
-Dash 配置同上。
+Dash 的监听地址和可信代理配置同上。使用标准 Caddyfile 路径时，可用以下命令检查并重载配置。
+
+```bash
+caddy validate --config /etc/caddy/Caddyfile && caddy reload --config /etc/caddy/Caddyfile
+```
 
 ## 可信代理
 
@@ -110,7 +117,7 @@ http:
 
 ## Node gRPC
 
-Node `ITHILTIR_NODE_TRANSPORT=grpc` 或 `auto` 要求代理支持 HTTP/2 和 gRPC。上面的 Nginx 示例使用 `grpc_pass` 将 `/ithiltir.node.v1.Node/` 转发到 Dash，同时保留普通 HTTP 的 `location /`。仅启用客户端侧 HTTP/2 不够，Nginx 到 Dash 的 gRPC 请求也必须使用 HTTP/2。
+Node 使用 `ITHILTIR_NODE_TRANSPORT=grpc` 或 `auto` 时，gRPC 请求两段都需要 HTTP/2。节点通过 HTTPS 连接代理；代理通过上例中的 `grpc_pass`（Nginx）或 `h2c://`（Caddy）连接本机 Dash。
 
 RPC 使用根路径 `/ithiltir.node.v1.Node/`，不是 `/api/node/metrics`，也不继承上报 URL 的自定义前缀。`app.grpc_port` 不启用第二监听端口。gRPC/auto 不会因 TLS 或鉴权失败改用明文。普通 HTTP 代理配置只能保证 HTTP 上报；[PVE 历史](./pve.md) 需要查询流正常连接。
 

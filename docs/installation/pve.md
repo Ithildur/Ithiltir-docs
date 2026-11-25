@@ -95,6 +95,6 @@ Node 收到 `PermissionDenied` 或 `Unauthenticated` 后会停止该目标的历
 
 如果日志出现 `unexpected HTTP status code ... 200 (OK)`、`text/html`，正文包含 `Ithiltir Monitor Dashboard` 或前端 HTML，说明收到的是网页而非 gRPC 响应。常见原因是源站代理把 gRPC 请求按普通 HTTP/1.1 转发：Dash 只有在收到 HTTP/2 和 `application/grpc` 请求时才进入 gRPC 处理器，否则请求可能进入前端页面路由。
 
-Cloudflare 开启 gRPC、SSL/TLS 设为 Full，以及 Nginx 开启 HTTP/2，都不能替代 Nginx 到 Dash 的 gRPC 转发。按[反向代理示例](./reverse-proxy.md#nginx-示例)，为 `/ithiltir.node.v1.Node/` 配置独立的 `grpc_pass`，保留普通网页的 `location /`。Node 会自动设置 gRPC 请求的 Content-Type，无需修改上报 URL 或强行覆盖响应 Content-Type。
+配置源站代理，通过 HTTP/2 将 `/ithiltir.node.v1.Node/` 转发到 Dash。使用 [Nginx 的 `grpc_pass` 示例](./reverse-proxy.md#nginx-示例)或 [Caddy 的 `h2c://` 示例](./reverse-proxy.md#caddy-示例)。Node 会自动设置 gRPC 请求的 Content-Type，无需修改上报 URL 或覆盖响应 Content-Type。
 
-在 Nginx 所在主机或容器内执行 `nginx -t && nginx -s reload`。然后在 PVE 宿主机重启 `ithiltir-node` 并检查日志，确认不再返回 HTML，面板收到最新指标，且 capabilities 中的 `connected` 和 `pve_history` 均为 `true`。
+按所选代理的示例检查并重载配置。然后在 PVE 宿主机重启 `ithiltir-node` 并检查日志，确认不再返回 HTML，面板收到最新指标，且 capabilities 中的 `connected` 和 `pve_history` 均为 `true`。
