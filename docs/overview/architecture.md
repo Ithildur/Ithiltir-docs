@@ -6,6 +6,8 @@ slug: /Architect
 
 Ithiltir Dash 是单实例应用。根入口只启动一个 HTTP 进程，该进程装配 API、SPA、主题资源、安装脚本、节点资产分发和后台服务。
 
+[标准生产部署](../installation/all-in-one.md)在同一台主机运行 Dash、PostgreSQL（含 TimescaleDB）和 Redis，由本机反向代理提供 HTTPS 入口。
+
 ## 运行边界
 
 | 组件 | 责任 |

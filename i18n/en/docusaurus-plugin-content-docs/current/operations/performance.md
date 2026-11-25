@@ -39,7 +39,6 @@ Reduce write volume in this order:
 2. Reduce retention for regular metric samples, raw NIC metrics, or five-minute traffic records.
 3. Use `billing` traffic mode only when accounting is needed.
 4. Enable P95 only for nodes that need accounting.
-5. Use dedicated PostgreSQL.
 
 ## Data Retention
 

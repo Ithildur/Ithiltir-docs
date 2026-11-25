@@ -70,7 +70,7 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
-      image: 'img/social-card.svg',
+      image: 'img/social-card.png',
       colorMode: {
         defaultMode: 'light',
         respectPrefersColorScheme: true,
@@ -83,11 +83,11 @@ const config = {
           src: 'img/logo.svg',
         },
         items: [
-          {type: 'docSidebar', sidebarId: 'docs', label: '文档', position: 'left'},
-          {type: 'doc', docId: 'installation/index', label: '部署', position: 'left'},
-          {type: 'doc', docId: 'configuration/index', label: '配置', position: 'left'},
-          {type: 'doc', docId: 'guides/index', label: '开发指南', position: 'left'},
-          {type: 'doc', docId: 'reference/index', label: '参考', position: 'left'},
+          {to: '/docs', activeBaseRegex: '/docs(?:/(?!Install|Config|Operations|Reference)|$)', label: '文档', position: 'left'},
+          {to: '/docs/Install', label: '部署', position: 'left'},
+          {to: '/docs/Config', label: '配置', position: 'left'},
+          {to: '/docs/Operations', label: '运维', position: 'left'},
+          {to: '/docs/Reference', label: '参考', position: 'left'},
           {
             href: 'https://demo.ithiltir.dev/',
             label: 'Demo',
@@ -95,19 +95,14 @@ const config = {
           },
           {
             href: 'https://github.com/Ithildur/Ithiltir',
-            label: 'Ithiltir',
-            position: 'right',
-          },
-          {
-            href: 'https://github.com/Ithildur/Ithiltir-node',
-            label: 'Ithiltir-node',
+            label: 'GitHub',
             position: 'right',
           },
           {type: 'localeDropdown', position: 'right'},
         ],
       },
       footer: {
-        style: 'dark',
+        style: 'light',
         links: [
           {
             title: '文档',

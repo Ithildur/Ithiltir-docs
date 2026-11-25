@@ -7,6 +7,8 @@ title: Architecture
 
 Ithiltir Dash is a single-instance application. One Dash process serves the Web UI, HTTP API, theme assets, install scripts, node binary downloads, and background services.
 
+In a [standard production deployment](../installation/all-in-one.md), Dash, PostgreSQL with TimescaleDB, and Redis share one host. A reverse proxy on that host provides the public HTTPS endpoint.
+
 ## Runtime Boundary
 
 ```text

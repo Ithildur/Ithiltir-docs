@@ -2,9 +2,9 @@
 slug: /Install/AllInOne
 ---
 
-# 单机 all-in-one 部署
+# 单机生产部署
 
-单机部署把 Dash、PostgreSQL、TimescaleDB 和 Redis 放在一台机器上。适合小规模、自用和初始生产环境。
+标准生产部署在一台 Linux 服务器上运行 Dash、PostgreSQL（含 TimescaleDB 扩展）和 Redis。浏览器与节点通过同机的 Nginx 或 Caddy 访问 Dash。
 
 ## 拓扑
 
@@ -39,7 +39,7 @@ systemctl --version
 
 不需要先手工安装数据库和 Redis。发布包安装脚本会在支持的发行版上准备 PostgreSQL 16+、TimescaleDB 和 Redis；Debian/Ubuntu 会走 `apt-get` 和对应仓库。
 
-推荐把数据库、Redis 和 Dash 放在同一内网或同一机器。本机 all-in-one 使用：
+Dash 通过回环地址连接本机 PostgreSQL 和 Redis。
 
 ```yaml
 database:
@@ -67,41 +67,17 @@ sudo bash install_dash_linux.sh --lang zh --service-manager=systemd
 
 ## 配置公开地址
 
-推荐域名 HTTPS 部署：
+Dash 监听回环地址，`app.public_url` 填写反向代理对外提供的 HTTPS 域名根地址。
 
 ```yaml
 app:
+  listen: "127.0.0.1:8080"
   public_url: "https://dash.example.com"
 ```
 
-临时内网 IP 验证：
-
-```yaml
-app:
-  public_url: "http://10.0.0.2:8080"
-```
-
-正式部署不要长期使用 IP+HTTP。`public_url` 只写根路径，不要加 `/ithiltir`、`/dash` 或其他路径前缀。
-
 ## 本机反向代理
 
-Nginx 转发到本机 Dash：
-
-```nginx
-server {
-    listen 443 ssl http2;
-    server_name dash.example.com;
-
-    location / {
-        proxy_pass http://127.0.0.1:8080;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
+按[反向代理配置示例](./reverse-proxy.md)设置 Nginx 或 Caddy，将 HTTPS 请求转发到 `127.0.0.1:8080`。使用 Node gRPC 或 PVE 历史查询时，同时配置示例中的 gRPC 转发规则。
 
 Dash 配置：
 
@@ -112,7 +88,7 @@ http:
     - ::1/128
 ```
 
-只暴露 443 给外部。Dash 的 `:8080` 可以只监听本机或由防火墙限制。
+配置完成后，按[上线检查清单](./production-deployment.md)验证公网入口和节点上报。
 
 ## 初始化和启动
 

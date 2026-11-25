@@ -1,11 +1,11 @@
 ---
 slug: /Install/AllInOne
-title: All-in-One Deployment
+title: Single-Host Production Deployment
 ---
 
-# All-in-One Deployment
+# Single-Host Production Deployment
 
-All-in-one deployment puts Dash, PostgreSQL, TimescaleDB, and Redis on one host. It fits small installations, personal use, and initial production.
+In a standard production deployment, one Linux host runs Dash, PostgreSQL with the TimescaleDB extension, and Redis. Browsers and nodes reach Dash through Nginx or Caddy on that host.
 
 ## Topology
 
@@ -38,7 +38,7 @@ systemctl --version
 
 Do not preinstall the database and Redis by default. On supported distributions, the release installer prepares PostgreSQL 16+, TimescaleDB, and Redis; Debian/Ubuntu uses `apt-get` and the required repositories.
 
-For local all-in-one, keep database, Redis, and Dash on the same host or internal network:
+Dash connects to PostgreSQL and Redis over loopback.
 
 ```yaml
 database:
@@ -66,41 +66,17 @@ Distribution package-manager behavior is documented in [Install Dash](./dash-lin
 
 ## Public URL
 
-Recommended domain HTTPS deployment:
+Bind Dash to loopback and set `app.public_url` to the public HTTPS domain root served by the reverse proxy.
 
 ```yaml
 app:
+  listen: "127.0.0.1:8080"
   public_url: "https://dash.example.com"
 ```
 
-Temporary internal IP validation:
-
-```yaml
-app:
-  public_url: "http://10.0.0.2:8080"
-```
-
-Do not keep IP+HTTP as the formal deployment URL. `public_url` is a root URL only; do not add `/ithiltir`, `/dash`, or any other path prefix.
-
 ## Local Reverse Proxy
 
-Nginx forwarding to local Dash:
-
-```nginx
-server {
-    listen 443 ssl http2;
-    server_name dash.example.com;
-
-    location / {
-        proxy_pass http://127.0.0.1:8080;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
+Configure Nginx or Caddy to forward HTTPS requests to `127.0.0.1:8080` using the [reverse proxy examples](./reverse-proxy.md). For Node gRPC or PVE history queries, include the gRPC forwarding rule.
 
 Dash config:
 
@@ -111,7 +87,7 @@ http:
     - ::1/128
 ```
 
-Expose only 443 externally. Dash `:8080` can listen on localhost or be restricted by firewall.
+Use the [go-live checklist](./production-deployment.md) to verify the public endpoint and node reporting.
 
 ## Verify
 

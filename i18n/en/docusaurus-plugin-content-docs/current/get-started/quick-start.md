@@ -5,9 +5,17 @@ title: Quick Start
 
 # Quick Start
 
-Download a Dash release package from GitHub Releases, install Dash, then enroll one node.
+Install Dash and connect your first Linux node to see live CPU and memory readings. For a single machine, you can also use [Node local mode](../components/node/local.md).
 
-## 1. Download the Dash Package
+:::note[Before you start]
+
+You need a [supported Linux host](../installation/requirements.md), administrator access, and a Dash address reachable from the node.
+
+:::
+
+## 1. Install Dash
+
+### Download the release {/* #1-download-the-dash-package */}
 
 Choose the target architecture:
 
@@ -24,7 +32,8 @@ curl -fL -o "Ithiltir_dash_linux_${ARCH}.tar.gz" \
   "https://github.com/Ithildur/Ithiltir/releases/latest/download/Ithiltir_dash_linux_${ARCH}.tar.gz"
 ```
 
-For a fixed version:
+<details>
+<summary>Install a specific release</summary>
 
 ```bash
 VERSION=1.2.3
@@ -33,7 +42,9 @@ curl -fL -o "Ithiltir_dash_linux_${ARCH}.tar.gz" \
   "https://github.com/Ithildur/Ithiltir/releases/download/${VERSION}/Ithiltir_dash_linux_${ARCH}.tar.gz"
 ```
 
-## 2. Extract and Install Dash
+</details>
+
+### Run the installer {/* #2-extract-and-install-dash */}
 
 ```bash
 tar -xzf "Ithiltir_dash_linux_${ARCH}.tar.gz"
@@ -50,19 +61,21 @@ On supported systemd Linux distributions, the installer detects and prepares run
 - Redis 6.2.0+; 8.2.3+ recommended.
 - Migrations, service files, and the admin password environment variable.
 
-On Debian/Ubuntu systems that use `apt-get`, do not preinstall PostgreSQL, TimescaleDB, or Redis manually. The installer handles the package manager and repositories when needed. Manual dependency setup is only for source runs, restricted hosts, external database/Redis deployments, or unsupported distributions.
+On supported Debian/Ubuntu systems, the installer uses `apt-get` to prepare local dependencies. See [requirements](../installation/requirements.md) for other distributions and manual setup.
 
 After installation, open the configured `app.public_url`, then open `/login` for the admin console.
 
-## 3. Create a Node
+## 2. Connect your first node
 
-Create a node in the admin console and copy its report secret. The node metrics endpoint is:
+### Create the node in Dash {/* #3-create-a-node */}
+
+In the admin console, open the node list and create a node. Copy the deployment command for its operating system. The command includes the secret assigned to this node. Node reports go to:
 
 ```text
 <app.public_url>/api/node/metrics
 ```
 
-## 4. Install the Linux Node
+### Run the installer on the node {/* #4-install-the-linux-node */}
 
 Linux nodes can use the install script served by Dash:
 
@@ -83,14 +96,24 @@ The node runs in push mode by default and reports metrics to `/api/node/metrics`
 
 The Linux Node script supports systemd, Alpine/OpenRC, and explicit `none`. systemd uses timers for SMART, connections, and LVM thinpool collection; OpenRC uses BusyBox cron for SMART/LVM and Node's built-in connection count.
 
-## 5. Verify
+## 3. Verify reporting {/* #5-verify */}
 
-Check the node in the Dash dashboard. On the node:
+Open the dashboard and find the node by name.
+
+:::tip[Expected result]
+
+The node is online and shows CPU and memory readings.
+
+:::
+
+If the node stays offline and uses systemd, check its service and logs.
 
 ```bash
 systemctl status ithiltir-node
 journalctl -u ithiltir-node -f
 ```
+
+For other node platforms, see the [macOS](../installation/node-macos.md) and [Windows](../installation/node-windows.md) installation guides. For reporting errors, see [troubleshooting](../operations/troubleshooting.md).
 
 ## Source Quick Check
 

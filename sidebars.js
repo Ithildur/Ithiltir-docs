@@ -4,6 +4,7 @@
 const sidebars = {
   docs: [
     {type: 'doc', id: 'index', label: '文档索引'},
+    'get-started/quick-start',
     'release-notes',
     {
       type: 'category',
@@ -11,7 +12,6 @@ const sidebars = {
       link: {type: 'doc', id: 'overview/about'},
       items: [
         'overview/architecture',
-        'get-started/quick-start',
       ],
     },
     {
@@ -20,8 +20,8 @@ const sidebars = {
       link: {type: 'doc', id: 'installation/index'},
       items: [
         'installation/requirements',
-        'installation/production-deployment',
         'installation/all-in-one',
+        'installation/production-deployment',
         'installation/dash-linux',
         'installation/node-rollout',
         'installation/node-linux',

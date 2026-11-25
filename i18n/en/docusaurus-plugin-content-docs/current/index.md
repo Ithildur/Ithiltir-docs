@@ -5,100 +5,93 @@ title: Documentation Index
 
 # Documentation Index
 
-Ithiltir documentation is organized by reader goal: install the system, understand the boundaries, operate it, then look up stable contracts.
+Dash collects reports from multiple hosts in one dashboard. For a single machine, Ithiltir-node can serve a local monitoring page on its own.
 
 ## Read by Goal
 
-| Goal | Start here |
+| I want to | Start here |
 | --- | --- |
-| Get a working instance | [Quick Start](get-started/quick-start.md) |
-| Deploy for production | [Install Overview](installation/index.md), [Production Deployment Checklist](installation/production-deployment.md) |
-| Add nodes | [Node Rollout](installation/node-rollout.md), [Install Linux Node](installation/node-linux.md) |
-| Change configuration | [Config Overview](configuration/index.md) |
-| Troubleshoot | [Logging](operations/logging.md), [Troubleshooting](operations/troubleshooting.md) |
-| Secondary development | [Development Guides](guides/index.md) |
-| Look up contracts | [Reference Overview](reference/index.md) |
-| Review release changes | [Release Notes](release-notes.md) |
+| See metrics from my first server | [Install Dash and enroll a node](get-started/quick-start.md) |
+| Inspect this host without a control server | [Run Node in local mode](components/node/local.md) |
+| Add machines to an existing dashboard | [Node rollout](installation/node-rollout.md) |
+| Publish a dashboard under my own name | [Site branding](configuration/themes.md#site-branding) and [guest access](configuration/access.md) |
+| Find out why a node is offline | [Logs](operations/logging.md) and [troubleshooting](operations/troubleshooting.md) |
+| Integrate a client or collector | [Dash HTTP API](reference/dash-api.md) and [node reporting protocol](reference/node-protocol.md) |
 
 ## Documentation Sections
 
-### Release Notes
+<div className="guideDirectory">
 
-- [Release Notes](release-notes.md)
+<section>
 
 ### Overview
 
-- [About Ithiltir](overview/about.md)
-- [Architecture](overview/architecture.md)
-- [Dash Overview](components/dash/index.md)
-- [Node Overview](components/node/index.md)
+[About Ithiltir](overview/about.md) introduces Dash and Node. [Architecture](overview/architecture.md) traces reports from collection to storage and the dashboard.
+
+</section>
+
+<section>
 
 ### Installation
 
-- [Install Overview](installation/index.md)
-- [Requirements](installation/requirements.md)
-- [Production Deployment Checklist](installation/production-deployment.md)
-- [All-in-One Deployment](installation/all-in-one.md)
-- [Install Dash](installation/dash-linux.md)
-- [Node Rollout](installation/node-rollout.md)
-- [Install Linux Node](installation/node-linux.md)
-- [Install macOS Node](installation/node-macos.md)
-- [Install Windows Node](installation/node-windows.md)
-- [Reverse Proxy](installation/reverse-proxy.md)
-- [Upgrade](installation/upgrade.md)
+Start with the [deployment options](installation/index.md) and [requirements](installation/requirements.md). Use the [production checklist](installation/production-deployment.md) to verify the proxy, service and node connections.
+
+</section>
+
+<section>
 
 ### Configuration Manual
 
-- [Config Overview](configuration/index.md)
-- [Dash Config](configuration/dash.md)
-- [Environment Variables](configuration/environment.md)
-- [Access Control](configuration/access.md)
-- [Traffic Accounting](configuration/traffic.md)
-- [Alert Rules](configuration/alerts.md)
-- [Notifications](configuration/notifications.md)
-- [Themes](configuration/themes.md)
-- [Security](configuration/security.md)
+The [configuration overview](configuration/index.md) identifies where each setting is stored. For accounting and notifications, see [traffic](configuration/traffic.md), [alert rules](configuration/alerts.md) and [notification channels](configuration/notifications.md).
+
+</section>
+
+<section>
 
 ### Operations
 
-- [Operations Overview](operations/index.md)
-- [Security Hardening](operations/security-hardening.md)
-- [Node Lifecycle](operations/node-lifecycle.md)
-- [Data Retention](operations/data-retention.md)
-- [Backup and Restore](operations/backup-restore.md)
-- [Logging](operations/logging.md)
-- [Performance and Capacity](operations/performance.md)
-- [Troubleshooting](operations/troubleshooting.md)
+Use the [operations guide](operations/index.md) for routine checks. Review [retention](operations/data-retention.md) and [backup and restore](operations/backup-restore.md) before changing storage.
+
+</section>
+
+<section>
 
 ### Reference
 
-- [Reference Overview](reference/index.md)
-- [Dash CLI](reference/dash-cli.md)
-- [Node CLI](reference/node-cli.md)
-- [Dash HTTP API](reference/dash-api.md)
-- [Node Report Protocol](reference/node-protocol.md)
-- [Runtime Metrics Schema](reference/metrics-schema.md)
-- [Disk Schema](reference/disk-schema.md)
-- [Theme Package Format](reference/theme-package.md)
-- [Filesystem Layout](reference/filesystem.md)
-- [Error Semantics](reference/errors.md)
+Look up command flags, payload fields and error codes in the [reference manual](reference/index.md). The [metrics schema](reference/metrics-schema.md) describes the values a node reports.
+
+</section>
+
+<section>
 
 ### Components
 
-- [Dash Install](components/dash/install.md)
-- [Dash Deployment Assets](components/dash/deploy.md)
-- [Install Linux Node](installation/node-linux.md)
-- [Node Update](components/node/update.md)
+Read the [Dash](components/dash/index.md) and [Node](components/node/index.md) guides for component-specific commands, configuration and update behavior.
+
+</section>
+
+<section>
 
 ### Development Guides
 
-- [Development Guides Overview](guides/index.md)
-- [Development Guidelines](guides/development-guidelines.md)
-- [Source Development](guides/source-development.md)
-- [Build](guides/build.md)
-- [Theme Development](guides/theme-authoring.md)
+The [development guides](guides/index.md) cover [running from source](guides/source-development.md), [building packages](guides/build.md) and [writing themes](guides/theme-authoring.md).
+
+</section>
+
+<section>
+
+### Release Notes
+
+Before an upgrade, read the [release notes](release-notes.md) and [upgrade procedure](installation/upgrade.md).
+
+</section>
+
+<section>
 
 ### Contributing and Releases
 
-- [AI Policy](contributing/ai-policy.md)
-- [Releases](contributing/releases.md)
+Contributors can consult the [development guidelines](guides/development-guidelines.md), [AI policy](contributing/ai-policy.md) and [release process](contributing/releases.md).
+
+</section>
+
+</div>

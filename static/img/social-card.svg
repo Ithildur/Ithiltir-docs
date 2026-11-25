@@ -1,23 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="Ithiltir Docs">
+  <rect width="1200" height="630" fill="#241f23"/>
+  <g transform="translate(856 164) scale(2.25)">
   <defs>
-    <mask id="cresMask">
-      <rect width="1200" height="630" fill="black"/>
-      <circle cx="877" cy="187" r="66" fill="white"/>
-      <circle cx="907" cy="162" r="66" fill="black"/>
-    </mask>
+    <linearGradient id="moon" gradientUnits="userSpaceOnUse" x1="73" y1="8" x2="36" y2="115">
+      <stop stop-color="#EDC88A"/>
+      <stop offset=".51" stop-color="#D99D74"/>
+      <stop offset="1" stop-color="#B77261"/>
+    </linearGradient>
+    <clipPath id="disc">
+      <circle cx="64" cy="64" r="56"/>
+    </clipPath>
   </defs>
-  <rect width="1200" height="630" fill="#0d1117"/>
-  <rect width="1200" height="630" fill="#15365A" opacity="0.24"/>
-  <circle cx="830" cy="318" r="214" fill="none" stroke="#89AFC8" stroke-opacity="0.26" stroke-width="3"/>
-  <ellipse cx="830" cy="318" rx="270" ry="148" fill="none" stroke="#D4E9F6" stroke-opacity="0.24" stroke-width="6"/>
-  <text x="108" y="250" fill="#F6FBFF" font-family="Microsoft YaHei, PingFang SC, sans-serif" font-size="88" font-weight="700">Ithiltir Docs</text>
-  <text x="112" y="326" fill="#B9CBE0" font-family="Microsoft YaHei, PingFang SC, sans-serif" font-size="32" font-weight="700">Deploy / Nodes / Config / API</text>
-  <rect x="748" y="142" width="164" height="164" rx="36" fill="#15365A"/>
-  <ellipse cx="830" cy="224" rx="64" ry="41" fill="none" stroke="#D4E9F6" stroke-opacity="0.90" stroke-width="14"/>
-  <ellipse cx="830" cy="224" rx="52" ry="33" fill="none" stroke="#89AFC8" stroke-opacity="0.62" stroke-width="11"/>
-  <circle cx="819" cy="241" r="20" fill="none" stroke="#4B91C2" stroke-opacity="0.76" stroke-width="14"/>
-  <circle cx="819" cy="241" r="7" fill="#DDEFFF"/>
-  <g mask="url(#cresMask)">
-    <circle cx="877" cy="187" r="66" fill="#DCEBFA"/>
+  <path fill="url(#moon)" d="M82 11A56 56 0 1 0 117.7 80C102 94 79 94 61 81C41 66 39 39 55 23C62 16 71 12 82 11Z"/>
+  <g clip-path="url(#disc)">
+    <path class="lit-stone" fill="#BC8D93" d="M43 121C52 107 58 89 60 72L61 60L53 56V50L85 43V52L79 55L78 69C76 83 82 92 98 95L123 89V127Z"/>
+    <path class="shade" fill="#987883" d="M78 61L78 69C76 83 82 92 98 95L123 89V127H52C66 109 71 90 73 64Z"/>
+    <path fill="#F7DBA1" d="M61 55L78 51L77.5 58L60.5 62Z"/>
+  </g>
+  </g>
+  <g font-family="sans-serif">
+    <text x="92" y="302" fill="#ffffff" font-size="106" font-weight="700">Ithiltir Docs</text>
+    <text x="98" y="383" fill="#edc88a" font-size="36">Self-hosted server monitoring</text>
   </g>
 </svg>

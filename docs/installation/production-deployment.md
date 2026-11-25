@@ -4,7 +4,7 @@ slug: /Install/ProductionDeployment
 
 # 生产部署检查清单
 
-生产部署的目标是固定边界：Dash 单实例、PostgreSQL 可恢复、Redis 可用、域名 HTTPS 入口、反向代理同源、节点只向可信 Dash 上报。
+完成[单机生产部署](./all-in-one.md)后，按以下各项检查本机服务、HTTPS 入口、节点上报和备份。
 
 ## 版本和平台
 
@@ -22,7 +22,7 @@ slug: /Install/ProductionDeployment
 - Redis。
 - systemd Linux 发行版或对应 macOS/Windows 服务管理器。
 
-发布包安装脚本会检测并准备 Dash 侧运行依赖。Debian/Ubuntu 这类 `apt-get` 系统不需要先手工安装 PostgreSQL、TimescaleDB 或 Redis；已有外部数据库/Redis、离线环境和受限服务器除外。
+发布包安装器会在受支持的 Debian/Ubuntu 主机上准备本机 PostgreSQL、TimescaleDB 和 Redis。离线或受限环境需预先准备依赖。
 
 源码运行或自定义打包才需要：
 
@@ -61,7 +61,7 @@ journalctl -u dash.service -n 100 --no-pager
 
 ```yaml
 app:
-  listen: ":8080"
+  listen: "127.0.0.1:8080"
   public_url: "https://dash.example.com"
   timezone: "Asia/Hong_Kong"
   language: "zh"
@@ -124,21 +124,7 @@ https://dash.example.com/
 - `/deploy`
 - `/`
 
-不能部署为：
-
-```text
-https://example.com/dash/
-```
-
-`app.public_url` 不能带路径前缀。反向代理在本机时，`trusted_proxies` 只写本机地址。反向代理在内网其他机器时，只写明确 CIDR。
-
-生产环境不暴露为：
-
-```text
-http://10.0.0.2:8080/
-```
-
-Dash 的 `:8080` 这类后端端口应只对本机或内网开放，公网入口交给 Nginx/Caddy/负载均衡。
+确认 `app.public_url` 使用 HTTPS 域名根路径，Dash 只监听回环地址，`http.trusted_proxies` 仅包含本机代理使用的地址。代理规则见[反向代理](./reverse-proxy.md)。
 
 ## Redis 策略
 

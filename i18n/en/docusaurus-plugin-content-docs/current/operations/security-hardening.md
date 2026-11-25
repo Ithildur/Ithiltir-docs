@@ -19,7 +19,7 @@ Do not expose these services publicly:
 - The Node local-mode page.
 - The Node Push debug port.
 
-Restrict the Dash backend listener to the local host or private network. Bind PostgreSQL and Redis to local or explicit private addresses and restrict their source networks with a firewall.
+In a standard production deployment, expose only the reverse proxy to external clients. Bind Dash, PostgreSQL, and Redis to loopback.
 
 ## Reverse Proxy
 

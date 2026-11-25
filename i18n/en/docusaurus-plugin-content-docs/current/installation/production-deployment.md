@@ -5,7 +5,7 @@ title: Production Deployment Checklist
 
 # Production Deployment Checklist
 
-Production deployment fixes the boundaries: one Dash instance, recoverable PostgreSQL, available Redis, domain HTTPS entrypoint, same-origin reverse proxy, and nodes reporting only to a trusted Dash.
+After [deploying on a single host](./all-in-one.md), verify local services, HTTPS ingress, node reporting, and backups.
 
 ## Version and Platform
 
@@ -23,7 +23,7 @@ Confirm runtime dependencies:
 - Redis.
 - systemd Linux distribution, or the matching macOS/Windows service manager.
 
-The release installer detects and prepares Dash-side runtime dependencies. Debian/Ubuntu systems that use `apt-get` do not need PostgreSQL, TimescaleDB, or Redis installed manually first, unless you use external services, offline hosts, or restricted servers.
+On supported Debian/Ubuntu hosts, the release installer provisions local PostgreSQL, TimescaleDB, and Redis. Prepare the dependencies in advance on offline or restricted hosts.
 
 Source runs or custom packaging additionally need:
 
@@ -62,7 +62,7 @@ Confirm at least these fields in `/opt/Ithiltir-dash/configs/config.local.yaml`:
 
 ```yaml
 app:
-  listen: ":8080"
+  listen: "127.0.0.1:8080"
   public_url: "https://dash.example.com"
   timezone: "Asia/Hong_Kong"
   language: "en"
@@ -125,21 +125,7 @@ Proxy same-origin paths:
 - `/deploy`
 - `/`
 
-Do not deploy as:
-
-```text
-https://example.com/dash/
-```
-
-`app.public_url` must not contain a path prefix. If the reverse proxy is local, `trusted_proxies` should only contain local addresses. If it is on another internal host, use explicit CIDRs only.
-
-Do not expose this as the formal deployment URL:
-
-```text
-http://10.0.0.2:8080/
-```
-
-Backend ports such as `:8080` should be reachable only from localhost or a private network. Public ingress belongs to Nginx, Caddy, or a load balancer.
+Verify that `app.public_url` is the HTTPS domain root, Dash listens on loopback, and `http.trusted_proxies` contains only the addresses used by the local proxy. See the [reverse proxy configuration](./reverse-proxy.md).
 
 ## Redis Policy
 

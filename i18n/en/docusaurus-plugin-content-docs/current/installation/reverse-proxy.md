@@ -78,7 +78,7 @@ Dash config:
 
 ```yaml
 app:
-  listen: ":8080"
+  listen: "127.0.0.1:8080"
   public_url: "https://dash.example.com"
 http:
   trusted_proxies:

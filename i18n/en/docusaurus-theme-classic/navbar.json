@@ -19,20 +19,12 @@
     "message": "Config",
     "description": "Navbar item for configuration docs"
   },
-  "item.label.\u5f00\u53d1\u6307\u5357": {
-    "message": "Development",
-    "description": "Navbar item for development guides"
-  },
   "item.label.\u53c2\u8003": {
     "message": "Reference",
     "description": "Navbar item for reference docs"
   },
-  "item.label.Ithiltir": {
-    "message": "Ithiltir",
-    "description": "Navbar item with label Ithiltir"
-  },
-  "item.label.Ithiltir-node": {
-    "message": "Ithiltir-node",
-    "description": "Navbar item with label Ithiltir-node"
+  "item.label.\u8fd0\u7ef4": {
+    "message": "Operations",
+    "description": "Navbar item for operations guides"
   }
 }

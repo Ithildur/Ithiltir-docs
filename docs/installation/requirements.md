@@ -37,7 +37,7 @@ Dash 发布包里的 `install_dash_linux.sh` 支持：
 | Arch / Manjaro | `pacman` | 使用系统仓库安装 PostgreSQL、TimescaleDB、Redis |
 | Alpine | `apk` | 要求预先安装并启动 PostgreSQL 16+、匹配的 TimescaleDB 和 Redis 6.2.0+ |
 
-已有 PostgreSQL 16+、TimescaleDB 或 Redis 满足要求时，脚本会复用。受限服务器、离线服务器、外部数据库/Redis 或不支持的发行版才需要手工准备。
+安装器会复用本机符合要求的 PostgreSQL、TimescaleDB 和 Redis。离线、受限或不支持自动安装依赖的环境需预先准备这些服务。
 
 ## Redis
 

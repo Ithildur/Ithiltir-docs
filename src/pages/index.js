@@ -3,108 +3,77 @@ import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import Layout from '@theme/Layout';
 
-const sections = [
+const guides = [
   {
-    title: '快速开始',
-    titleEn: 'Quick Start',
-    meta: 'QuickStart',
-    text: 'Dash / Node',
-    textEn: 'Dash / Node',
-    to: 'docs/QuickStart',
+    title: ['部署与接入', 'Deployment'],
+    links: [
+      ['Install', '安装 Dash', 'Install Dash'],
+      ['Install/NodeRollout', '接入更多节点', 'Enroll more nodes'],
+      ['Install/ReverseProxy', '配置反向代理', 'Configure a reverse proxy'],
+    ],
   },
   {
-    title: '安装部署',
-    titleEn: 'Install',
-    meta: 'Install',
-    text: 'Linux / Proxy / Upgrade',
-    textEn: 'Linux / Proxy / Upgrade',
-    to: 'docs/Install',
+    title: ['配置与运维', 'Operations'],
+    links: [
+      ['Config/Alerts', '设置告警规则', 'Configure alerts'],
+      ['Operations/BackupRestore', '备份与恢复', 'Back up and restore'],
+      ['Operations/Troubleshooting', '排查上报故障', 'Troubleshoot reporting'],
+    ],
   },
   {
-    title: '配置',
-    titleEn: 'Config',
-    meta: 'Config',
-    text: 'Access / Traffic / Alert',
-    textEn: 'Access / Traffic / Alert',
-    to: 'docs/Config',
-  },
-  {
-    title: '参考手册',
-    titleEn: 'Reference',
-    meta: 'Reference',
-    text: 'API / CLI / Metrics',
-    textEn: 'API / CLI / Metrics',
-    to: 'docs/Reference',
+    title: ['开发与参考', 'Development'],
+    links: [
+      ['Reference/DashAPI', 'Dash HTTP API', 'Dash HTTP API'],
+      ['Reference/NodeCLI', 'Node 命令行', 'Node CLI'],
+      ['Guides', '源码与构建', 'Source and build guides'],
+    ],
   },
 ];
 
-const copy = {
-  'zh-CN': {
-    title: 'Ithiltir 文档',
-    description: 'Ithiltir 是一套自托管服务器监控系统，支持 Dash 集中管理与 Node 本地监控。',
-    eyebrow: 'Ithiltir Docs',
-    primary: '打开文档',
-    secondary: '快速开始',
-    indexLabel: '核心文档入口',
-  },
-  en: {
-    title: 'Ithiltir Docs',
-    description: 'Ithiltir is a self-hosted server monitoring system with Dash management and Node local monitoring.',
-    eyebrow: 'Ithiltir Docs',
-    primary: 'Open Docs',
-    secondary: 'Quick Start',
-    indexLabel: 'Core documentation entry points',
-  },
-};
-
 export default function Home() {
-  const {
-    i18n: {currentLocale},
-  } = useDocusaurusContext();
-  const logoUrl = useBaseUrl('img/logo.svg');
-  const text = copy[currentLocale] ?? copy['zh-CN'];
-
+  const {i18n: {currentLocale}, siteConfig} = useDocusaurusContext();
+  const english = currentLocale === 'en';
+  const title = english ? 'Documentation' : '文档';
+  const description = english
+    ? 'Monitor your servers with Ithiltir Dash. Connect a node to see live metrics, then explore its history, traffic and alerts.'
+    : '用 Ithiltir Dash 集中监控服务器。接入第一台节点后，即可查看实时指标、历史曲线、流量和告警。';
+  const preview = useBaseUrl(`img/dashboard-${english ? 'en' : 'zh'}.jpg`);
   return (
-    <Layout
-      title={text.title}
-      description={text.description}>
+    <Layout title={title} description={description}>
       <main className="docsHome">
-        <section className="docsHome__hero">
-          <div className="docsHome__shell">
-            <div className="docsHome__copy">
-              <p className="docsHome__eyebrow">{text.eyebrow}</p>
-              <h1>{text.title}</h1>
-              <p>{text.description}</p>
-              <div className="docsHome__actions">
-                <Link className="docsHome__button docsHome__button--primary" to="docs">
-                  {text.primary}
-                </Link>
-                <Link
-                  className="docsHome__button docsHome__button--secondary"
-                  to="docs/QuickStart">
-                  {text.secondary}
-                </Link>
-              </div>
-            </div>
-            <div className="docsHome__stage" aria-hidden="true">
-              <div className="docsHome__ring docsHome__ring--outer" />
-              <div className="docsHome__ring docsHome__ring--inner" />
-              <img className="docsHome__logo" src={logoUrl} alt="" />
-              <span className="docsHome__node docsHome__node--dash">Dash</span>
-              <span className="docsHome__node docsHome__node--node">Node</span>
-              <span className="docsHome__node docsHome__node--api">API</span>
-              <span className="docsHome__node docsHome__node--ops">Ops</span>
+        <header className="docsHome__intro">
+          <div>
+            <h1>{siteConfig.title} <br />{title}</h1>
+            <p>{description}</p>
+            <div className="docsHome__actions">
+              <Link className="button button--primary" to="docs/QuickStart">
+                {english ? 'Connect your first node' : '接入第一台节点'} <span aria-hidden="true">→</span>
+              </Link>
+              <Link to="docs/Node/Local">{english ? 'Run Node locally' : '使用 Node 本地模式'}</Link>
             </div>
           </div>
-        </section>
-        <section className="docsHome__index" aria-label={text.indexLabel}>
-          <div className="docsHome__grid">
-            {sections.map((section) => (
-              <Link className="docsHome__card" to={section.to} key={section.to}>
-                <span>{section.meta}</span>
-                <h2>{currentLocale === 'en' ? section.titleEn : section.title}</h2>
-                <p>{currentLocale === 'en' ? section.textEn : section.text}</p>
-              </Link>
+          <a className="docsHome__preview" href="https://demo.ithiltir.dev/">
+            <figure>
+              <div className="docsHome__viewport">
+                <img src={preview} width="1920" height="1200" alt={english ? 'Node metrics in Ithiltir Dash' : 'Ithiltir Dash 的节点指标看板'} />
+              </div>
+              <figcaption>{english ? 'Explore the live dashboard' : '打开在线演示'} <span aria-hidden="true">↗</span></figcaption>
+            </figure>
+          </a>
+        </header>
+        <section className="docsHome__guides">
+          <header>
+            <h2>{english ? 'Browse the guides' : '查阅指南'}</h2>
+            <Link to="docs">{english ? 'All documentation' : '完整文档索引'} <span aria-hidden="true">→</span></Link>
+          </header>
+          <div className="docsHome__topics">
+            {guides.map(({title: labels, links}) => (
+              <section key={labels[1]}>
+                <h3>{labels[english ? 1 : 0]}</h3>
+                <ul>{links.map(([slug, zh, en]) => (
+                  <li key={slug}><Link to={`docs/${slug}`}>{english ? en : zh}</Link></li>
+                ))}</ul>
+              </section>
             ))}
           </div>
         </section>

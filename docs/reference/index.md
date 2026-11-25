@@ -6,10 +6,18 @@ slug: /Reference
 
 参考文档记录稳定契约：命令、路径、字段、错误语义、数据结构和文件布局。部署和运维步骤分别见 [安装部署](../installation/index.md) 和 [运维](../operations/index.md)；配置说明见 [配置总览](../configuration/index.md)；二次开发见 [开发指南](../guides/index.md)。
 
+<div className="guideDirectory">
+
+<section>
+
 ## CLI
 
 - [Dash CLI](./dash-cli.md)
 - [Node CLI](./node-cli.md)
+
+</section>
+
+<section>
 
 ## HTTP 和协议
 
@@ -17,12 +25,24 @@ slug: /Reference
 - [节点上报协议](./node-protocol.md)
 - [错误语义](./errors.md)
 
+</section>
+
+<section>
+
 ## 数据结构
 
 - [运行时指标结构](./metrics-schema.md)
 - [磁盘结构](./disk-schema.md)
 - [主题包格式](./theme-package.md)
 
+</section>
+
+<section>
+
 ## 部署参考
 
 - [文件系统布局](./filesystem.md)
+
+</section>
+
+</div>

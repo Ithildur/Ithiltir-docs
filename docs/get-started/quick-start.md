@@ -4,9 +4,17 @@ slug: /QuickStart
 
 # 快速开始
 
-从 GitHub Release 下载 Dash 发布包，安装 Dash，再接入一台节点。
+安装 Dash，接入第一台 Linux 节点，在看板查看实时 CPU 和内存指标。只需查看本机状态时，也可以使用 [Node 本地模式](../components/node/local.md)。
 
-## 1. 下载 Dash 发布包
+:::note[开始前]
+
+准备一台[受支持的 Linux 主机](../installation/requirements.md)、管理员权限，以及节点能够访问的 Dash 地址。
+
+:::
+
+## 1. 安装 Dash
+
+### 下载发布包 {/* #1-下载-dash-发布包 */}
 
 选择目标架构：
 
@@ -23,7 +31,8 @@ curl -fL -o "Ithiltir_dash_linux_${ARCH}.tar.gz" \
   "https://github.com/Ithildur/Ithiltir/releases/latest/download/Ithiltir_dash_linux_${ARCH}.tar.gz"
 ```
 
-如需固定版本：
+<details>
+<summary>安装指定版本</summary>
 
 ```bash
 VERSION=1.2.3
@@ -32,7 +41,9 @@ curl -fL -o "Ithiltir_dash_linux_${ARCH}.tar.gz" \
   "https://github.com/Ithildur/Ithiltir/releases/download/${VERSION}/Ithiltir_dash_linux_${ARCH}.tar.gz"
 ```
 
-## 2. 解压并安装 Dash
+</details>
+
+### 运行安装脚本 {/* #2-解压并安装-dash */}
 
 ```bash
 tar -xzf "Ithiltir_dash_linux_${ARCH}.tar.gz"
@@ -49,19 +60,21 @@ sudo bash install_dash_linux.sh --lang zh --service-manager=systemd
 - Redis 6.2.0+；推荐 8.2.3+。
 - 迁移、服务文件、管理员密码环境变量。
 
-Debian/Ubuntu 这类 `apt-get` 系统不需要先手工安装 PostgreSQL、TimescaleDB 或 Redis；脚本会按提示使用包管理器和对应仓库处理。只有源码运行、受限服务器、外部数据库/Redis 或不支持的发行版才需要自己准备依赖。
+在受支持的 Debian/Ubuntu 系统上，安装器通过 `apt-get` 准备本机依赖。其他发行版和手动安装要求见[运行要求](../installation/requirements.md)。
 
 安装完成后访问安装时填写的 `app.public_url`，再打开 `/login` 进入管理台。
 
-## 3. 创建节点
+## 2. 接入第一台节点
 
-在管理台创建节点，取得节点的上报密钥。节点上报接口是：
+### 在 Dash 中创建节点 {/* #3-创建节点 */}
+
+在管理台的「节点概览」中新增节点，复制与目标操作系统对应的部署命令。命令中包含该节点的上报密钥。节点向以下地址上报：
 
 ```text
 <app.public_url>/api/node/metrics
 ```
 
-## 4. 安装 Linux 节点
+### 在节点上运行安装脚本 {/* #4-安装-linux-节点 */}
 
 Linux 节点可以使用 Dash 提供的安装脚本：
 
@@ -82,14 +95,24 @@ sudo bash install_node.sh 10.0.0.2 8080 '<node-secret>' 3 --net eth0,eth1
 
 Linux Node 脚本支持 systemd、Alpine/OpenRC 和显式 `none`。systemd 使用 timer 采集 SMART、连接数和 LVM thinpool；OpenRC 使用 BusyBox cron 采集 SMART 和 LVM，并由 Node 自行统计连接数。
 
-## 5. 验证
+## 3. 验证上报 {/* #5-验证 */}
 
-在 Dash 看板检查节点是否在线。节点侧可以检查服务：
+打开 Dash 看板，按名称找到刚接入的节点。
+
+:::tip[预期结果]
+
+节点显示在线，并且已有 CPU 和内存读数。
+
+:::
+
+如果节点持续离线且使用 systemd，检查服务状态和日志。
 
 ```bash
 systemctl status ithiltir-node
 journalctl -u ithiltir-node -f
 ```
+
+其他节点平台见 [macOS 安装](../installation/node-macos.md)和 [Windows 安装](../installation/node-windows.md)。上报异常时，按[排错指南](../operations/troubleshooting.md)检查。
 
 ## 源码快速验证
 

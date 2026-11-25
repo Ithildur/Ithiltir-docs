@@ -18,7 +18,7 @@ slug: /Operations/SecurityHardening
 - Node 本地模式页面。
 - Node Push debug 端口。
 
-Dash 后端端口限制在本机或内网。PostgreSQL 和 Redis 绑定本机或明确的内网地址，并通过防火墙限制访问源。
+标准生产部署只对外开放反向代理的入口。Dash、PostgreSQL 和 Redis 监听回环地址。
 
 ## 反向代理
 

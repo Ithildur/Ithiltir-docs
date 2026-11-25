@@ -7,6 +7,12 @@ title: Themes
 
 Theme package format v1 is frozen and deprecated but remains supported for upload, apply, and runtime use.
 
+## Site branding
+
+Open **System Settings → Site Brand** to change the logo, page title, or topbar text. Dash uses the logo in the header, on the sign-in page, and as the browser tab icon. Edit **Topbar Text** to rename the site independently of the image.
+
+Upload an SVG, PNG, JPG, GIF, WebP, or ICO up to 512 KiB and save your changes. To restore the built-in logo, choose **Reset** next to the preview and save.
+
 ## Package Layout
 
 A ZIP may contain only these regular root-level files:

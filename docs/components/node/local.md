@@ -4,17 +4,20 @@ slug: /Node/Local
 
 # 本地模式
 
-本地模式提供内置单节点页面和本地 HTTP 接口。
+本地模式由 Ithiltir-node 直接提供单台主机的监控页面和只读 HTTP 接口，可以独立于 Dash 运行。
 
 ## 启动
 
+从 [Ithiltir-node Releases](https://github.com/Ithildur/Ithiltir-node/releases) 下载与主机匹配的可执行文件。在 Linux 或 macOS 上将文件保存为 `node`，在下载目录运行：
+
 ```bash
-./node
-./node local
+chmod +x ./node
 ./node local 127.0.0.1 9100
 ```
 
-默认监听：
+在 Windows 上可将对应文件保存为 `node.exe`，运行 `.\node.exe local 127.0.0.1 9100`。
+
+在同一台主机的浏览器打开 `http://127.0.0.1:9100/` 查看指标。直接运行 `./node` 或 `./node local` 时，默认监听：
 
 ```text
 0.0.0.0:9100

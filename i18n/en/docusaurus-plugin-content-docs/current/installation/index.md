@@ -11,9 +11,8 @@ Ithiltir has two deployment targets: the Dash control plane and Ithiltir-node in
 
 | Path | Use case | Start here |
 | --- | --- | --- |
-| Quick validation | Single host, small scale, personal use | [Quick Start](../get-started/quick-start.md) |
-| Single-host production | Dash, PostgreSQL, TimescaleDB, and Redis on one host | [All-in-One Deployment](./all-in-one.md) |
-| Standard production | Dash + reverse proxy + managed database operations | [Production Deployment Checklist](./production-deployment.md) |
+| Quick validation | Install Dash and verify the first node report | [Quick Start](../get-started/quick-start.md) |
+| Standard production | Dash, PostgreSQL with TimescaleDB, and Redis on one host behind a local HTTPS reverse proxy | [Single-Host Production Deployment](./all-in-one.md) · [Go-live checklist](./production-deployment.md) |
 | Source validation | Development, troubleshooting, config validation | [Source Development](../guides/source-development.md) |
 | PVE VMs | QEMU snapshots, Guest Agent IPs, and history queries | [PVE Monitoring](./pve.md) |
 
@@ -30,7 +29,7 @@ Ithiltir has two deployment targets: the Dash control plane and Ithiltir-node in
 
 The release package installer checks PostgreSQL 16+, TimescaleDB, and Redis. If they are missing or too old, it uses the distribution package manager when possible and may prompt for a Redis source build. Debian/Ubuntu systems that use `apt-get` do not need these dependencies installed manually first.
 
-The recommended deployment shape is: domain + HTTPS + Nginx/Caddy reverse proxy. Dash listens on a local or private backend address such as `127.0.0.1:8080`; external clients only access `https://dash.example.com/`. Direct `http://IP:port` exposure is only for temporary validation or controlled internal testing.
+Browsers and nodes use `https://dash.example.com/`. Nginx or Caddy forwards requests to Dash on the same host (for example, `127.0.0.1:8080`). Direct `http://IP:port` access is for temporary checks.
 
 ## Deployment Boundaries
 
@@ -39,7 +38,7 @@ The recommended deployment shape is: domain + HTTPS + Nginx/Caddy reverse proxy.
 | Dash | Single instance; multiple Dash writers against the same state are not supported |
 | PostgreSQL | Stores nodes, metrics, traffic, alerts, settings, and theme metadata |
 | Redis | Stores admin sessions and disposable frontend caches |
-| Reverse proxy | Recommended for production; keep same-origin root paths through Nginx, Caddy, or a load balancer |
+| Reverse proxy | Forward requests from the same domain root to the local Dash listener |
 | Nodes | Use push mode to call Dash `/api/node/*` endpoints |
 
 ## Public Paths
@@ -83,4 +82,4 @@ https://dash.example.com/api/node/static
 - [Reverse Proxy](./reverse-proxy.md)
 - [Upgrade](./upgrade.md)
 - [Production Deployment Checklist](./production-deployment.md)
-- [All-in-One Deployment](./all-in-one.md)
+- [Single-Host Production Deployment](./all-in-one.md)
